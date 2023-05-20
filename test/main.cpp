@@ -3,20 +3,20 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
-#include "date.h"
-#include "structs.h"
-#include "parser.h"
+
+#include <date.h>
+#include <parser.h>
 
 using namespace date;
 
 int main()
 {
     std::unordered_map<SatName, Satellite> sats;
-    const char russia_location[] = "DATA_Files/Russia2Constellation/";
+    const char russia_location[] = "../../DATA_Files/Russia2Constellation/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
     std::unordered_map<std::string, Observatory> obs;
-    const char facility_location[] = "DATA_Files/Facility2Constellation/";
+    const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     parse_observatory(facility_location, obs);
     
     // auto sat_first = sats.begin()->second;
