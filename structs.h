@@ -1,34 +1,44 @@
 #ifndef SCHEDULE_STRUCTS
 #define SCHEDULE_STRUCTS
 
+#include <map>
+
 #include "date.h"
 
-#define KINOSAT 0
-#define ZORKIY 1
+#define PLANES_NUM 20
+
+using SatName = uint32_t;
+
+enum class SatType
+{
+    KINOSAT,
+    ZORKIY
+};
+
+const std::map<SatType, std::string> SatNames = {{SatType::KINOSAT, "KinoSat"}, {SatType::ZORKIY, "Zorkiy"}};
+const std::string KinosatName = SatNames.at(SatType::KINOSAT);
+const std::string ZorkiyName = SatNames.at(SatType::ZORKIY);
 
 struct Interval
 {
-    char sat_name[20];
-    int sat_type;
+    SatName sat_name;
+    SatType sat_type;
     std::chrono::system_clock::time_point start;
     std::chrono::system_clock::time_point end;
     double duration;
 };
 
-
 struct Satellite
 {
-    char name[20];
-    int type;
+    SatName name;
+    SatType type;
     std::vector<Interval> ints;
 };
 
 struct Observatory
 {
-    char name[20];
+    std::string name;
     std::vector<Interval> ints;
 };
 
-
-
-#endif 
+#endif
