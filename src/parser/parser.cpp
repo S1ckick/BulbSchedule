@@ -10,7 +10,7 @@
 
 using namespace date;
 
-Interval parse_interval(const std::string &line, const SatType &sat_type, const SatName sat_name)
+Interval parse_interval(const std::string &line, const SatType &sat_type, const SatName &sat_name, const ObsName &obs_name)
 {
     std::string str_idx, str_start_day, str_start_month, str_start_year, str_start_time,
         str_end_day, str_end_month, str_end_year, str_end_time,
@@ -36,6 +36,7 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     interval.duration = duration;
     interval.start = tp_start;
     interval.end = tp_end;
+    interval.obs_name = obs_name;
     interval.sat_type = sat_type;
     interval.sat_name = sat_name;
 
@@ -76,9 +77,9 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
                     continue;
                 }
 
-                auto interval = parse_interval(line, sats[cur_sat].type, sats[cur_sat].name);
+                auto interval = parse_interval(line, sats[cur_sat].type, sats[cur_sat].name, {});
 
-                sats[cur_sat].ints.push_back(interval);
+                sats[cur_sat].ints_in_area.push_back(interval);
             }
             else
             {
@@ -98,7 +99,8 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
 
                     cur_sat = std::stoi(&sat_name[start_number]);
                     if (!sats.count(cur_sat)) {
-                        sats[cur_sat].ints.reserve(300);
+                        sats[cur_sat].ints_in_area.reserve(300);
+                        sats[cur_sat].ints_observatories.reserve(300);
                         sats[cur_sat] = Satellite();
                         sats[cur_sat].name = cur_sat;
 
@@ -121,14 +123,14 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
 
         std::cout << "Current state:\nSattelites " + std::to_string(sats.size()) + "\n";
         for (auto &sat: sats) {
-            std::cout << SatNames.at(sat.second.type) + "_" + std::to_string(sat.second.name) + ":" << sat.second.ints.size() << "\t";
+            std::cout << SatNames.at(sat.second.type) + "_" + std::to_string(sat.second.name) + ":" << sat.second.ints_in_area.size() << "\t";
         }
         std::cout << "\n";
     }
     return 0;
 }
 
-int parse_observatory(const char *location, std::unordered_map<std::string, Observatory> &obs)
+int parse_observatory(const char *location, Observatories &obs, Satellites &sats)
 {
     int int_idx = 0;
     SatName cur_sat_name;
@@ -136,7 +138,7 @@ int parse_observatory(const char *location, std::unordered_map<std::string, Obse
 
     // TODO: call OS (in)dependent function to get files list
 
-    std::vector<std::string> obs_names = {"Anadyr1", "Anadyr2", "CapeTown",
+    std::vector<ObsName> obs_names = {"Anadyr1", "Anadyr2", "CapeTown",
                                           "Delhi", "Irkutsk", "Magadan1",
                                           "Magadan2", "Moscow", "Murmansk1",
                                           "Murmansk2", "Norilsk", "Novosib",
@@ -148,9 +150,9 @@ int parse_observatory(const char *location, std::unordered_map<std::string, Obse
     for (int i = 0; i < obs_num; i++)
     {
         char filename[70];
-        std::string cur_obs = obs_names[i].data();
+        ObsName cur_obs = obs_names[i].data();
         obs[cur_obs] = Observatory{cur_obs, {}};
-        obs[cur_obs].ints.reserve(30000);
+        obs[cur_obs].ints_satellite.reserve(30000);
 
         sprintf(filename, "%sFacility-%s.txt", location, obs_names[i].data());
 
@@ -179,9 +181,9 @@ int parse_observatory(const char *location, std::unordered_map<std::string, Obse
                     continue;
                 }
 
-                auto interval = parse_interval(line, cur_sat_type, cur_sat_name);
+                auto interval = parse_interval(line, cur_sat_type, cur_sat_name, cur_obs);
 
-                obs[cur_obs].ints.push_back(interval);
+                obs[cur_obs].ints_satellite.push_back(interval);
             }
             else
             {
@@ -215,7 +217,7 @@ int parse_observatory(const char *location, std::unordered_map<std::string, Obse
         }
 
         fclose(fp);
-        std::cout << "Readed " + cur_obs + " with " + std::to_string(obs[cur_obs].ints.size()) + " intervals\n";
+        std::cout << "Readed " + cur_obs + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
     }
 
     return 0;
