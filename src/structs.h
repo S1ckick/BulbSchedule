@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 #include <chrono>
+#include <string>
 
 #define PLANES_NUM 20
 
