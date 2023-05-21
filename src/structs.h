@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <set>
+#include <string>
 
 #define PLANES_NUM 20
 
