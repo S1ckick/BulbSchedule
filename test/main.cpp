@@ -5,19 +5,21 @@
 #include <vector>
 
 #include <date.h>
-#include <parser.h>
+#include <parser/parser.h>
+#include <algos/algos.h>
 
 using namespace date;
 
 int main()
 {
     std::unordered_map<SatName, Satellite> sats;
-    const char russia_location[] = "../../DATA_Files/Russia2Constellation/";
+    const char russia_location[] = "/mnt/c/Work/SitroniksHack/BulbSchedule/DATA_Files/Russia2Constellation/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
     std::unordered_map<std::string, Observatory> obs;
-    const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
-    parse_observatory(facility_location, obs);
+    const char facility_location[] = "/mnt/c/Work/SitroniksHack/BulbSchedule/DATA_Files/Facility2Constellation/";
+    parse_observatory(facility_location, obs, sats);
+    algos::build_schedule(sats);
     
     // auto sat_first = sats.begin()->second;
     // for (int i = 0; i < sat_first.ints.size(); i++)

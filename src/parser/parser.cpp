@@ -10,7 +10,7 @@
 
 using namespace date;
 
-Interval parse_interval(const std::string &line, const SatType &sat_type, const SatName &sat_name, const ObsName &obs_name)
+Interval parse_interval(const std::string &line, const SatType &sat_type, const SatName &sat_name, const ObsName &obs_name = {})
 {
     std::string str_idx, str_start_day, str_start_month, str_start_year, str_start_time,
         str_end_day, str_end_month, str_end_year, str_end_time,
@@ -28,17 +28,12 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     std::chrono::system_clock::time_point tp_end;
     end_date >> date::parse("%d/%b/%Y %T", tp_end);
 
-    double duration = (std::chrono::duration<double, std::milli>(tp_end - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den)
-                          .count();
+    double duration = DURATION(tp_start, tp_end);
+    // (std::chrono::duration<double, std::milli>(tp_end - tp_start) * std::chrono::milliseconds::period::num /
+    //                    std::chrono::milliseconds::period::den)
+    //                       .count();
 
-    Interval interval;
-    interval.duration = duration;
-    interval.start = tp_start;
-    interval.end = tp_end;
-    interval.obs_name = obs_name;
-    interval.sat_type = sat_type;
-    interval.sat_name = sat_name;
+    Interval interval(tp_start, tp_end, sat_name, sat_type, obs_name);
 
     return interval;
 }
@@ -49,24 +44,25 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
     // Read Russia intervals for each satellite
     for (int plane_num = 1; plane_num <= PLANES_NUM; plane_num++)
     {
-        char filename[90];
-        sprintf(filename, "%sAreaTarget-Russia-To-Satellite-KinoSat_%02d_plane.txt", location, plane_num);
-        std::cout << "Reading file " + std::string(filename) + "\n";
+        std::string filename;
+        std::string plane_str = plane_num < 10 ? "0" + std::to_string(plane_num) : std::to_string(plane_num); 
+        filename = std::string(location) +  "AreaTarget-Russia-To-Satellite-KinoSat_" + plane_str + "_plane.txt";
+        std::cout << "Reading file " + filename + "\n";
 
-        FILE *fp = fopen(filename, "r");
-        if (fp == NULL)
+        std::ifstream fp(filename);
+        if (!fp)
         {
             printf("Error with opening file!\n");
             return 1;
         }
 
         size_t len = 0;
-        char *line = NULL;
+        std::string line;
 
         bool headerReaded = false;
         SatName cur_sat = 0;
 
-        while ((getline(&line, &len, fp)) != -1)
+        while (std::getline(fp, line))
         {
             if (headerReaded)
             {
@@ -77,18 +73,18 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
                     continue;
                 }
 
-                auto interval = parse_interval(line, sats[cur_sat].type, sats[cur_sat].name, {});
+                auto interval = parse_interval(line, sats.at(cur_sat).type, sats.at(cur_sat).name);
 
-                sats[cur_sat].ints_in_area.push_back(interval);
+                sats.at(cur_sat).ints_in_area.insert(std::make_shared<Interval>(interval));
             }
             else
             {
-                const char *pre = "Russia-To";
-                if (strncmp(pre, line, strlen(pre)) == 0)
+                std::string pre = "Russia-To";
+                if (strncmp(pre.data(), line.data(), pre.size()) == 0)
                 {
-                    char sat_name[20];
+                    char sat_name[30];
 
-                    sscanf(line, "Russia-To-%s\n", sat_name);
+                    sscanf(line.data(), "Russia-To-%s\n", sat_name);
 
                     int start_number = -1;
                     for (int i = 0; i < strlen(sat_name); i++)
@@ -96,30 +92,30 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
                             start_number = i + 1;
                             break;
                         }
+                    if (start_number == -1)
+                        throw "darou";
 
                     cur_sat = std::stoi(&sat_name[start_number]);
                     if (!sats.count(cur_sat)) {
-                        sats[cur_sat].ints_in_area.reserve(300);
-                        sats[cur_sat].ints_observatories.reserve(300);
-                        sats[cur_sat] = Satellite();
-                        sats[cur_sat].name = cur_sat;
-
+                        SatType cur_type;
                         if (strncmp(KinosatName.data(), sat_name, KinosatName.size()) == 0)
-                            sats[cur_sat].type = SatType::KINOSAT;
+                            cur_type = SatType::KINOSAT;
                         else
-                            sats[cur_sat].type = SatType::ZORKIY;
+                            cur_type = SatType::ZORKIY;
+                        auto new_sat = Satellite(cur_sat, cur_type);
+                        sats.insert(std::make_pair(cur_sat, new_sat));
                     }
 
                     headerReaded = true;
                     // pass header lines
-                    getline(&line, &len, fp);
-                    getline(&line, &len, fp);
-                    getline(&line, &len, fp);
+                    std::getline(fp, line);
+                    std::getline(fp, line);
+                    std::getline(fp, line);
                 }
             }
         }
 
-        fclose(fp);
+        fp.close();
 
         std::cout << "Current state:\nSattelites " + std::to_string(sats.size()) + "\n";
         for (auto &sat: sats) {
@@ -127,6 +123,7 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
         }
         std::cout << "\n";
     }
+
     return 0;
 }
 
@@ -149,28 +146,27 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
     // Read each observatory
     for (int i = 0; i < obs_num; i++)
     {
-        char filename[70];
+        std::string filename;
         ObsName cur_obs = obs_names[i].data();
         obs[cur_obs] = Observatory{cur_obs, {}};
-        obs[cur_obs].ints_satellite.reserve(30000);
 
-        sprintf(filename, "%sFacility-%s.txt", location, obs_names[i].data());
+        filename = std::string(location) + "Facility-" + obs_names[i] + ".txt";
 
-        std::cout << "Reading file " + std::string(filename) + "\n";
+        std::cout << "Reading file " + filename + "\n";
         
-        FILE *fp = fopen(filename, "r");
-        if (fp == NULL)
+        std::ifstream fp(filename);
+        if (!fp)
         {
             printf("Error with opening file!\n");
             return 1;
         }
 
         size_t len = 0;
-        char *line = NULL;
+        std::string line;
 
         bool headerReaded = false;
 
-        while ((getline(&line, &len, fp)) != -1)
+        while ((std::getline(fp, line)))
         {
             if (headerReaded)
             {
@@ -181,26 +177,27 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
                     continue;
                 }
 
-                auto interval = parse_interval(line, cur_sat_type, cur_sat_name, cur_obs);
+                auto interval = std::make_shared<Interval>(parse_interval(line, cur_sat_type, cur_sat_name, cur_obs));
 
-                obs[cur_obs].ints_satellite.push_back(interval);
+                obs[cur_obs].ints_satellite.insert(interval);
+                sats.at(cur_sat_name).ints_observatories.insert(interval);
             }
             else
             {
                 std::string prefix = obs_names[i] + "-To-";
 
-                if (std::strncmp(prefix.data(), line, prefix.size()) == 0)
+                if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
                     int prefix_size = prefix.size();
 
                     int start_number = -1;
-                    for (int i = 0; i < strlen(line); i++)
+                    for (int i = 0; i < line.size(); i++)
                         if (line[i] == '_') {
                             start_number = i + 1;
                             break;
                         }
 
-                    int cur_sat = std::stoi(&line[start_number]);
+                    cur_sat_name = std::stoi(&line[start_number]);
 
                     if (strncmp(&line[prefix_size], KinosatName.data(), KinosatName.size()) == 0)
                         cur_sat_type = SatType::KINOSAT;
@@ -209,14 +206,15 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
 
                     headerReaded = true;
                     // pass header lines
-                    getline(&line, &len, fp);
-                    getline(&line, &len, fp);
-                    getline(&line, &len, fp);
+                    std::getline(fp, line);
+                    std::getline(fp, line);
+                    std::getline(fp, line);
                 }
             }
         }
 
-        fclose(fp);
+        fp.close();
+
         std::cout << "Readed " + cur_obs + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
     }
 

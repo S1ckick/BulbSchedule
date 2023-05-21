@@ -1,0 +1,96 @@
+#include "../algos.h"
+
+void algos::build_schedule(Satellites &sats)
+{
+    for (auto &pair : sats)
+    {
+        auto &sat = pair.second;
+        auto &sat_ints = sat.ints_in_area;       // intervals when satellite in recording area
+        auto &obs_ints = sat.ints_observatories; // observatories intervals for current satellite only
+        auto &schedule = sat.full_schedule;      // array for all intervals of operations for current satellite
+        int ints_num = sat_ints.size();
+
+        auto obs_it = obs_ints.begin();                   // current observatory interval to be handled
+        auto last_trigger = (*(sat_ints.begin()))->start; // here will be stored end time of last operation
+
+        // Each iteration handle time from start of current interval to start of next interval
+        auto it = sat_ints.begin();
+        for (;it != sat_ints.end(); ++it) {// int cur_int = 0; cur_int < sat_ints.size(); cur_int++) {
+            auto cur_int = *it;
+            auto begin_cur = cur_int->start;
+            auto end_cur = cur_int->end;
+
+            auto begin_next = end_cur; // start of next interval
+            it++;
+            if (it != sat_ints.end())
+                begin_next = (*it)->start;
+            it--;
+
+            // Handle all observatory intervals that starts between begin_cur and begin_next
+            while (obs_it != obs_ints.end() && (*obs_it)->start < begin_next) {
+                // state of observatory at currrent interval
+                auto &obs_start = (*obs_it)->start;
+                auto &obs_end = (*obs_it)->end;
+                auto &obs_state = (*obs_it)->state;
+                auto &obs_name = (*obs_it)->obs_name;
+
+                // Move to beginning of interval
+                if (last_trigger < begin_cur) {
+                    // schedule.push_back(Interval(last_trigger, begin_cur, sat.name, sat.type, State::IDLE));
+                    last_trigger = begin_cur;
+                }
+
+                // Observatory was occupied
+                if (obs_state == State::BROADCAST) {
+                    obs_it++;
+                    continue;
+                }
+                
+                // Handle broadcast
+                if (last_trigger < obs_start) {
+                    // Record before transmission
+                    auto record_time = DURATION(last_trigger, obs_start);
+                    auto recorded = sat.record(record_time);
+                    schedule.insert(std::make_shared<Interval>(Interval(last_trigger, obs_start, sat.name, sat.type, State::RECORDING, recorded)));
+                    last_trigger = obs_start;
+                    // Transmission whole interval
+                    auto broadcast_time = DURATION(last_trigger, obs_end);
+                    auto transmitted = sat.broadcast(broadcast_time);
+                    schedule.insert(
+                        std::make_shared<Interval>(
+                            Interval(last_trigger, obs_start, 
+                                sat.name, sat.type, State::BROADCAST, 
+                                transmitted, obs_name)
+                        )
+                    );
+                    obs_state = State::BROADCAST;
+                    last_trigger = obs_end;
+                }
+                else { // Begin transmission after start of observatory interval, use only part of it
+                    auto broadcast_time = DURATION(last_trigger, obs_end);
+                    auto transmitted = sat.broadcast(broadcast_time);
+                    schedule.insert(
+                        std::make_shared<Interval>(
+                            Interval(last_trigger, obs_start, 
+                                sat.name, sat.type, State::BROADCAST, 
+                                transmitted, obs_name)
+                        )
+                    );
+                    // save unused time in interval
+                    obs_end = last_trigger;
+                    
+                    last_trigger = obs_end;
+                }
+                
+                obs_it++;
+            }
+
+            // record last part of in area interval
+            if (last_trigger < end_cur) {
+                auto record_time = DURATION(last_trigger, end_cur);
+                schedule.insert(std::make_shared<Interval>(Interval(last_trigger, end_cur, sat.name, sat.type, State::RECORDING, sat.record(record_time))));
+                last_trigger = end_cur;
+            }
+        }
+    }
+}
