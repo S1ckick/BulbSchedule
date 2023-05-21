@@ -17,8 +17,28 @@ int main()
 
     std::unordered_map<std::string, Observatory> obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
-    parse_observatory(facility_location, obs, sats);
+    int res_parse_obs = parse_observatory(facility_location, obs, sats);
     
+    std::ofstream out("sats.txt", std::ofstream::out);
+
+
+    std::istringstream start_date("1/Jun/2027 00:00:00.000");
+    std::chrono::system_clock::time_point tp_start;
+    start_date >> date::parse("%d/%b/%Y %T", tp_start);
+
+    for (auto &item : sats){
+        for (auto &interval : item.second.ints_in_area){
+            out << std::fixed << interval.sat_name << " "
+                << (std::chrono::duration<double, std::milli>(interval.start - tp_start) * std::chrono::milliseconds::period::num /
+                       std::chrono::milliseconds::period::den).count()
+                << " " << (std::chrono::duration<double, std::milli>(interval.end - tp_start) * std::chrono::milliseconds::period::num /
+                       std::chrono::milliseconds::period::den).count()
+                << '\n';
+        }
+    }
+
+    out.close();
+
     // auto sat_first = sats.begin()->second;
     // for (int i = 0; i < sat_first.ints.size(); i++)
     // {
