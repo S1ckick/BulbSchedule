@@ -17,7 +17,7 @@ int main()
 
     std::unordered_map<std::string, Observatory> obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
-    parse_observatory(facility_location, obs);
+    parse_observatory(facility_location, obs, sats);
     
     // auto sat_first = sats.begin()->second;
     // for (int i = 0; i < sat_first.ints.size(); i++)
