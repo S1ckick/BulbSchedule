@@ -25,7 +25,7 @@ enum class SatType
     ZORKIY
 };
 
-enum class State
+enum State
 {
     IDLE,
     BROADCAST,
@@ -40,7 +40,7 @@ struct Interval
 {
     SatName sat_name;
     SatType sat_type;
-    State state = State::IDLE;
+    int state = State::IDLE;
     std::chrono::system_clock::time_point start;
     std::chrono::system_clock::time_point end;
     double duration;
