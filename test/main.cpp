@@ -29,6 +29,12 @@ int main()
     start_date >> date::parse("%d/%b/%Y %T", tp_start);
 
 
+    std::unordered_map<int,int> satName_to_num;
+
+    int sat_i = 0;
+    for(auto &item : sats)
+        satName_to_num[item.first] = sat_i++;
+
     std::unordered_map<std::string, int> obs_to_int = {
         {"Anadyr1",1},
         {"Anadyr2", 2},
@@ -57,7 +63,9 @@ int main()
         }
 
         for (auto &interval : item.second.full_schedule){
-            out_schedule << std::fixed << interval->sat_name << " "
+            out_schedule << std::fixed << satName_to_num[interval->sat_name] 
+                << " " << interval->sat_name
+                << " "
                 << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
@@ -65,6 +73,7 @@ int main()
                 << " " << interval->state
                 << " " << interval->capacity_change
                 << " " << obs_to_int[interval->obs_name]
+                << " " << interval->obs_name
                 << '\n';
         }
 
