@@ -71,12 +71,13 @@ void algos::build_schedule(Satellites &sats)
 
                 // Handle broadcast
                 if (last_trigger < obs_start) {
-                    if (last_trigger < end_cur && can_record) {
+                    if (last_trigger < end_cur && can_record && !cur_int->dark) {
                         // Record before transmission than idle until obs_start
                         auto end_record = obs_start < end_cur ? obs_start : end_cur;
 
                         // night immitation
                         double night_dur = 0;
+
 #ifdef NIGHT
                         auto nights = get_night(last_trigger, end_record);
                         for (auto &night: nights) {
@@ -140,8 +141,9 @@ void algos::build_schedule(Satellites &sats)
             }
 
             // record last part of in area interval
-            if (last_trigger < end_cur && can_record) {
-                auto start_record = begin_cur > last_trigger ? begin_cur : last_trigger; 
+            if (last_trigger < end_cur && can_record && !cur_int->dark) {
+                auto start_record = begin_cur > last_trigger ? begin_cur : last_trigger;
+
                 // std::cout << "Record:";
                 // print_time(start_record, end_cur);
                 double night_dur = 0;

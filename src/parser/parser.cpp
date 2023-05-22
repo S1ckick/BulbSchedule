@@ -61,6 +61,7 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
 
         bool headerRead = false;
         SatName cur_sat = 0;
+        int cnt = 0;
 
         while (std::getline(fp, line))
         {
@@ -75,6 +76,9 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
 
                 auto interval = parse_interval(line, sats.at(cur_sat).type, sats.at(cur_sat).name);
 
+                interval.dark = cnt % 2;
+                cnt++;
+                
                 sats.at(cur_sat).ints_in_area.insert(std::make_shared<Interval>(interval));
             }
             else
