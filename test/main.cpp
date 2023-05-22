@@ -46,6 +46,7 @@ int main()
                        std::chrono::milliseconds::period::den).count()
                 << " " << interval->state
                 << " " << interval->capacity_change
+                << " " << interval->obs_name
                 << '\n';
         }
 
