@@ -132,7 +132,7 @@ struct Satellite
     double record(const double &duration)
     {
         double recorded = duration * recording_speed;
-        (capacity + recorded) < max_capacity ? capacity += recorded : recorded = max_capacity - capacity, capacity = max_capacity;
+        (capacity + recorded) < max_capacity ? capacity += recorded : (recorded = max_capacity - capacity, capacity = max_capacity);
 
         return recorded;
     }
@@ -144,7 +144,7 @@ struct Satellite
             return 0;
 
         double transmitted = duration * broadcasting_speed;
-        (capacity - transmitted) > 0 ? capacity -= transmitted : transmitted = capacity, capacity = 0;
+        (capacity - transmitted) > 0 ? capacity -= transmitted : (transmitted = capacity, capacity = 0);
 
         return transmitted;
     }
