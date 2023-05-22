@@ -28,6 +28,24 @@ int main()
     std::chrono::system_clock::time_point tp_start;
     start_date >> date::parse("%d/%b/%Y %T", tp_start);
 
+
+    std::unordered_map<std::string, int> obs_to_int = {
+        {"Anadyr1",1},
+        {"Anadyr2", 2},
+        {"CapeTown", 3},
+        {"Delhi", 4},
+        {"Irkutsk", 5},
+        {"Magadan1", 6},
+        {"Magadan2", 7},
+        {"Moscow", 8},
+        {"Murmansk1", 9},
+        {"Murmansk2", 10},
+        {"Norilsk", 11},
+        {"Novosib", 12},
+        {"RioGallegos", 13},
+        {"Sumatra", 14}
+    };
+
     for (auto &item : sats){
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << interval->sat_name << " "
@@ -46,7 +64,7 @@ int main()
                        std::chrono::milliseconds::period::den).count()
                 << " " << interval->state
                 << " " << interval->capacity_change
-                << " " << interval->obs_name
+                << " " << obs_to_int[interval->obs_name]
                 << '\n';
         }
 
