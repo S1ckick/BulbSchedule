@@ -25,12 +25,27 @@ enum class SatType
     ZORKIY
 };
 
-enum State
+enum class State
 {
     IDLE,
     BROADCAST,
     RECORDING // for satellite
 };
+
+std::ostream& operator << (std::ostream& os, const State& obj)
+{
+
+   if(obj == State::IDLE) {
+    os << "IDLE";
+   }
+   if(obj == State::BROADCAST){
+    os << "BROADCAST";
+   }
+   if(obj == State::RECORDING) {
+    os << "RECORDING";
+   }
+   return os;
+}
 
 const std::map<SatType, std::string> SatNames = {{SatType::KINOSAT, "KinoSat"}, {SatType::ZORKIY, "Zorkiy"}};
 const std::string KinosatName = SatNames.at(SatType::KINOSAT);
@@ -40,7 +55,7 @@ struct Interval
 {
     SatName sat_name;
     SatType sat_type;
-    int state = State::IDLE;
+    State state = State::IDLE;
     std::chrono::system_clock::time_point start;
     std::chrono::system_clock::time_point end;
     double duration;
