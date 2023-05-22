@@ -1,9 +1,9 @@
 #include "../algos.h"
 #include <date.h>
 
-void print_time(const std::chrono::system_clock::time_point &a, const std::chrono::system_clock::time_point &b) {
+void print_time(const timepoint &a, const timepoint &b) {
     std::istringstream start_date("1/Jun/2027 00:00:00.000");
-    std::chrono::system_clock::time_point tp_start;
+    timepoint tp_start;
     start_date >> date::parse("%d/%b/%Y %T", tp_start);
     std::cout << (std::chrono::duration<double, std::milli>(a - tp_start) * std::chrono::milliseconds::period::num /
         std::chrono::milliseconds::period::den).count()
@@ -27,6 +27,8 @@ void algos::build_schedule(Satellites &sats)
 
         // Each iteration handle time from start of current interval to start of next interval
         auto it = sat_ints.begin();
+        bool can_record = true; // swap every iteration
+
         for (;it != sat_ints.end(); ++it) {
             auto cur_int = *it;
             auto begin_cur = cur_int->start;
@@ -69,12 +71,23 @@ void algos::build_schedule(Satellites &sats)
 
                 // Handle broadcast
                 if (last_trigger < obs_start) {
-                    if (last_trigger < end_cur) {
+                    if (last_trigger < end_cur && can_record) {
                         // Record before transmission than idle until obs_start
-                        auto end_record = obs_start < end_cur ? obs_start : end_cur; 
-                        auto record_time = DURATION(last_trigger, end_record);
-                        auto recorded = sat.record(record_time);
-                        schedule.insert(std::make_shared<Interval>(Interval(last_trigger, end_record, sat.name, sat.type, State::RECORDING, recorded)));
+                        auto end_record = obs_start < end_cur ? obs_start : end_cur;
+
+                        // night immitation
+                        double night_dur = 0;
+#ifdef NIGHT
+                        auto nights = get_night(last_trigger, end_record);
+                        for (auto &night: nights) {
+                            night_dur += DURATION(night.first, night.second);
+                        }
+#endif
+                        auto record_time = std::max(DURATION(last_trigger, end_record) - night_dur, 0.);
+                        if (record_time > 0) {
+                            auto recorded = sat.record(record_time);
+                            schedule.insert(std::make_shared<Interval>(Interval(last_trigger, end_record, sat.name, sat.type, State::RECORDING, recorded)));
+                        }
                         // std::cout << "Record before transmission:";
                         // print_time(last_trigger, end_record);
                     }
@@ -121,15 +134,26 @@ void algos::build_schedule(Satellites &sats)
                 }
                 
                 obs_it++;
+#ifdef RECORD_ODD
+                can_record = !can_record;
+#endif
             }
 
             // record last part of in area interval
-            if (last_trigger < end_cur) {
+            if (last_trigger < end_cur && can_record) {
                 auto start_record = begin_cur > last_trigger ? begin_cur : last_trigger; 
                 // std::cout << "Record:";
                 // print_time(start_record, end_cur);
-                auto record_time = DURATION(start_record, end_cur);
-                schedule.insert(std::make_shared<Interval>(Interval(start_record, end_cur, sat.name, sat.type, State::RECORDING, sat.record(record_time))));
+                double night_dur = 0;
+#ifdef NIGHT
+                auto nights = get_night(start_record, end_cur);
+                for (auto &night: nights) {
+                    night_dur += DURATION(night.first, night.second);
+                }
+#endif
+                auto record_time = std::max(DURATION(start_record, end_cur) - night_dur, 0.);
+                if (record_time > 0)
+                    schedule.insert(std::make_shared<Interval>(Interval(start_record, end_cur, sat.name, sat.type, State::RECORDING, sat.record(record_time))));
                 last_trigger = end_cur;
             }
 

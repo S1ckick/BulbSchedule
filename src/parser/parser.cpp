@@ -21,11 +21,11 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
         str_end_time >> str_duration;
 
     std::istringstream start_date(str_start_day + "/" + str_start_month + "/" + str_start_year + " " + str_start_time);
-    std::chrono::system_clock::time_point tp_start;
+    timepoint tp_start;
     start_date >> date::parse("%d/%b/%Y %T", tp_start);
 
     std::istringstream end_date(str_end_day + "/" + str_end_month + "/" + str_end_year + " " + str_end_time);
-    std::chrono::system_clock::time_point tp_end;
+    timepoint tp_end;
     end_date >> date::parse("%d/%b/%Y %T", tp_end);
 
     double duration = DURATION(tp_start, tp_end);

@@ -25,7 +25,7 @@ int main()
     std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
 
     std::istringstream start_date("1/Jun/2027 00:00:00.000");
-    std::chrono::system_clock::time_point tp_start;
+    timepoint tp_start;
     start_date >> date::parse("%d/%b/%Y %T", tp_start);
 
 

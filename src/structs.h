@@ -9,8 +9,11 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <algorithm>
 
 #define PLANES_NUM 20
+#define NIGHT
+#define RECORD_ODD
 
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
                                std::chrono::milliseconds::period::num / std::chrono::milliseconds::period::den) \
@@ -18,6 +21,7 @@
 
 using SatName = uint32_t;
 using ObsName = std::string;
+using timepoint = std::chrono::system_clock::time_point;
 
 enum class SatType
 {
@@ -56,8 +60,8 @@ struct Interval
     SatName sat_name;
     SatType sat_type;
     State state = State::IDLE;
-    std::chrono::system_clock::time_point start;
-    std::chrono::system_clock::time_point end;
+    timepoint start;
+    timepoint end;
     double duration;
     double capacity_change = 0; // for satellites
 
@@ -68,8 +72,8 @@ struct Interval
 
     // Constructor for parser
     Interval(
-        const std::chrono::system_clock::time_point &tp_start,
-        const std::chrono::system_clock::time_point &tp_end,
+        const timepoint &tp_start,
+        const timepoint &tp_end,
         const SatName &sat, const SatType &type,
         const ObsName &obs = {}) : start(tp_start), end(tp_end), sat_name(sat), sat_type(type), obs_name(obs)
     {
@@ -80,8 +84,8 @@ struct Interval
     // RECORDING -> only satelitte info
     // BROADCAST -> satelitte and observartory info
     Interval(
-        const std::chrono::system_clock::time_point &tp_start,
-        const std::chrono::system_clock::time_point &tp_end,
+        const timepoint &tp_start,
+        const timepoint &tp_end,
         const SatName &sat, const SatType &type,
         const State &new_state, const double &change, const ObsName &obs = {}) : Interval(tp_start, tp_end, sat, type)
     {
@@ -174,5 +178,25 @@ struct Observatory
 };
 
 typedef std::unordered_map<ObsName, Observatory> Observatories;
+
+// get interval of night or empty pair if its all day
+std::vector<std::pair<timepoint, timepoint>> get_night(const timepoint &start, const timepoint &end) {
+    using namespace std::chrono;
+
+    std::vector<std::pair<timepoint, timepoint>> nights;
+    int nights_cnt = (1. * rand() / RAND_MAX * 3);
+    for (int i = 0; i < nights_cnt; i++) {
+        float a = std::rand();
+        float b = std::rand();
+        auto dur = DURATION(start, end);
+        auto minmax = std::minmax(a, b);
+        auto night_start = start + seconds(int(minmax.first / RAND_MAX * dur));
+        auto night_end = start + seconds(int(minmax.second / RAND_MAX * dur));
+        
+        nights.push_back(std::make_pair(night_start, night_end));
+    }
+
+    return nights;
+}
 
 #endif
