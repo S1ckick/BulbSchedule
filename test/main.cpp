@@ -54,11 +54,13 @@ int main()
 
     for (auto &item : sats){
         for (auto &interval : item.second.ints_in_area){
-            out << std::fixed << interval->sat_name << " "
+            out << std::fixed << satName_to_num[interval->sat_name] 
+                << " " << interval->sat_name << " "
                 << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
+                << " " << !interval->dark
                 << '\n';
         }
 
