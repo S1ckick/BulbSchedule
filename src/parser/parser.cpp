@@ -59,16 +59,16 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
         size_t len = 0;
         std::string line;
 
-        bool headerReaded = false;
+        bool headerRead = false;
         SatName cur_sat = 0;
 
         while (std::getline(fp, line))
         {
-            if (headerReaded)
+            if (headerRead)
             {
                 if (line[0] != ' ')
                 {
-                    headerReaded = false;
+                    headerRead = false;
                     //sats_idx++;
                     continue;
                 }
@@ -106,7 +106,7 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
                         sats.insert(std::make_pair(cur_sat, new_sat));
                     }
 
-                    headerReaded = true;
+                    headerRead = true;
                     // pass header lines
                     std::getline(fp, line);
                     std::getline(fp, line);
@@ -164,15 +164,15 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
         size_t len = 0;
         std::string line;
 
-        bool headerReaded = false;
+        bool headerRead = false;
 
         while ((std::getline(fp, line)))
         {
-            if (headerReaded)
+            if (headerRead)
             {
                 if (line[0] != ' ')
                 {
-                    headerReaded = false;
+                    headerRead = false;
                     int_idx++;
                     continue;
                 }
@@ -204,7 +204,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
                     else
                         cur_sat_type = SatType::ZORKIY;
 
-                    headerReaded = true;
+                    headerRead = true;
                     // pass header lines
                     std::getline(fp, line);
                     std::getline(fp, line);
@@ -215,7 +215,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
 
         fp.close();
 
-        std::cout << "Readed " + cur_obs + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
+        std::cout << "Read " + cur_obs + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
     }
 
     return 0;
