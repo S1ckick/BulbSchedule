@@ -12,8 +12,6 @@
 #include <algorithm>
 
 #define PLANES_NUM 20
-//#define NIGHT
-//#define RECORD_ODD
 
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
                                std::chrono::milliseconds::period::num / std::chrono::milliseconds::period::den) \
@@ -64,7 +62,6 @@ struct Interval
     timepoint end;
     double duration;
     double capacity_change = 0; // for satellites
-    bool dark = false;
 
     ObsName obs_name;
 

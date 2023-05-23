@@ -1,10 +1,10 @@
 BEGIN {
     print("set term wxt size 1800,900")
-    print("set xrange [86400:172800]")
+    print("set xrange [86400:86400*3]")
     print("set yrange [0:200]")
 }
 {
-    if ($3 >= 86400 && $3 <= 86400*2)
+    if ($3 >= 86400 && $3 <= 86400*3)
     {
         if ($5 == "RECORDING")
         {
@@ -16,10 +16,10 @@ BEGIN {
             printf("set arrow from %lf,%lf to %lf,%lf nohead front lt %d lw 1\n",
                    $3, $1, $4, $1, $7)
         }
-        else # visibility file, 0 -- night, 1 -- day
+        else # visibility file
         {
             printf("set arrow from %lf,%lf to %lf,%lf nohead back lw 5 lc rgb \"%s\"\n",
-                   $3, $1, $4, $1, $5 == 0 ? "#888888" : "#CCCCCC")
+                   $3, $1, $4, $1, "#CCCCCC")
         }
     }
 }
