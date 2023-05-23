@@ -41,12 +41,14 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
 int parse_russia_to_satellites(const char *location, std::unordered_map<SatName, Satellite> &sats)
 {
     std::cout << "\nStart parsing satellites\n";
+
+    std::vector<std::string> file_names = {"Russia-To-Satellite-SatPlanes_1_5.txt", "Russia-To-Satellite-SatPlanes_6_20.txt"};
+    std::vector<SatType> sat_types = {SatType::KINOSAT, SatType::ZORKIY};
     // Read Russia intervals for each satellite
-    for (int plane_num = 1; plane_num <= PLANES_NUM; plane_num++)
+    for (int file_idx = 0; file_idx < file_names.size(); file_idx++)
     {
         std::string filename;
-        std::string plane_str = plane_num < 10 ? "0" + std::to_string(plane_num) : std::to_string(plane_num); 
-        filename = std::string(location) +  "AreaTarget-Russia-To-Satellite-KinoSat_" + plane_str + "_plane.txt";
+        filename = std::string(location) + file_names[file_idx];
         std::cout << "Reading file " + filename + "\n";
 
         std::ifstream fp(filename);
@@ -76,7 +78,7 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
 
                 auto interval = parse_interval(line, sats.at(cur_sat).type, sats.at(cur_sat).name);
 
-                interval.dark = cnt % 2;
+                interval.dark = false;
                 cnt++;
                 
                 sats.at(cur_sat).ints_in_area.insert(std::make_shared<Interval>(interval));
@@ -101,11 +103,7 @@ int parse_russia_to_satellites(const char *location, std::unordered_map<SatName,
 
                     cur_sat = std::stoi(&sat_name[start_number]);
                     if (!sats.count(cur_sat)) {
-                        SatType cur_type;
-                        if (strncmp(KinosatName.data(), sat_name, KinosatName.size()) == 0)
-                            cur_type = SatType::KINOSAT;
-                        else
-                            cur_type = SatType::ZORKIY;
+                        SatType cur_type = sat_types[file_idx];
                         auto new_sat = Satellite(cur_sat, cur_type);
                         sats.insert(std::make_pair(cur_sat, new_sat));
                     }

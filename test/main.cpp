@@ -13,7 +13,7 @@ using namespace date;
 int main()
 {
     std::unordered_map<SatName, Satellite> sats;
-    const char russia_location[] = "../../DATA_Files/Russia2Constellation/";
+    const char russia_location[] = "../../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
     std::unordered_map<std::string, Observatory> obs;
