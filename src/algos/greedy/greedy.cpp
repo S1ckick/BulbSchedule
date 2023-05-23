@@ -27,7 +27,6 @@ void algos::build_schedule(Satellites &sats)
 
         // Each iteration handle time from start of current interval to start of next interval
         auto it = sat_ints.begin();
-        bool can_record = true; // swap every iteration
 
         for (;it != sat_ints.end(); ++it) {
             auto cur_int = *it;
@@ -71,20 +70,11 @@ void algos::build_schedule(Satellites &sats)
 
                 // Handle broadcast
                 if (last_trigger < obs_start) {
-                    if (last_trigger < end_cur && can_record && !cur_int->dark) {
+                    if (last_trigger < end_cur) {
                         // Record before transmission than idle until obs_start
                         auto end_record = obs_start < end_cur ? obs_start : end_cur;
 
-                        // night immitation
-                        double night_dur = 0;
-
-#ifdef NIGHT
-                        auto nights = get_night(last_trigger, end_record);
-                        for (auto &night: nights) {
-                            night_dur += DURATION(night.first, night.second);
-                        }
-#endif
-                        auto record_time = std::max(DURATION(last_trigger, end_record) - night_dur, 0.);
+                        auto record_time = std::max(DURATION(last_trigger, end_record), 0.);
                         if (record_time > 0) {
                             auto recorded = sat.record(record_time);
                             schedule.insert(std::make_shared<Interval>(Interval(last_trigger, end_record, sat.name, sat.type, State::RECORDING, recorded)));
@@ -135,25 +125,15 @@ void algos::build_schedule(Satellites &sats)
                 }
                 
                 obs_it++;
-#ifdef RECORD_ODD
-                can_record = !can_record;
-#endif
             }
 
             // record last part of in area interval
-            if (last_trigger < end_cur && can_record && !cur_int->dark) {
+            if (last_trigger < end_cur) {
                 auto start_record = begin_cur > last_trigger ? begin_cur : last_trigger;
 
                 // std::cout << "Record:";
                 // print_time(start_record, end_cur);
-                double night_dur = 0;
-#ifdef NIGHT
-                auto nights = get_night(start_record, end_cur);
-                for (auto &night: nights) {
-                    night_dur += DURATION(night.first, night.second);
-                }
-#endif
-                auto record_time = std::max(DURATION(start_record, end_cur) - night_dur, 0.);
+                auto record_time = std::max(DURATION(start_record, end_cur), 0.);
                 if (record_time > 0)
                     schedule.insert(std::make_shared<Interval>(Interval(start_record, end_cur, sat.name, sat.type, State::RECORDING, sat.record(record_time))));
                 last_trigger = end_cur;

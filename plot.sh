@@ -1,2 +1,2 @@
 #!/bin/sh
-{ cat build/test/sats_schedule.txt  build/test/sats.txt  | awk -f plot.awk; cat; }  | gnuplot
+{ cat build/test/sats_obs.txt  build/test/sats.txt  build/test/sats_schedule.txt | awk -f plot.awk; cat; }  | gnuplot

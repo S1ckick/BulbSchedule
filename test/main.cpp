@@ -70,7 +70,7 @@ int main()
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
-                << " " << !interval->dark
+                << " " 
                 << '\n';
         }
 
