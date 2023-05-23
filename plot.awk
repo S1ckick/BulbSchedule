@@ -13,13 +13,18 @@ BEGIN {
         }
         else if ($5 == "BROADCAST")
         {
-            printf("set arrow from %lf,%lf to %lf,%lf nohead front lt %d lw 1\n",
+            printf("set arrow from %lf,%lf to %lf,%lf nohead front lt %d lw 2\n",
                    $3, $1, $4, $1, $7)
         }
-        else # visibility file
+        else if ($5 == "") # satellite-Russia visibility file
         {
-            printf("set arrow from %lf,%lf to %lf,%lf nohead back lw 5 lc rgb \"%s\"\n",
-                   $3, $1, $4, $1, "#CCCCCC")
+            printf("set arrow from %lf,%lf to %lf,%lf nohead back lw 5 lc rgb \"#CCCCCC\"\n",
+                   $3, $1, $4, $1)
+        }
+        else # satellite-station radio visibility file
+        {
+            printf("set arrow from %lf,%lf to %lf,%lf nohead front lt %d lw 1\n",
+                   $3, $1, $4, $1, $6)
         }
     }
 }
