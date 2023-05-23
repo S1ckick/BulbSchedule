@@ -23,6 +23,7 @@ int main()
     
     std::ofstream out("sats.txt", std::ofstream::out);
     std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
+    std::ofstream sats_obs_out("sats_obs.txt", std::ofstream::out);
 
     std::istringstream start_date("1/Jun/2027 00:00:00.000");
     timepoint tp_start;
@@ -61,6 +62,17 @@ int main()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
                 << " " << !interval->dark
+                << '\n';
+        }
+
+        for (auto &interval : item.second.ints_observatories){
+            sats_obs_out << std::fixed << satName_to_num[interval->sat_name] 
+                << " " << interval->sat_name << " "
+                << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
+                       std::chrono::milliseconds::period::den).count()
+                << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
+                       std::chrono::milliseconds::period::den).count()
+                << " " << interval->obs_name << " " << obs_to_int[interval->obs_name]
                 << '\n';
         }
 
