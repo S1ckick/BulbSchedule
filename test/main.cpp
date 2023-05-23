@@ -32,9 +32,18 @@ int main()
 
     std::unordered_map<int,int> satName_to_num;
 
+    std::vector<int> all_sat_names(200);
+
     int sat_i = 0;
-    for(auto &item : sats)
-        satName_to_num[item.first] = sat_i++;
+    for(auto &item : sats){
+        all_sat_names[sat_i] = item.first;
+        sat_i++;
+    }
+    std::sort(all_sat_names.begin(), all_sat_names.end());
+    for(int ii = 0; ii < 200; ii++){
+        satName_to_num[all_sat_names[ii]] = ii;
+    }
+    
 
     std::unordered_map<std::string, int> obs_to_int = {
         {"Anadyr1",1},
