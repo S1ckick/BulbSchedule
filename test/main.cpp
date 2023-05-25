@@ -12,6 +12,40 @@ using namespace date;
 
 int main()
 {
+    std::unordered_map<std::string, int> obs_to_int = {
+    {"Anadyr1",1},
+    {"Anadyr2", 2},
+    {"CapeTown", 3},
+    {"Delhi", 4},
+    {"Irkutsk", 5},
+    {"Magadan1", 6},
+    {"Magadan2", 7},
+    {"Moscow", 8},
+    {"Murmansk1", 9},
+    {"Murmansk2", 10},
+    {"Norilsk", 11},
+    {"Novosib", 12},
+    {"RioGallegos", 13},
+    {"Sumatra", 14}
+    };
+
+    std::unordered_map<std::string, std::string> obs_to_hex = {
+        {"Anadyr1","#FF2D00"},
+        {"Anadyr2", "#FF8700"},
+        {"CapeTown", "#FAFF00"},
+        {"Delhi", "#05FFAF"},
+        {"Irkutsk", "#05FFF7"},
+        {"Magadan1", "#05C5FF"},
+        {"Magadan2", "#0599FF"},
+        {"Moscow", "#0546FF"},
+        {"Murmansk1", "#9705FF"},
+        {"Murmansk2", "#D905FF"},
+        {"Norilsk", "#FF05ED"},
+        {"Novosib", "#FF059A"},
+        {"RioGallegos", "#5890A7"},
+        {"Sumatra", "#388357"}
+    };
+
     std::unordered_map<SatName, Satellite> sats;
     const char russia_location[] = "../../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
@@ -19,7 +53,7 @@ int main()
     std::unordered_map<std::string, Observatory> obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
-    algos::greedy(sats, obs);
+    algos::greedy_capacity(sats, obs);
 
     std::ofstream out("sats.txt", std::ofstream::out);
     std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
@@ -44,6 +78,7 @@ int main()
         satName_to_num[all_sat_names[ii]] = ii;
     }
 
+    int sum_data = 0;
     for (auto &item : sats){
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
@@ -83,9 +118,13 @@ int main()
                 << " " << obs_to_int[interval->info[0]->obs_name]
                 << " " << interval->info[0]->obs_name
                 << '\n';
+
+                if (interval->info[0]->state == State::BROADCAST)
+                    sum_data += interval->capacity_change;
         }
 
     }
+    std::cout << "Total data transmitted: " << sum_data << "\n";
 
     out.close();
     out_schedule.close();

@@ -12,7 +12,7 @@ void print_time(const timepoint &a, const timepoint &b) {
                 << '\n';
 }
 
-void algos::greedy(Satellites &sats, Observatories &obs) {
+void algos::greedy_random(Satellites &sats, Observatories &obs) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -52,6 +52,7 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
 
         int broadcasting_count = 0;
 
+        // init all objects with IDLE state
         for (auto &ss: sat_state) {
             ss.second = chill;
         }
@@ -59,7 +60,6 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
             os.second = chill;
         }
 
-        // handle all actions
         for (auto &action: inter->info) {
             if (broadcasting_count < obs.size() && action->state == State::BROADCAST)
             {
@@ -100,6 +100,7 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
                 sats.at(pair.first).full_schedule.push_back(new_inter);
             }
         }
+
         //auto c = std::chrono::high_resolution_clock::now();
 
         // mean_big1 += duration_cast<microseconds>(b - a).count();
@@ -108,6 +109,92 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
 
     // std::cout << mean_big1 / plan.size() << "\n";
     // std::cout << mean_big2 / plan.size() << "\n";
+}
+
+void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
+    using namespace std::chrono;
+
+    std::cout << "Starting greedy algorithm\n";
+    auto plan = great_plan(sats);
+    std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
+
+    int cnt = 0;
+    int cur_step = 0;
+
+    for (auto &inter: plan) {
+        if (cnt / (plan.size() / 100) > cur_step) {
+            std::cout << cur_step++ << "/100\n";
+        }
+        cnt++;
+
+        // unique actors
+        std::set<SatName> sat_actors;
+        std::set<ObsName> obs_actors;
+        // maps to group actions by satellite 
+        std::unordered_map<SatName, std::vector<std::shared_ptr<IntervalInfo>>> visible_obs;
+        std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> can_record;
+        // get all actors in interval
+        for (auto &action: inter->info) {
+            sat_actors.insert(action->sat_name);
+            if (action->state == State::BROADCAST) {
+                if (!visible_obs.count(action->sat_name)) {
+                    visible_obs[action->sat_name] = {};
+                }
+                visible_obs[action->sat_name].push_back(action);
+                obs_actors.insert(action->obs_name);
+            }
+            else {
+                can_record[action->sat_name] = action;
+            }
+        }
+
+        // sort all satellites by current capacity
+        std::vector<std::pair<SatName, double>> sat_cap(sat_actors.size());
+        int cnt = 0;
+        for (auto &sa: sat_actors) {
+            sat_cap[cnt] = {sa, sats.at(sa).capacity};
+            cnt++;
+        }
+        std::sort(sat_cap.begin(), sat_cap.end(), 
+            [](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){ 
+                return a.second > b.second;
+            }
+        );
+
+        // fill observatories with capacity priority
+        for (auto &pair: sat_cap) {
+            SatName satellite = pair.first;
+            bool pair_found = false;
+
+            if (!obs_actors.empty() && visible_obs.count(satellite)) // check if some obs available and sat can broadcast
+            {
+                // choose observatory
+                for (auto &visible: visible_obs.at(satellite)) {
+                    auto &cur_obs = visible->obs_name;
+                    if (obs_actors.count(cur_obs)) {
+                        pair_found = true;
+                        // fill interval
+                        Interval ii(inter->start, inter->end, {visible});
+                        auto new_inter = std::make_shared<Interval>(ii);
+                        new_inter->capacity_change = sats.at(satellite).broadcast(ii.duration);
+
+                        sats.at(satellite).full_schedule.push_back(new_inter);
+                        obs.at(cur_obs).full_schedule.push_back(new_inter);
+
+                        // this observatory busy now
+                        obs_actors.erase(cur_obs);
+                    }
+                }
+            }
+            if (!pair_found && can_record.count(satellite)) {
+                // satellite can't broadcast but can record
+                Interval ii(inter->start, inter->end, {can_record.at(satellite)});
+                auto new_inter = std::make_shared<Interval>(ii);
+                new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
+                sats.at(satellite).full_schedule.push_back(new_inter);
+            }
+        }        
+    }
 }
 
 #if 0

@@ -225,38 +225,4 @@ struct Observatory
 
 typedef std::unordered_map<ObsName, Observatory> Observatories;
 
-std::unordered_map<std::string, int> obs_to_int = {
-    {"Anadyr1",1},
-    {"Anadyr2", 2},
-    {"CapeTown", 3},
-    {"Delhi", 4},
-    {"Irkutsk", 5},
-    {"Magadan1", 6},
-    {"Magadan2", 7},
-    {"Moscow", 8},
-    {"Murmansk1", 9},
-    {"Murmansk2", 10},
-    {"Norilsk", 11},
-    {"Novosib", 12},
-    {"RioGallegos", 13},
-    {"Sumatra", 14}
-};
-
-std::unordered_map<std::string, std::string> obs_to_hex = {
-    {"Anadyr1","#FF2D00"},
-    {"Anadyr2", "#FF8700"},
-    {"CapeTown", "#FAFF00"},
-    {"Delhi", "#05FFAF"},
-    {"Irkutsk", "#05FFF7"},
-    {"Magadan1", "#05C5FF"},
-    {"Magadan2", "#0599FF"},
-    {"Moscow", "#0546FF"},
-    {"Murmansk1", "#9705FF"},
-    {"Murmansk2", "#D905FF"},
-    {"Norilsk", "#FF05ED"},
-    {"Novosib", "#FF059A"},
-    {"RioGallegos", "#5890A7"},
-    {"Sumatra", "#388357"}
-};
-
 #endif
