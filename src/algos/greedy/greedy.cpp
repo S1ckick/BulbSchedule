@@ -69,17 +69,17 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
                 Interval ii(inter->start, inter->end, infovector);
                 std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
 
-                sats.at(pair.first).full_schedule.push_back(new_inter);
                 if (pair.second->state == State::RECORDING) {
-                    sats.at(pair.first).record(ii.duration);
+                    new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
                 }
                 else {
                     if (pair.second->obs_name.empty()) {
                         throw std::logic_error("Obs and sat state dont coresspond");
                     }
-                    sats.at(pair.first).broadcast(ii.duration);
+                    new_inter->capacity_change = sats.at(pair.first).broadcast(ii.duration);
                     obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
                 }
+                sats.at(pair.first).full_schedule.push_back(new_inter);
             }
         }
     }
