@@ -7,6 +7,7 @@
 #include <date.h>
 #include <parser/parser.h>
 #include <algos/algos.h>
+#include <validation.h>
 
 using namespace date;
 
@@ -83,10 +84,8 @@ int main()
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
-                << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
+                << DURATION(tp_start, interval->start)
+                << " " << DURATION(tp_start, interval->end)
                 << " " 
                 << '\n';
         }
@@ -94,10 +93,8 @@ int main()
         for (auto &interval : item.second.ints_observatories){
             sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
-                << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
+                << DURATION(tp_start, interval->start)
+                << " " << DURATION(tp_start, interval->end)
                 << " " << interval->info[0]->obs_name 
                 << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
@@ -108,10 +105,8 @@ int main()
             out_schedule << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name
                 << " "
-                << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
-                << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
+                << DURATION(tp_start, interval->start)
+                << " " << DURATION(tp_start, interval->end)
                 << " " << interval->info[0]->state
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[interval->info[0]->obs_name]
@@ -126,36 +121,49 @@ int main()
     }
     std::cout << "Total data transmitted: " << sum_data << "\n";
 
-    out.close();
-    out_schedule.close();
-    sats_obs_out.close();
+    std::string err_check_str;
+    int err_check_int = checkValidity(sats, err_check_str);
+    if(err_check_int == -1) {
+        std::cout << "Error while checking obs: " << err_check_str;
+    } else {
+        std::cout << "obs are fine!" << std::endl;
+    }
+
 
     // Schedule check;
 
-    // for(auto &item : sats) {
-    //     for(auto & interval : item.second.full_schedule) {
-    //         check.insert(interval);
-    //     }
-    // }
+    Schedule check;
 
-    // std::ofstream check_out("check.txt", std::ofstream::out);
-    // for(auto &interval : check) {
-    //         check_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-    //             << " " << interval->info[0]->sat_name
-    //             << " "
-    //             << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
-    //                    std::chrono::milliseconds::period::den).count()
-    //             << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
-    //                    std::chrono::milliseconds::period::den).count()
-    //             << " " << interval->info[0]->state
-    //             << " " << interval->capacity_change
-    //             << " " << obs_to_int[interval->info[0]->obs_name]
-    //             << " " << interval->info[0]->obs_name
-    //             << '\n';
-    // }
+    for(auto &item : sats) {
+        for(auto & interval : item.second.full_schedule) {
+            check.insert(interval);
+        }
+    }
 
-    // check_out.close();
-
+    int check_counter = 0;
+    std::ofstream check_out("check.txt", std::ofstream::out);
+    for(auto &interval : check) {
+            if(interval->start == interval->end){
+                check_counter++;
+            }
+            check_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+                << " " << interval->info[0]->sat_name
+                << " "
+                << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
+                       std::chrono::milliseconds::period::den).count()
+                << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
+                       std::chrono::milliseconds::period::den).count()
+                << " " << interval->info[0]->state
+                << " " << interval->capacity_change
+                << " " << obs_to_int[interval->info[0]->obs_name]
+                << " " << interval->info[0]->obs_name
+                << '\n';
+    }
+    std::cout << "check_counter: " << check_counter << std::endl;
+    check_out.close();
+    out.close();
+    out_schedule.close();
+    sats_obs_out.close();
 
 
 
