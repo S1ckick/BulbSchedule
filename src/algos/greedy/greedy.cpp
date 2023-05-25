@@ -13,6 +13,8 @@ void print_time(const timepoint &a, const timepoint &b) {
 }
 
 void algos::greedy(Satellites &sats, Observatories &obs) {
+    using namespace std::chrono;
+
     std::cout << "Starting greedy algorithm\n";
     auto plan = great_plan(sats);
     std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
@@ -33,14 +35,29 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
         observ.second.full_schedule.reserve(40000);
         init_obs_idle.push_back({observ.first, chill});
     }
+
+    float mean_big1 = 0;
+    float mean_big2 = 0;
+
+    std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> sat_state(init_sat_idle.begin(), init_sat_idle.end());
+    std::unordered_map<ObsName, std::shared_ptr<IntervalInfo>> obs_state(init_obs_idle.begin(), init_obs_idle.end());
+
     for (auto &inter: plan) {
         if (cnt / (plan.size() / 100) > cur_step) {
             std::cout << cur_step++ << "/100\n";
         }
         cnt++;
+
+        //auto a = std::chrono::high_resolution_clock::now();
+
         int broadcasting_count = 0;
-        std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> sat_state(init_sat_idle.begin(), init_sat_idle.end());
-        std::unordered_map<ObsName, std::shared_ptr<IntervalInfo>> obs_state(init_obs_idle.begin(), init_obs_idle.end());
+
+        for (auto &ss: sat_state) {
+            ss.second = chill;
+        }
+        for (auto &os: obs_state) {
+            os.second = chill;
+        }
 
         // handle all actions
         for (auto &action: inter->info) {
@@ -62,11 +79,12 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
             }
         }
 
+        //auto b = std::chrono::high_resolution_clock::now();
+
         // save states in shedule intervals
         for (auto &pair: sat_state) {
             if (pair.second->state != State::IDLE) {
-                std::vector<std::shared_ptr<IntervalInfo>> infovector = {pair.second};
-                Interval ii(inter->start, inter->end, infovector);
+                Interval ii(inter->start, inter->end, {pair.second});
                 std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
 
                 if (pair.second->state == State::RECORDING) {
@@ -82,7 +100,14 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
                 sats.at(pair.first).full_schedule.push_back(new_inter);
             }
         }
+        //auto c = std::chrono::high_resolution_clock::now();
+
+        // mean_big1 += duration_cast<microseconds>(b - a).count();
+        // mean_big2 += duration_cast<microseconds>(c - b).count();
     }
+
+    // std::cout << mean_big1 / plan.size() << "\n";
+    // std::cout << mean_big2 / plan.size() << "\n";
 }
 
 #if 0
