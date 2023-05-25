@@ -5,7 +5,8 @@
 
 namespace algos
 {
-    void build_schedule(Satellites &sats);
+    Schedule great_plan(const Satellites &sats);
+    void greedy(Satellites &sats, Observatories &obs);
 }
 
 #endif // SCHEDULE_GREEDY

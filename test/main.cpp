@@ -19,8 +19,8 @@ int main()
     std::unordered_map<std::string, Observatory> obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
-    algos::build_schedule(sats);
-    
+    algos::greedy(sats, obs);
+
     std::ofstream out("sats.txt", std::ofstream::out);
     std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
     std::ofstream sats_obs_out("sats_obs.txt", std::ofstream::out);
@@ -43,29 +43,11 @@ int main()
     for(int ii = 0; ii < 200; ii++){
         satName_to_num[all_sat_names[ii]] = ii;
     }
-    
-
-    std::unordered_map<std::string, int> obs_to_int = {
-        {"Anadyr1",1},
-        {"Anadyr2", 2},
-        {"CapeTown", 3},
-        {"Delhi", 4},
-        {"Irkutsk", 5},
-        {"Magadan1", 6},
-        {"Magadan2", 7},
-        {"Moscow", 8},
-        {"Murmansk1", 9},
-        {"Murmansk2", 10},
-        {"Norilsk", 11},
-        {"Novosib", 12},
-        {"RioGallegos", 13},
-        {"Sumatra", 14}
-    };
 
     for (auto &item : sats){
         for (auto &interval : item.second.ints_in_area){
-            out << std::fixed << satName_to_num[interval->sat_name] 
-                << " " << interval->sat_name << " "
+            out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+                << " " << interval->info[0]->sat_name << " "
                 << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
@@ -75,28 +57,28 @@ int main()
         }
 
         for (auto &interval : item.second.ints_observatories){
-            sats_obs_out << std::fixed << satName_to_num[interval->sat_name] 
-                << " " << interval->sat_name << " "
+            sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+                << " " << interval->info[0]->sat_name << " "
                 << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
-                << " " << interval->obs_name << " " << obs_to_int[interval->obs_name]
+                << " " << interval->info[0]->obs_name << " " << obs_to_int[interval->info[0]->obs_name]
                 << '\n';
         }
 
         for (auto &interval : item.second.full_schedule){
-            out_schedule << std::fixed << satName_to_num[interval->sat_name] 
-                << " " << interval->sat_name
+            out_schedule << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+                << " " << interval->info[0]->sat_name
                 << " "
                 << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
-                << " " << interval->state
+                << " " << interval->info[0]->state
                 << " " << interval->capacity_change
-                << " " << obs_to_int[interval->obs_name]
-                << " " << interval->obs_name
+                << " " << obs_to_int[interval->info[0]->obs_name]
+                << " " << interval->info[0]->obs_name
                 << '\n';
         }
 

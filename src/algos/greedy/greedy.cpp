@@ -12,6 +12,76 @@ void print_time(const timepoint &a, const timepoint &b) {
                 << '\n';
 }
 
+void algos::greedy(Satellites &sats, Observatories &obs) {
+    std::cout << "Starting greedy algorithm\n";
+    auto plan = great_plan(sats);
+    std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
+
+    std::vector<std::pair<SatName, std::shared_ptr<IntervalInfo>>> init_sat_idle;
+    std::vector<std::pair<ObsName, std::shared_ptr<IntervalInfo>>> init_obs_idle;
+
+    std::shared_ptr<IntervalInfo> chill = std::make_shared<IntervalInfo>(IntervalInfo({}, SatType::KINOSAT, State::IDLE, {}));
+
+    int cnt = 0;
+    int cur_step = 0;
+
+    for (auto &sat: sats) {
+        init_sat_idle.push_back({sat.first, chill});
+    }
+    for (auto &observ: obs) {
+        init_obs_idle.push_back({observ.first, chill});
+    }
+    for (auto &inter: plan) {
+        if (cnt / (plan.size() / 100) > cur_step) {
+            std::cout << cur_step << "/100\n";
+            cur_step++;
+        }
+        cnt++;
+        
+        int broadcasting_count = 0;
+        std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> sat_state(init_sat_idle.begin(), init_sat_idle.end());
+        std::unordered_map<ObsName, std::shared_ptr<IntervalInfo>> obs_state(init_obs_idle.begin(), init_obs_idle.end());
+
+        // handle all actions
+        for (auto &action: inter->info) {
+            if (broadcasting_count < obs.size() && action->state == State::BROADCAST)
+            {
+                if (sat_state.at(action->sat_name)->state != State::BROADCAST && 
+                    obs_state.at(action->obs_name)->state != State::BROADCAST) 
+                {
+                    sat_state.at(action->sat_name) = action;
+                    obs_state.at(action->obs_name) = action;
+                }
+            }
+            else if (action->state == State::RECORDING)
+            {
+                if (sat_state.at(action->sat_name)->state == State::IDLE) {
+                    broadcasting_count++;
+                    sat_state.at(action->sat_name) = action;
+                }
+            }
+        }
+
+        // save states in shedule intervals
+        for (auto &pair: sat_state) {
+            if (pair.second->state != State::IDLE) {
+                std::vector<std::shared_ptr<IntervalInfo>> infovector = {pair.second};
+                Interval ii(inter->start, inter->end, infovector);
+                std::shared_ptr<Interval> inter = std::make_shared<Interval>(ii);
+
+                sats.at(pair.first).full_schedule.insert(inter);
+                if (pair.second->state == State::BROADCAST) {
+                    if (pair.second->obs_name.empty()) {
+                        throw std::logic_error("Obs and sat state dont coresspond");
+                    }
+                    obs.at(pair.second->obs_name).full_schedule.insert(inter);
+                }
+            }
+        }
+    }
+}
+
+#if 0
 void algos::build_schedule(Satellites &sats)
 {
     for (auto &pair : sats)
@@ -145,3 +215,4 @@ void algos::build_schedule(Satellites &sats)
         }
     }
 }
+#endif

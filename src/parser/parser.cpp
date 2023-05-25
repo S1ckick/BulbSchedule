@@ -32,8 +32,13 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     // (std::chrono::duration<double, std::milli>(tp_end - tp_start) * std::chrono::milliseconds::period::num /
     //                    std::chrono::milliseconds::period::den)
     //                       .count();
+    State new_state;
+    if (!obs_name.empty())
+        new_state = State::BROADCAST;
+    else
+        new_state = State::RECORDING;
 
-    Interval interval(tp_start, tp_end, sat_name, sat_type, obs_name);
+    Interval interval(tp_start, tp_end, sat_name, sat_type, new_state, obs_name);
 
     return interval;
 }

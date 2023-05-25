@@ -53,42 +53,31 @@ const std::map<SatType, std::string> SatNames = {{SatType::KINOSAT, "KinoSat"}, 
 const std::string KinosatName = SatNames.at(SatType::KINOSAT);
 const std::string ZorkiyName = SatNames.at(SatType::ZORKIY);
 
-struct Interval
-{
+struct IntervalInfo {
     SatName sat_name;
     SatType sat_type;
     State state = State::IDLE;
-    timepoint start;
-    timepoint end;
-    double duration;
-    double capacity_change = 0; // for satellites
-
     ObsName obs_name;
 
-    Interval(const Interval &base_interval) = default;
-    Interval(Interval &base_interval) = default;
+    IntervalInfo() = default;
+    IntervalInfo(const IntervalInfo &base_interval) = default;
+    IntervalInfo(IntervalInfo &base_interval) = default;
 
-    // Constructor for parser
-    Interval(
-        const timepoint &tp_start,
-        const timepoint &tp_end,
+    IntervalInfo(
         const SatName &sat, const SatType &type,
-        const ObsName &obs = {}) : start(tp_start), end(tp_end), sat_name(sat), sat_type(type), obs_name(obs)
+        const ObsName &obs = {}) : sat_name(sat), sat_type(type), obs_name(obs)
     {
-        duration = DURATION(start, end);
+        
     }
 
     // Constructor for scheduling algorithm
     // RECORDING -> only satelitte info
     // BROADCAST -> satelitte and observartory info
-    Interval(
-        const timepoint &tp_start,
-        const timepoint &tp_end,
+    IntervalInfo(
         const SatName &sat, const SatType &type,
-        const State &new_state, const double &change, const ObsName &obs = {}) : Interval(tp_start, tp_end, sat, type)
+        const State &new_state, const ObsName &obs = {}) : IntervalInfo(sat, type, obs)
     {
         state = new_state;
-        capacity_change = change;
 
         if (new_state == State::BROADCAST)
         {
@@ -98,6 +87,63 @@ struct Interval
             }
             obs_name = obs;
         }
+    }
+};
+
+struct Interval
+{
+    timepoint start;
+    timepoint end;
+    double duration;
+    double capacity_change = 0;
+
+    std::vector<std::shared_ptr<IntervalInfo>> info;
+
+    Interval(const Interval &base_interval) = default;
+    Interval(Interval &base_interval) = default;
+
+    // Constructor for parser
+    Interval(
+        const timepoint &tp_start,
+        const timepoint &tp_end,
+        const SatName &sat, const SatType &type,
+        const ObsName &obs = {}) : start(tp_start), end(tp_end)
+    {
+        duration = DURATION(start, end);
+        info.push_back(std::make_shared<IntervalInfo>(IntervalInfo(sat, type, obs)));
+    }
+
+    // Constructor for scheduling algorithm
+    // RECORDING -> only satelitte info
+    // BROADCAST -> satelitte and observartory info
+    Interval(
+        const timepoint &tp_start,
+        const timepoint &tp_end,
+        const SatName &sat, const SatType &type,
+        const State &new_state, const ObsName &obs = {}) : start(tp_start), end(tp_end)
+    {
+        duration = DURATION(start, end);
+        info.push_back(std::make_shared<IntervalInfo>(IntervalInfo(sat, type, new_state, obs)));
+    }
+
+    void add_info(const std::vector<std::shared_ptr<IntervalInfo>> &new_info)
+    {
+        auto start_size = info.size();
+
+        info.resize(start_size + new_info.size());
+        for (int i = 0; i < new_info.size(); ++i)
+            info[start_size + i] = new_info[i];
+    }
+
+    // Constructor for plan
+    Interval(
+        const timepoint &tp_start,
+        const timepoint &tp_end,
+        const std::vector<std::shared_ptr<IntervalInfo>> &new_info) : start(tp_start), end(tp_end)
+    {
+        duration = DURATION(start, end);
+        info.resize(new_info.size());
+        std::copy(new_info.begin(), new_info.end(), info.begin());
     }
 };
 
@@ -173,28 +219,26 @@ struct Observatory
 {
     std::string name;
     Schedule ints_satellite;
+    Schedule full_schedule;
 };
 
 typedef std::unordered_map<ObsName, Observatory> Observatories;
 
-// get interval of night or empty pair if its all day
-std::vector<std::pair<timepoint, timepoint>> get_night(const timepoint &start, const timepoint &end) {
-    using namespace std::chrono;
-
-    std::vector<std::pair<timepoint, timepoint>> nights;
-    int nights_cnt = (1. * rand() / RAND_MAX * 3);
-    for (int i = 0; i < nights_cnt; i++) {
-        float a = std::rand();
-        float b = std::rand();
-        auto dur = DURATION(start, end);
-        auto minmax = std::minmax(a, b);
-        auto night_start = start + seconds(int(minmax.first / RAND_MAX * dur));
-        auto night_end = start + seconds(int(minmax.second / RAND_MAX * dur));
-        
-        nights.push_back(std::make_pair(night_start, night_end));
-    }
-
-    return nights;
-}
+std::unordered_map<std::string, int> obs_to_int = {
+    {"Anadyr1",1},
+    {"Anadyr2", 2},
+    {"CapeTown", 3},
+    {"Delhi", 4},
+    {"Irkutsk", 5},
+    {"Magadan1", 6},
+    {"Magadan2", 7},
+    {"Moscow", 8},
+    {"Murmansk1", 9},
+    {"Murmansk2", 10},
+    {"Norilsk", 11},
+    {"Novosib", 12},
+    {"RioGallegos", 13},
+    {"Sumatra", 14}
+};
 
 #endif
