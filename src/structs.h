@@ -159,6 +159,7 @@ struct sort_schedule
 
 
 using Schedule = std::set<std::shared_ptr<Interval>, sort_schedule>;
+using VecSchedule = std::vector<std::shared_ptr<Interval>>;
 
 struct Satellite
 {
@@ -166,7 +167,7 @@ struct Satellite
     SatType type;
     Schedule ints_in_area;
     Schedule ints_observatories;
-    Schedule full_schedule;
+    VecSchedule full_schedule;
 
     // in Gbit
     double capacity;
@@ -219,7 +220,7 @@ struct Observatory
 {
     std::string name;
     Schedule ints_satellite;
-    Schedule full_schedule;
+    VecSchedule full_schedule;
 };
 
 typedef std::unordered_map<ObsName, Observatory> Observatories;

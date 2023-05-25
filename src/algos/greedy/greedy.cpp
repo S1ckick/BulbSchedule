@@ -26,18 +26,18 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
     int cur_step = 0;
 
     for (auto &sat: sats) {
+        sat.second.full_schedule.reserve(55000);
         init_sat_idle.push_back({sat.first, chill});
     }
     for (auto &observ: obs) {
+        observ.second.full_schedule.reserve(40000);
         init_obs_idle.push_back({observ.first, chill});
     }
     for (auto &inter: plan) {
         if (cnt / (plan.size() / 100) > cur_step) {
-            std::cout << cur_step << "/100\n";
-            cur_step++;
+            std::cout << cur_step++ << "/100\n";
         }
         cnt++;
-        
         int broadcasting_count = 0;
         std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> sat_state(init_sat_idle.begin(), init_sat_idle.end());
         std::unordered_map<ObsName, std::shared_ptr<IntervalInfo>> obs_state(init_obs_idle.begin(), init_obs_idle.end());
@@ -67,14 +67,18 @@ void algos::greedy(Satellites &sats, Observatories &obs) {
             if (pair.second->state != State::IDLE) {
                 std::vector<std::shared_ptr<IntervalInfo>> infovector = {pair.second};
                 Interval ii(inter->start, inter->end, infovector);
-                std::shared_ptr<Interval> inter = std::make_shared<Interval>(ii);
+                std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
 
-                sats.at(pair.first).full_schedule.insert(inter);
-                if (pair.second->state == State::BROADCAST) {
+                sats.at(pair.first).full_schedule.push_back(new_inter);
+                if (pair.second->state == State::RECORDING) {
+                    sats.at(pair.first).record(ii.duration);
+                }
+                else {
                     if (pair.second->obs_name.empty()) {
                         throw std::logic_error("Obs and sat state dont coresspond");
                     }
-                    obs.at(pair.second->obs_name).full_schedule.insert(inter);
+                    sats.at(pair.first).broadcast(ii.duration);
+                    obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
                 }
             }
         }
