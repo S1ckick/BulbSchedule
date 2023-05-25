@@ -242,4 +242,21 @@ std::unordered_map<std::string, int> obs_to_int = {
     {"Sumatra", 14}
 };
 
+std::unordered_map<std::string, std::string> obs_to_hex = {
+    {"Anadyr1","#FF2D00"},
+    {"Anadyr2", "#FF8700"},
+    {"CapeTown", "#FAFF00"},
+    {"Delhi", "#05FFAF"},
+    {"Irkutsk", "#05FFF7"},
+    {"Magadan1", "#05C5FF"},
+    {"Magadan2", "#0599FF"},
+    {"Moscow", "#0546FF"},
+    {"Murmansk1", "#9705FF"},
+    {"Murmansk2", "#D905FF"},
+    {"Norilsk", "#FF05ED"},
+    {"Novosib", "#FF059A"},
+    {"RioGallegos", "#5890A7"},
+    {"Sumatra", "#388357"}
+};
+
 #endif
