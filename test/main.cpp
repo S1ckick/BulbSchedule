@@ -63,7 +63,9 @@ int main()
                        std::chrono::milliseconds::period::den).count()
                 << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
                        std::chrono::milliseconds::period::den).count()
-                << " " << interval->info[0]->obs_name << " " << obs_to_int[interval->info[0]->obs_name]
+                << " " << interval->info[0]->obs_name 
+                << " " << obs_to_hex[interval->info[0]->obs_name]
+                << " " << obs_to_int[interval->info[0]->obs_name]
                 << '\n';
         }
 
@@ -77,6 +79,7 @@ int main()
                        std::chrono::milliseconds::period::den).count()
                 << " " << interval->info[0]->state
                 << " " << interval->capacity_change
+                << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
                 << " " << interval->info[0]->obs_name
                 << '\n';
@@ -85,12 +88,39 @@ int main()
     }
 
     out.close();
+    out_schedule.close();
+    sats_obs_out.close();
 
-    // auto sat_first = sats.begin()->second;
-    // for (int i = 0; i < sat_first.ints.size(); i++)
-    // {
-    //     std::cout << sat_first.name << " " << sat_first.ints[i].start << " " << sat_first.ints[i].end << " " << sat_first.ints[i].duration << std::endl;
+    // Schedule check;
+
+    // for(auto &item : sats) {
+    //     for(auto & interval : item.second.full_schedule) {
+    //         check.insert(interval);
+    //     }
     // }
+
+    // std::ofstream check_out("check.txt", std::ofstream::out);
+    // for(auto &interval : check) {
+    //         check_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+    //             << " " << interval->info[0]->sat_name
+    //             << " "
+    //             << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
+    //                    std::chrono::milliseconds::period::den).count()
+    //             << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
+    //                    std::chrono::milliseconds::period::den).count()
+    //             << " " << interval->info[0]->state
+    //             << " " << interval->capacity_change
+    //             << " " << obs_to_int[interval->info[0]->obs_name]
+    //             << " " << interval->info[0]->obs_name
+    //             << '\n';
+    // }
+
+    // check_out.close();
+
+
+
+
+
 
     return 0;
 }
