@@ -225,8 +225,8 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
     return 0;
 }
 
-int parse_schedule(VecSchedule &schedule) {
-    std::ifstream fp("sats_schedule.txt");
+int parse_schedule(Schedule &schedule, std::string &filename) {
+    std::ifstream fp(filename);
     if (!fp)
     {
         printf("Error with opening file!\n");
@@ -260,7 +260,7 @@ int parse_schedule(VecSchedule &schedule) {
         inter.info[0]->state = str_to_state.at(state_str);
         inter.capacity_change = std::stod(capacity_change);
 
-        schedule.push_back(std::make_shared<Interval>(inter));
+        schedule.insert(std::make_shared<Interval>(inter));
     }
     return 0;
 }

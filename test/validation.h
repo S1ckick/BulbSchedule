@@ -9,6 +9,8 @@ extern std::unordered_map<std::string, std::string> obs_to_hex;
 
 std::ostream& operator << (std::ostream& os, const State& obj);
 
-int checkValidity(Satellites &sats, std::string &res);
+int checkValidity(Schedule &schedule_to_check, std::string &res);
+
+double countObsTotalLength(Satellites &sats);
 
 #endif
