@@ -94,11 +94,19 @@ int main()
 
     std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << "\n";
 
-    Schedule sats_to_check;
+    VecSchedule sats_to_check;
     std::string filename_sats_to_check = "sats_schedule.txt";
     parse_schedule(sats_to_check, filename_sats_to_check);
+    std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
 
+    std::cout << sats_to_check.size() << std::endl;
     std::string err_check_str;
+
+    if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
+        std::cout << "Intervals intersection " << err_check_str;
+    } else {
+        std::cout << "No intervals intersections." << std::endl;
+    }
 
     if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
         std::cout << "Zero interval " << err_check_str;

@@ -48,7 +48,42 @@ std::ostream& operator << (std::ostream& os, const State& obj)
    return os;
 }
 
-int checkZeroIntervals(Schedule &schedule_to_check, std::string &res) {
+int checkForIntervalsIntersection(VecSchedule &schedule_to_check, std::string &res) {
+    for(int i = 0; i < schedule_to_check.size()-1; i++){
+
+        if(schedule_to_check[i]->start == schedule_to_check[i+1]->start && 
+           schedule_to_check[i]->end == schedule_to_check[i+1]->end)
+                continue;
+
+        if(schedule_to_check[i]->end > schedule_to_check[i+1]->start) {
+            std::stringstream res_ss;
+            std::istringstream start_date("1/Jun/2027 00:00:00.000");
+            timepoint tp_start;
+            start_date >> date::parse("%d/%b/%Y %T", tp_start);
+            res_ss << std::fixed << "Error: \n" << schedule_to_check[i]->info[0]->sat_name <<
+              " " << (DURATION(tp_start, schedule_to_check[i]->start) * 1000) <<
+              " " << (DURATION(tp_start, schedule_to_check[i]->end) * 1000) <<
+              " " << schedule_to_check[i]->info[0]->state <<
+              " " << schedule_to_check[i]->capacity_change <<
+              " " << obs_to_hex[schedule_to_check[i]->info[0]->obs_name] <<
+              " " << obs_to_int[schedule_to_check[i]->info[0]->obs_name] <<
+              " " << schedule_to_check[i]->info[0]->obs_name << 
+              std::endl << schedule_to_check[i+1]->info[0]->sat_name <<
+              " " << (DURATION(tp_start, schedule_to_check[i+1]->start) * 1000) <<
+              " " << (DURATION(tp_start, schedule_to_check[i+1]->end) * 1000) <<
+              " " << schedule_to_check[i+1]->info[0]->state <<
+              " " << schedule_to_check[i+1]->capacity_change <<
+              " " << obs_to_hex[schedule_to_check[i+1]->info[0]->obs_name] <<
+              " " << obs_to_int[schedule_to_check[i+1]->info[0]->obs_name] <<
+              " " << schedule_to_check[i+1]->info[0]->obs_name << 
+              std::endl;
+              return -1;
+        }
+    }
+    return 0;
+}
+
+int checkZeroIntervals(VecSchedule &schedule_to_check, std::string &res) {
     for(auto &interval : schedule_to_check) {
         if(interval->start == interval->end) {
             std::stringstream res_ss;
@@ -70,11 +105,12 @@ int checkZeroIntervals(Schedule &schedule_to_check, std::string &res) {
     return 0;
 }
 
-int checkValidity(Schedule &schedule_to_check, std::string &res) {
+int checkValidity(VecSchedule &schedule_to_check, std::string &res) {
     std::unordered_map<std::string, std::vector<std::shared_ptr<Interval>>> obs_to_check;
 
     for(auto &item : schedule_to_check) {
-        obs_to_check[item->info[0]->obs_name].push_back(item);
+        if(item->info[0]->obs_name != "0")
+            obs_to_check[item->info[0]->obs_name].push_back(item);
     }
 
     for(auto &item : obs_to_check) {
