@@ -29,7 +29,7 @@ enum class SatType
     ZORKIY
 };
 
-std::ostream& operator << (std::ostream& os, const SatType& obj)
+inline std::ostream& operator << (std::ostream& os, const SatType& obj)
 {
 
    if(obj == SatType::KINOSAT) {
@@ -145,6 +145,13 @@ struct Interval
         std::copy(new_info.begin(), new_info.end(), info.begin());
     }
 };
+
+
+inline bool sort_obs(std::shared_ptr<Interval> a, std::shared_ptr<Interval> b) {
+    if (a->start == b->start)
+        return a->duration > b->duration;
+    return a->start < b->start;
+}
 
 struct sort_schedule
 {

@@ -34,12 +34,6 @@ std::unordered_map<std::string, std::string> obs_to_hex = {
     {"Sumatra", "#388357"}
 };
 
-bool sort_obs(std::shared_ptr<Interval> a, std::shared_ptr<Interval> b) {
-    if (a->start == b->start)
-        return a->duration > b->duration;
-    return a->start < b->start;
-}
-
 std::ostream& operator << (std::ostream& os, const State& obj)
 {
    if(obj == State::IDLE) {
