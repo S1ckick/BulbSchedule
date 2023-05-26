@@ -1,5 +1,4 @@
-#include "../algos.h"
-#include <date.h>
+#include "algos.h"
 
 void print_time(const timepoint &a, const timepoint &b) {
     std::istringstream start_date("1/Jun/2027 00:00:00.000");
@@ -66,14 +65,15 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
                 if (sat_state.at(action->sat_name)->state != State::BROADCAST && 
                     obs_state.at(action->obs_name)->state != State::BROADCAST) 
                 {
+                    broadcasting_count++;
                     sat_state.at(action->sat_name) = action;
                     obs_state.at(action->obs_name) = action;
                 }
             }
-            else if (action->state == State::RECORDING)
+
+            if (action->state == State::RECORDING && sat_state.at(action->sat_name)->state != State::BROADCAST)
             {
                 if (sat_state.at(action->sat_name)->state == State::IDLE) {
-                    broadcasting_count++;
                     sat_state.at(action->sat_name) = action;
                 }
             }
@@ -152,12 +152,12 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
         std::vector<std::pair<SatName, double>> sat_cap(sat_actors.size());
         int cnt = 0;
         for (auto &sa: sat_actors) {
-            sat_cap[cnt] = {sa, sats.at(sa).capacity};
+            sat_cap[cnt] = {sa, sats.at(sa).capacity / sats.at(sa).max_capacity};
             cnt++;
         }
         std::sort(sat_cap.begin(), sat_cap.end(), 
-            [](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){ 
-                return a.second > b.second;
+            [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){ 
+                return a.second * 0.5 * visible_obs.at(a.first).size() / obs_actors.size() > b.second * 0.5 * visible_obs.at(b.first).size() / obs_actors.size();
             }
         );
 
@@ -166,7 +166,8 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
             SatName satellite = pair.first;
             bool pair_found = false;
 
-            if (!obs_actors.empty() && visible_obs.count(satellite)) // check if some obs available and sat can broadcast
+            // check if some obs available, sat can broadcast and its not empty
+            if (!obs_actors.empty() && visible_obs.count(satellite) && pair.second != 0)
             {
                 // choose observatory
                 for (auto &visible: visible_obs.at(satellite)) {
@@ -195,7 +196,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                 new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
                 sats.at(satellite).full_schedule.push_back(new_inter);
             }
-        }        
+        }
     }
 }
 

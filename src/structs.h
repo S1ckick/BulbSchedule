@@ -11,6 +11,8 @@
 #include <string>
 #include <algorithm>
 
+#include <date.h>
+
 #define PLANES_NUM 20
 
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
@@ -33,21 +35,6 @@ enum class State
     BROADCAST,
     RECORDING // for satellite
 };
-
-std::ostream& operator << (std::ostream& os, const State& obj)
-{
-
-   if(obj == State::IDLE) {
-    os << "IDLE";
-   }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
-   }
-   if(obj == State::RECORDING) {
-    os << "RECORDING";
-   }
-   return os;
-}
 
 const std::map<SatType, std::string> SatNames = {{SatType::KINOSAT, "KinoSat"}, {SatType::ZORKIY, "Zorkiy"}};
 const std::string KinosatName = SatNames.at(SatType::KINOSAT);

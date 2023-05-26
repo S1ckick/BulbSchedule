@@ -6,8 +6,6 @@
 #include <cstring>
 #include <vector>
 
-#include <date.h>
-
 using namespace date;
 
 Interval parse_interval(const std::string &line, const SatType &sat_type, const SatName &sat_name, const ObsName &obs_name = {})

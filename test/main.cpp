@@ -3,50 +3,14 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <iomanip>
 
-#include <date.h>
-#include <parser/parser.h>
-#include <algos/algos.h>
-#include <validation.h>
+#include "validation.h"
 
 using namespace date;
 
 int main()
 {
-    std::unordered_map<std::string, int> obs_to_int = {
-    {"Anadyr1",1},
-    {"Anadyr2", 2},
-    {"CapeTown", 3},
-    {"Delhi", 4},
-    {"Irkutsk", 5},
-    {"Magadan1", 6},
-    {"Magadan2", 7},
-    {"Moscow", 8},
-    {"Murmansk1", 9},
-    {"Murmansk2", 10},
-    {"Norilsk", 11},
-    {"Novosib", 12},
-    {"RioGallegos", 13},
-    {"Sumatra", 14}
-    };
-
-    std::unordered_map<std::string, std::string> obs_to_hex = {
-        {"Anadyr1","#FF2D00"},
-        {"Anadyr2", "#FF8700"},
-        {"CapeTown", "#FAFF00"},
-        {"Delhi", "#05FFAF"},
-        {"Irkutsk", "#05FFF7"},
-        {"Magadan1", "#05C5FF"},
-        {"Magadan2", "#0599FF"},
-        {"Moscow", "#0546FF"},
-        {"Murmansk1", "#9705FF"},
-        {"Murmansk2", "#D905FF"},
-        {"Norilsk", "#FF05ED"},
-        {"Novosib", "#FF059A"},
-        {"RioGallegos", "#5890A7"},
-        {"Sumatra", "#388357"}
-    };
-
     std::unordered_map<SatName, Satellite> sats;
     const char russia_location[] = "../../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
@@ -79,7 +43,7 @@ int main()
         satName_to_num[all_sat_names[ii]] = ii;
     }
 
-    int sum_data = 0;
+    double sum_data = 0;
     for (auto &item : sats){
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
@@ -119,7 +83,7 @@ int main()
         }
 
     }
-    std::cout << "Total data transmitted: " << sum_data << "\n";
+    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << "\n";
 
     std::string err_check_str;
     int err_check_int = checkValidity(sats, err_check_str);

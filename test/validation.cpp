@@ -1,14 +1,57 @@
-#ifndef VALIDATION
-#define VALIDATION
+#include "validation.h"
 
-#include <date.h>
-#include <parser/parser.h>
-#include <algos/algos.h>
+std::unordered_map<std::string, int> obs_to_int = {
+{"Anadyr1",1},
+{"Anadyr2", 2},
+{"CapeTown", 3},
+{"Delhi", 4},
+{"Irkutsk", 5},
+{"Magadan1", 6},
+{"Magadan2", 7},
+{"Moscow", 8},
+{"Murmansk1", 9},
+{"Murmansk2", 10},
+{"Norilsk", 11},
+{"Novosib", 12},
+{"RioGallegos", 13},
+{"Sumatra", 14}
+};
+
+std::unordered_map<std::string, std::string> obs_to_hex = {
+    {"Anadyr1","#FF2D00"},
+    {"Anadyr2", "#FF8700"},
+    {"CapeTown", "#FAFF00"},
+    {"Delhi", "#05FFAF"},
+    {"Irkutsk", "#05FFF7"},
+    {"Magadan1", "#05C5FF"},
+    {"Magadan2", "#0599FF"},
+    {"Moscow", "#0546FF"},
+    {"Murmansk1", "#9705FF"},
+    {"Murmansk2", "#D905FF"},
+    {"Norilsk", "#FF05ED"},
+    {"Novosib", "#FF059A"},
+    {"RioGallegos", "#5890A7"},
+    {"Sumatra", "#388357"}
+};
 
 bool sort_obs(std::shared_ptr<Interval> a, std::shared_ptr<Interval> b) {
     if (a->start == b->start)
         return a->duration > b->duration;
     return a->start < b->start;
+}
+
+std::ostream& operator << (std::ostream& os, const State& obj)
+{
+   if(obj == State::IDLE) {
+    os << "IDLE";
+   }
+   if(obj == State::BROADCAST){
+    os << "BROADCAST";
+   }
+   if(obj == State::RECORDING) {
+    os << "RECORDING";
+   }
+   return os;
 }
 
 int checkValidity(Satellites &sats, std::string &res) {
@@ -66,8 +109,3 @@ int checkValidity(Satellites &sats, std::string &res) {
     }
     return 0;
 }
-
-
-
-
-#endif
