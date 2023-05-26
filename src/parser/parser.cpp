@@ -251,8 +251,8 @@ int parse_schedule(Schedule &schedule, std::string &filename) {
         std::istringstream start_date("1/Jun/2027 00:00:00.000");
         timepoint tp_start;
         start_date >> date::parse("%d/%b/%Y %T", tp_start);
-        int start_int = std::stod(start_str) * 1000;
-        int end_int = std::stod(end_str) * 1000;
+        int start_int = std::stoi(start_str);
+        int end_int = std::stoi(end_str);
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
 
@@ -262,5 +262,8 @@ int parse_schedule(Schedule &schedule, std::string &filename) {
 
         schedule.insert(std::make_shared<Interval>(inter));
     }
+
+    fp.close();
+
     return 0;
 }

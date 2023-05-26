@@ -48,21 +48,21 @@ int main()
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << DURATION(tp_start, interval->start)
-                << " " << DURATION(tp_start, interval->end)
+                << (long) DURATION(tp_start, interval->start) * 1000 //milliseconds
+                << " " << (long) DURATION(tp_start, interval->end) * 1000 //milliseconds
                 << " " 
-                << '\n';
+                << std::endl;
         }
 
         for (auto &interval : item.second.ints_observatories){
             sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << DURATION(tp_start, interval->start)
-                << " " << DURATION(tp_start, interval->end)
+                << (long) DURATION(tp_start, interval->start) * 1000 //milliseconds
+                << " " << (long) DURATION(tp_start, interval->end) * 1000 //milliseconds
                 << " " << interval->info[0]->obs_name 
                 << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
-                << '\n';
+                << std::endl;
         }
 
         for (auto &interval : item.second.full_schedule){
@@ -70,20 +70,24 @@ int main()
                 << " " << interval->info[0]->sat_name
                 << " " << interval->info[0]->sat_type
                 << " "
-                << DURATION(tp_start, interval->start)
-                << " " << DURATION(tp_start, interval->end)
+                << (long) DURATION(tp_start, interval->start) * 1000 //milliseconds
+                << " " << (long) DURATION(tp_start, interval->end) * 1000 //milliseconds
                 << " " << interval->info[0]->state
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
                 << " " << interval->info[0]->obs_name
-                << '\n';
+                << std::endl;
 
             if (interval->info[0]->state == State::BROADCAST)
                 sum_data += interval->capacity_change;
         }
 
     }
+
+    out.close();
+    out_schedule.close();
+    sats_obs_out.close();
 
     double obs_total_length = countObsTotalLength(sats);
     std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
@@ -102,9 +106,6 @@ int main()
         std::cout << "obs are fine!" << std::endl;
     }
 
-    out.close();
-    out_schedule.close();
-    sats_obs_out.close();
 
     return 0;
 }
