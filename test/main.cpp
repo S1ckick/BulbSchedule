@@ -48,8 +48,8 @@ int main()
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (long) DURATION(tp_start, interval->start) * 1000 //milliseconds
-                << " " << (long) DURATION(tp_start, interval->end) * 1000 //milliseconds
+                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
                 << " " 
                 << std::endl;
         }
@@ -57,8 +57,8 @@ int main()
         for (auto &interval : item.second.ints_observatories){
             sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (long) DURATION(tp_start, interval->start) * 1000 //milliseconds
-                << " " << (long) DURATION(tp_start, interval->end) * 1000 //milliseconds
+                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
                 << " " << interval->info[0]->obs_name 
                 << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
@@ -70,8 +70,8 @@ int main()
                 << " " << interval->info[0]->sat_name
                 << " " << interval->info[0]->sat_type
                 << " "
-                << (long) DURATION(tp_start, interval->start) * 1000 //milliseconds
-                << " " << (long) DURATION(tp_start, interval->end) * 1000 //milliseconds
+                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(tp_start, interval->end) * 1000)  //milliseconds
                 << " " << interval->info[0]->state
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[interval->info[0]->obs_name]

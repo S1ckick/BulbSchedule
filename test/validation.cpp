@@ -48,6 +48,8 @@ std::ostream& operator << (std::ostream& os, const State& obj)
    return os;
 }
 
+
+
 int checkValidity(Schedule &schedule_to_check, std::string &res) {
     std::unordered_map<std::string, std::vector<std::shared_ptr<Interval>>> obs_to_check;
 
@@ -70,8 +72,8 @@ int checkValidity(Schedule &schedule_to_check, std::string &res) {
                 start_date >> date::parse("%d/%b/%Y %T", tp_start);
                     std::stringstream res_ss;
                     res_ss << std::fixed << "Error: \n" << item.second[i]->info[0]->sat_name <<
-                          " " << (long) DURATION(tp_start, item.second[i]->start) <<
-                          " " << (long) DURATION(tp_start, item.second[i]->end) <<
+                          " " << (long) (DURATION(tp_start, item.second[i]->start) * 1000) <<
+                          " " << (long) (DURATION(tp_start, item.second[i]->end) * 1000) <<
                           " " << item.second[i]->info[0]->state <<
                           " " << item.second[i]->capacity_change <<
                           " " << obs_to_hex[item.second[i]->info[0]->obs_name] <<
@@ -79,8 +81,8 @@ int checkValidity(Schedule &schedule_to_check, std::string &res) {
                           " " << item.second[i]->info[0]->obs_name << 
                           "\n"<< 
                                 item.second[i+1]->info[0]->sat_name <<
-                          " " << (long) DURATION(tp_start, item.second[i+1]->start) <<
-                          " " << (long) DURATION(tp_start, item.second[i+1]->end) <<
+                          " " << (long) (DURATION(tp_start, item.second[i+1]->start) * 1000) <<
+                          " " << (long) (DURATION(tp_start, item.second[i+1]->end) * 1000) <<
                           " " << item.second[i+1]->info[0]->state <<
                           " " << item.second[i+1]->capacity_change <<
                           " " << obs_to_hex[item.second[i+1]->info[0]->obs_name] <<
