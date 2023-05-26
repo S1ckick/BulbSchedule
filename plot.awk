@@ -5,17 +5,17 @@ BEGIN {
     p1=1.0
 }
 {
-    if ($3*p1 >= 86400 && $3*p1 <= 100000)
+    if ($4*p1 >= 86400 && $4*p1 <= 100000)
     {
         if ($5 == "RECORDING")
         {
             printf("set arrow from %s,%s to %s,%s nohead front lt 1 lw 4 lc rgb \"#11FF11\"\n",
-                   $3, $1, $4, $1)
+                   $4, $1, $5, $1)
         }
         else if ($5 == "BROADCAST")
         {
             printf("set arrow from %s,%s to %s,%s nohead lw 3 lc rgb \"%s\" \n",
-                   $3, $1, $4, $1, $7)
+                   $4, $1, $5, $1, $8)
         }
         else if ($5 == "") # satellite-Russia visibility file
         {

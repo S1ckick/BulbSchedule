@@ -68,6 +68,7 @@ int main()
         for (auto &interval : item.second.full_schedule){
             out_schedule << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name
+                << " " << interval->info[0]->sat_type
                 << " "
                 << DURATION(tp_start, interval->start)
                 << " " << DURATION(tp_start, interval->end)
@@ -83,6 +84,45 @@ int main()
         }
 
     }
+
+    Observatories init_obs;
+
+    for(auto &item : sats) {
+        for (auto &interval : item.second.ints_observatories){
+            if(init_obs.find(interval->info[0]->obs_name) == init_obs.end()){
+                Observatory ob;
+                ob.full_schedule.push_back(interval);
+                ob.name = interval->info[0]->obs_name;
+                init_obs[interval->info[0]->obs_name] = ob;
+            } else {
+                init_obs[interval->info[0]->obs_name].full_schedule.push_back(interval);
+            }
+
+        }
+    }
+    std::cout << "are we here?" << std::endl;
+    double obs_total_length = 0.0;
+
+    for(auto &ob : init_obs) {
+        std::sort(ob.second.full_schedule.begin(), ob.second.full_schedule.end(), sort_obs);
+
+        for(int i = 0; i < ob.second.full_schedule.size(); i++){
+            timepoint start = ob.second.full_schedule[i]->start;
+            timepoint end = ob.second.full_schedule[i]->end;
+            while(i+1 < ob.second.full_schedule.size() && end >= ob.second.full_schedule[i+1]->start) {
+                // (S)--------------E
+                //    S------E          S--------(E)
+                //                S--------E            S-----E
+                if(end < ob.second.full_schedule[i+1]->end)
+                    end = ob.second.full_schedule[i+1]->end;
+                i++;
+            }
+            obs_total_length += DURATION(start,end);
+        }
+    }
+
+    std::cout << std::fixed << "stations can receive max: " << obs_total_length << std::endl;
+
     std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << "\n";
 
     std::string err_check_str;
@@ -94,44 +134,32 @@ int main()
     }
 
 
-    // Schedule check;
-
-    Schedule check;
-
-    for(auto &item : sats) {
-        for(auto & interval : item.second.full_schedule) {
-            check.insert(interval);
-        }
+    VecSchedule sats_to_check;
+    parse_schedule(sats_to_check);
+    std::ofstream check_file("check.txt", std::ofstream::out);
+    for(auto &interval : sats_to_check) {
+        check_file << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+        << " " << interval->info[0]->sat_name
+        << " " << interval->info[0]->sat_type
+        << " "
+        << DURATION(tp_start, interval->start)
+        << " " << DURATION(tp_start, interval->end)
+        << " " << interval->info[0]->state
+        << " " << interval->capacity_change
+        << " " << obs_to_hex[interval->info[0]->obs_name]
+        << " " << obs_to_int[interval->info[0]->obs_name]
+        << " " << interval->info[0]->obs_name
+        << '\n';
     }
 
-    int check_counter = 0;
-    std::ofstream check_out("check.txt", std::ofstream::out);
-    for(auto &interval : check) {
-            if(interval->start == interval->end){
-                check_counter++;
-            }
-            check_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                << " " << interval->info[0]->sat_name
-                << " "
-                << (std::chrono::duration<double, std::milli>(interval->start - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
-                << " " << (std::chrono::duration<double, std::milli>(interval->end - tp_start) * std::chrono::milliseconds::period::num /
-                       std::chrono::milliseconds::period::den).count()
-                << " " << interval->info[0]->state
-                << " " << interval->capacity_change
-                << " " << obs_to_int[interval->info[0]->obs_name]
-                << " " << interval->info[0]->obs_name
-                << '\n';
-    }
-    std::cout << "check_counter: " << check_counter << std::endl;
-    check_out.close();
+
+
+
+
+    check_file.close();
     out.close();
     out_schedule.close();
     sats_obs_out.close();
-
-
-
-
 
     return 0;
 }
