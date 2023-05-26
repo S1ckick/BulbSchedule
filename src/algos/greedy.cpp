@@ -1,12 +1,9 @@
 #include "algos.h"
 
 void print_time(const timepoint &a, const timepoint &b) {
-    std::istringstream start_date("1/Jun/2027 00:00:00.000");
-    timepoint tp_start;
-    start_date >> date::parse("%d/%b/%Y %T", tp_start);
-    std::cout << (std::chrono::duration<double, std::milli>(a - tp_start) * std::chrono::milliseconds::period::num /
+    std::cout << (std::chrono::duration<double, std::milli>(a - TP_START) * std::chrono::milliseconds::period::num /
         std::chrono::milliseconds::period::den).count()
-                << " " << (std::chrono::duration<double, std::milli>(b - tp_start) * std::chrono::milliseconds::period::num /
+                << " " << (std::chrono::duration<double, std::milli>(b - TP_START) * std::chrono::milliseconds::period::num /
         std::chrono::milliseconds::period::den).count()
                 << '\n';
 }

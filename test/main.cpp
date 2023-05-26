@@ -9,13 +9,53 @@
 
 using namespace date;
 
+std::unordered_map<std::string, int> obs_to_int = {
+    {"Anadyr1",1},
+    {"Anadyr2", 2},
+    {"CapeTown", 3},
+    {"Delhi", 4},
+    {"Irkutsk", 5},
+    {"Magadan1", 6},
+    {"Magadan2", 7},
+    {"Moscow", 8},
+    {"Murmansk1", 9},
+    {"Murmansk2", 10},
+    {"Norilsk", 11},
+    {"Novosib", 12},
+    {"RioGallegos", 13},
+    {"Sumatra", 14}
+};
+
+std::unordered_map<std::string, std::string> obs_to_hex = {
+    {"Anadyr1","#FF2D00"},
+    {"Anadyr2", "#FF8700"},
+    {"CapeTown", "#FAFF00"},
+    {"Delhi", "#05FFAF"},
+    {"Irkutsk", "#05FFF7"},
+    {"Magadan1", "#05C5FF"},
+    {"Magadan2", "#0599FF"},
+    {"Moscow", "#0546FF"},
+    {"Murmansk1", "#9705FF"},
+    {"Murmansk2", "#D905FF"},
+    {"Norilsk", "#FF05ED"},
+    {"Novosib", "#FF059A"},
+    {"RioGallegos", "#5890A7"},
+    {"Sumatra", "#388357"}
+};
+
+timepoint TP_START;
+
 int main()
 {
-    std::unordered_map<SatName, Satellite> sats;
+
+    std::istringstream start_date("1/Jun/2027 00:00:00.000");
+    start_date >> date::parse("%d/%b/%Y %T", TP_START);
+
+    Satellites sats;
     const char russia_location[] = "../../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
-    std::unordered_map<std::string, Observatory> obs;
+    Observatories obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
     algos::greedy_capacity(sats, obs);
@@ -23,11 +63,6 @@ int main()
     std::ofstream out("sats.txt", std::ofstream::out);
     std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
     std::ofstream sats_obs_out("sats_obs.txt", std::ofstream::out);
-
-    std::istringstream start_date("1/Jun/2027 00:00:00.000");
-    timepoint tp_start;
-    start_date >> date::parse("%d/%b/%Y %T", tp_start);
-
 
     std::unordered_map<int,int> satName_to_num;
 
@@ -48,8 +83,8 @@ int main()
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
+                << (DURATION(TP_START, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(TP_START, interval->end) * 1000) //milliseconds
                 << " " 
                 << std::endl;
         }
@@ -57,8 +92,8 @@ int main()
         for (auto &interval : item.second.ints_observatories){
             sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
+                << (DURATION(TP_START, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(TP_START, interval->end) * 1000) //milliseconds
                 << " " << interval->info[0]->obs_name 
                 << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
@@ -70,8 +105,8 @@ int main()
                 << " " << interval->info[0]->sat_name
                 << " " << interval->info[0]->sat_type
                 << " "
-                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(tp_start, interval->end) * 1000)  //milliseconds
+                << (DURATION(TP_START, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(TP_START, interval->end) * 1000)  //milliseconds
                 << " " << interval->info[0]->state
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[interval->info[0]->obs_name]
@@ -118,6 +153,12 @@ int main()
         std::cout << "Error while checking obs: " << err_check_str;
     } else {
         std::cout << "obs are fine!" << std::endl;
+    }
+
+    if(checkRecordingInRightArea(sats_to_check, sats, err_check_str) == -1) {
+       std::cout << "Error while checking recording in right area: " << err_check_str;
+    } else {
+        std::cout << "all satellites record in right area" << std::endl;
     }
 
 
