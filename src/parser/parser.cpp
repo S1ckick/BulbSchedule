@@ -224,3 +224,45 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
 
     return 0;
 }
+
+int parse_schedule(VecSchedule &schedule) {
+    std::ifstream fp("sats_schedule.txt");
+    if (!fp)
+    {
+        printf("Error with opening file!\n");
+        return 1;
+    }
+
+    std::string line;
+    std::unordered_map<std::string,SatType> const str_to_sat_type = { {"KINOSAT", SatType::KINOSAT}, {"ZORKIY", SatType::ZORKIY} };
+    std::unordered_map<std::string,State> const str_to_state = { {"BROADCAST", State::BROADCAST}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
+    
+    while ((std::getline(fp, line))) {
+        std::istringstream line_stream(line);
+        std::string sat_num, sat_name, sat_type, start_str, end_str, state_str, capacity_change,
+                    obs_hex, obs_int, obs_name;
+        line_stream >> sat_num >> sat_name >> sat_type >> start_str >> end_str >> state_str >> capacity_change >>
+                    obs_hex;
+        if(obs_hex != "0")
+            line_stream >> obs_int >> obs_name;
+        else
+            obs_name = "0";
+
+        std::cout << sat_num << ' ' << sat_name << ' ' << sat_type << " " << start_str << " " << end_str << " " << state_str << " " << capacity_change << std::endl;
+
+        std::istringstream start_date("1/Jun/2027 00:00:00.000");
+        timepoint tp_start;
+        start_date >> date::parse("%d/%b/%Y %T", tp_start);
+        int start_int = std::stod(start_str) * 1000;
+        int end_int = std::stod(end_str) * 1000;
+        const timepoint start = tp_start + std::chrono::milliseconds(start_int);
+        const timepoint end = tp_start + std::chrono::milliseconds(end_int);
+
+        Interval inter(start, end, std::stoi(sat_name), str_to_sat_type.at(sat_type), obs_name);
+        inter.info[0]->state = str_to_state.at(state_str);
+        inter.capacity_change = std::stod(capacity_change);
+
+        schedule.push_back(std::make_shared<Interval>(inter));
+    }
+    return 0;
+}

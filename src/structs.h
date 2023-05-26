@@ -29,6 +29,18 @@ enum class SatType
     ZORKIY
 };
 
+std::ostream& operator << (std::ostream& os, const SatType& obj)
+{
+
+   if(obj == SatType::KINOSAT) {
+    os << "KINOSAT";
+   }
+   if(obj == SatType::ZORKIY){
+    os << "ZORKIY";
+   }
+   return os;
+}
+
 enum class State
 {
     IDLE,
