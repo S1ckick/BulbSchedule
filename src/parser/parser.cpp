@@ -145,7 +145,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
                                           "Murmansk2", "Norilsk", "Novosib",
                                           "RioGallegos", "Sumatra"};
 
-    int obs_num = obs_names.size();
+    size_t obs_num = obs_names.size();
     std::cout << "\nStart parsing observatories\n";
     // Read each observatory
     for (int i = 0; i < obs_num; i++)
@@ -192,7 +192,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
 
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
-                    int prefix_size = prefix.size();
+                    size_t prefix_size = prefix.size();
 
                     int start_number = -1;
                     for (int i = 0; i < line.size(); i++)

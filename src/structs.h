@@ -60,7 +60,7 @@ struct IntervalInfo {
 
     IntervalInfo() = default;
     IntervalInfo(const IntervalInfo &base_interval) = default;
-    IntervalInfo(IntervalInfo &base_interval) = default;
+    //IntervalInfo(IntervalInfo &base_interval) = default;
 
     IntervalInfo(
         const SatName &sat, const SatType &type,
@@ -99,7 +99,7 @@ struct Interval
     std::vector<std::shared_ptr<IntervalInfo>> info;
 
     Interval(const Interval &base_interval) = default;
-    Interval(Interval &base_interval) = default;
+    //Interval(Interval &base_interval) = default;
 
     // Constructor for parser
     Interval(
@@ -198,6 +198,19 @@ struct Satellite
         }
     }
 
+    double can_record(const double &duration)
+    {
+        if (capacity == max_capacity)
+            return 0;
+
+        double recorded = duration * recording_speed;
+        if (capacity + recorded > max_capacity) {
+            recorded = max_capacity - capacity;
+        }
+
+        return recorded;
+    }
+
     // change capacity, return recorded amount
     double record(const double &duration)
     {
@@ -205,6 +218,19 @@ struct Satellite
         (capacity + recorded) < max_capacity ? capacity += recorded : (recorded = max_capacity - capacity, capacity = max_capacity);
 
         return recorded;
+    }
+
+    double can_broadcast(const double &duration)
+    {
+        if (capacity == 0)
+            return 0;
+
+        double transmitted = duration * broadcasting_speed;
+        if (capacity - transmitted < 0) {
+            transmitted = capacity;
+        }
+
+        return transmitted;
     }
 
     // change capacity, return transmitted amount

@@ -1,5 +1,7 @@
 #include "algos.h"
 
+#include <algorithm>
+
 void print_time(const timepoint &a, const timepoint &b) {
     std::istringstream start_date("1/Jun/2027 00:00:00.000");
     timepoint tp_start;
@@ -163,13 +165,13 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
 
         std::sort(sat_cap.begin(), sat_cap.end(),
             [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){
-                double a_visibility = visible_obs.at(a.first).size() / obs_actors.size();
-                double b_visibility = visible_obs.at(b.first).size() / obs_actors.size();
+                double a_visibility = 1.0 * visible_obs.at(a.first).size() / obs_actors.size();
+                double b_visibility = 1.0 * visible_obs.at(b.first).size() / obs_actors.size();
                 return a.second * a_visibility > b.second * b_visibility;
             }
         );
 
-        // sort observatories by visibility
+        // sort observatories for satellite by visibility
         for (auto &vis_obs: visible_obs) {
             std::sort(vis_obs.second.begin(), vis_obs.second.end(), 
                 [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
@@ -217,138 +219,123 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
     }
 }
 
-#if 0
-void algos::build_schedule(Satellites &sats)
-{
-    for (auto &pair : sats)
-    {
-        auto &sat = pair.second;
-        auto &sat_ints = sat.ints_in_area;       // intervals when satellite in recording area
-        auto &obs_ints = sat.ints_observatories; // observatories intervals for current satellite only
-        auto &schedule = sat.full_schedule;      // array for all intervals of operations for current satellite
-        int ints_num = sat_ints.size();
+void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
+    using namespace std::chrono;
 
-        auto obs_it = obs_ints.begin();                   // current observatory interval to be handled
-        auto last_trigger = (*(sat_ints.begin()))->start; // here will be stored end time of last operation
+    std::cout << "Starting greedy algorithm\n";
+    auto plan = great_plan(sats);
+    std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
 
-        // Each iteration handle time from start of current interval to start of next interval
-        auto it = sat_ints.begin();
+    int cnt = 0;
+    int cur_step = 0;
 
-        for (;it != sat_ints.end(); ++it) {
-            auto cur_int = *it;
-            auto begin_cur = cur_int->start;
-            auto end_cur = cur_int->end;
-            // auto start_capacity = sat.capacity; // for debug
-            // std::cout << "\n\nSat interval:";
-            // print_time(begin_cur, end_cur);
-
-            auto begin_next = end_cur; // start of next interval
-            it++;
-            if (it != sat_ints.end())
-                begin_next = (*it)->start;
-            it--;
-
-            // Handle all observatory intervals that starts between begin_cur and begin_next
-            while (obs_it != obs_ints.end() && (*obs_it)->start < begin_next) {
-                // state of observatory at currrent interval
-                auto &obs_start = (*obs_it)->start;
-                auto &obs_end = (*obs_it)->end;
-                auto &obs_state = (*obs_it)->state;
-                auto &obs_name = (*obs_it)->obs_name;
-
-                // std::cout << "\nObs interval:";
-                // print_time(obs_start, obs_end);
-
-                // Move to beginning of interval
-                if (last_trigger < begin_cur) {
-                    // schedule.push_back(Interval(last_trigger, begin_cur, sat.name, sat.type, State::IDLE));
-                    last_trigger = begin_cur;
-                }
-
-                // Observatory was occupied
-                if (obs_state == State::BROADCAST) {
-                    obs_it++;
-                    continue;
-                }
-                
-                // std::cout << "Latst trigger to obs_start:";
-                // print_time(last_trigger, obs_start);
-
-                // Handle broadcast
-                if (last_trigger < obs_start) {
-                    if (last_trigger < end_cur) {
-                        // Record before transmission than idle until obs_start
-                        auto end_record = obs_start < end_cur ? obs_start : end_cur;
-
-                        auto record_time = std::max(DURATION(last_trigger, end_record), 0.);
-                        if (record_time > 0) {
-                            auto recorded = sat.record(record_time);
-                            schedule.insert(std::make_shared<Interval>(Interval(last_trigger, end_record, sat.name, sat.type, State::RECORDING, recorded)));
-                        }
-                        // std::cout << "Record before transmission:";
-                        // print_time(last_trigger, end_record);
-                    }
-
-                    if (sat.capacity > 0) {
-                        last_trigger = obs_start;
-                        // Transmission whole interval
-                        auto broadcast_time = DURATION(last_trigger, obs_end);
-                        auto transmitted = sat.broadcast(broadcast_time);
-                        schedule.insert(
-                            std::make_shared<Interval>(
-                                Interval(last_trigger, obs_end,
-                                    sat.name, sat.type, State::BROADCAST,
-                                    transmitted, obs_name)
-                            )
-                        );
-                        obs_state = State::BROADCAST;
-                        // std::cout << "Transmission:";
-                        // print_time(last_trigger, obs_end);
-                        last_trigger = obs_end;
-                    }
-                }
-                else if (sat.capacity == 0 || last_trigger > obs_end) { // do nothing
-                    // std::cout << "Skip\n";
-                    obs_it++;
-                    continue;
-                }
-                else { // Begin transmission after start of observatory interval, use only part of it
-                    auto broadcast_time = DURATION(last_trigger, obs_end);
-                    auto transmitted = sat.broadcast(broadcast_time);
-                    schedule.insert(
-                        std::make_shared<Interval>(
-                            Interval(last_trigger, obs_end,
-                                sat.name, sat.type, State::BROADCAST,
-                                transmitted, obs_name)
-                        )
-                    );
-                    // std::cout << "Transmission after transmission:";
-                    // print_time(last_trigger, obs_end);
-                    auto swp = last_trigger;
-                    last_trigger = obs_end;
-                    // save unused time of interval in smaller interval
-                    obs_end = swp;
-                }
-                
-                obs_it++;
-            }
-
-            // record last part of in area interval
-            if (last_trigger < end_cur) {
-                auto start_record = begin_cur > last_trigger ? begin_cur : last_trigger;
-
-                // std::cout << "Record:";
-                // print_time(start_record, end_cur);
-                auto record_time = std::max(DURATION(start_record, end_cur), 0.);
-                if (record_time > 0)
-                    schedule.insert(std::make_shared<Interval>(Interval(start_record, end_cur, sat.name, sat.type, State::RECORDING, sat.record(record_time))));
-                last_trigger = end_cur;
-            }
-
-            // if (sat.capacity - start_capacity > DURATION(begin_cur, end_cur) * sat.recording_speed + 0.1) {
-            //     throw std::logic_error("Recorded too much");
-            // }
+    for (auto &inter: plan) {
+        if (cnt / (plan.size() / 100) > cur_step) {
+            std::cout << cur_step++ << "/100\n";
         }
-    }
+        cnt++;
+
+        // maps to group actions by actors
+        std::unordered_map<SatName, std::vector<std::shared_ptr<IntervalInfo>>> visible_obs;
+        std::unordered_map<ObsName, std::vector<std::shared_ptr<IntervalInfo>>> visible_sat;
+        std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> can_record;
+        // get all actors in interval
+        for (auto &action: inter->info) {
+            // sat_actors.insert(action->sat_name);
+            if (action->state == State::BROADCAST) {
+                if (sats.at(action->sat_name).capacity > 0) {
+                    if (!visible_obs.count(action->sat_name)) {
+                        visible_obs[action->sat_name] = {};
+                    }
+                    if (!visible_sat.count(action->obs_name)) {
+                        visible_sat[action->obs_name] = {};
+                    }
+                    visible_obs[action->sat_name].push_back(action);
+                    visible_sat[action->obs_name].push_back(action);
+                }
+                // obs_actors.insert(action->obs_name);
+            }
+            else {
+                can_record[action->sat_name] = action;
+            }
+        }
+
+        // mb sort stations before
+
+        std::vector<std::pair<ObsName, std::vector<std::shared_ptr<IntervalInfo>>>> obs_sat(visible_sat.begin(), visible_sat.end());
+
+        // sort satellite for observatories by capacity
+        for (auto &vis_sat: obs_sat) {
+            std::sort(vis_sat.second.begin(), vis_sat.second.end(), 
+                [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
+                    return sats.at(a->sat_name).capacity < sats.at(b->sat_name).capacity;
+                }
+            );
+        }
+
+        int obs_num = obs_sat.size();
+
+        // sats < 200 so string is acceptable and easier to manipulate
+        std::string max_case(obs_num, char(0));
+        std::string cur_case(obs_num, char(0));
+        std::string opt_case(obs_num, char(0));
+        double opt_data = 0;
+
+        int obs_cnt = 0;
+        for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
+            max_case[cur_obs] = obs_sat[cur_obs].second.size() - 1;
+        }
+
+        // check all possible cases
+        while (cur_case < max_case) {
+            std::set<SatName> used;
+            double cur_data = 0;
+
+            // fill observatories
+            for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
+                auto &cur_sat = obs_sat[cur_obs].second[cur_case[cur_obs]]->sat_name;
+                if (!used.count(cur_sat)) {
+                    used.insert(cur_sat);
+                    cur_data += sats.at(cur_sat).can_broadcast(inter->duration);
+                }
+            }
+
+            // save new optimal solution
+            if (opt_data <= cur_data) {
+                opt_data = cur_data;
+                opt_case = cur_case;
+            }
+
+            // increase case number
+            for (int cur_obs = obs_num - 1; cur_obs >= 0; cur_obs--) {
+                if (cur_case[cur_obs] < max_case[cur_obs]) {
+                    cur_case[cur_obs]++;
+                    break;
+                }
+            }
+        }
+
+        // restore optimal case
+        std::set<SatName> used;
+        for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
+            auto cur_action = obs_sat[cur_obs].second[cur_case[cur_obs]];
+            if (!used.count(cur_action->sat_name)) {
+                Interval ii(inter->start, inter->end, {cur_action});
+                auto new_inter = std::make_shared<Interval>(ii);
+                new_inter->capacity_change = sats.at(cur_action->sat_name).broadcast(ii.duration);
+
+                sats.at(cur_action->sat_name).full_schedule.push_back(new_inter);
+                obs.at(obs_sat[cur_obs].first).full_schedule.push_back(new_inter);
+            }
+        }
+
+        for (auto &sat_info: can_record) {
+            if (!used.count(sat_info.first)) {
+                Interval ii(inter->start, inter->end, {can_record.at(sat_info.first)});
+                auto new_inter = std::make_shared<Interval>(ii);
+                new_inter->capacity_change = sats.at(sat_info.first).record(ii.duration);
+                sats.at(sat_info.first).full_schedule.push_back(new_inter);
+            }
+        }
+   }
 }
-#endif

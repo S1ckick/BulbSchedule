@@ -18,7 +18,7 @@ int main()
     std::unordered_map<std::string, Observatory> obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
-    algos::greedy_capacity(sats, obs);
+    algos::greedy_exhaustive(sats, obs);
 
     std::ofstream out("sats.txt", std::ofstream::out);
     std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
@@ -45,45 +45,46 @@ int main()
 
     double sum_data = 0;
     for (auto &item : sats){
-        for (auto &interval : item.second.ints_in_area){
-            out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                << " " << interval->info[0]->sat_name << " "
-                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
-                << " " 
-                << std::endl;
-        }
+        // for (auto &interval : item.second.ints_in_area){
+        //     out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+        //         << " " << interval->info[0]->sat_name << " "
+        //         << (DURATION(tp_start, interval->start) * 1000) //milliseconds
+        //         << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
+        //         << " " 
+        //         << std::endl;
+        // }
 
-        for (auto &interval : item.second.ints_observatories){
-            sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                << " " << interval->info[0]->sat_name << " "
-                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
-                << " " << interval->info[0]->obs_name 
-                << " " << obs_to_hex[interval->info[0]->obs_name]
-                << " " << obs_to_int[interval->info[0]->obs_name]
-                << std::endl;
-        }
+        // for (auto &interval : item.second.ints_observatories){
+        //     sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+        //         << " " << interval->info[0]->sat_name << " "
+        //         << (DURATION(tp_start, interval->start) * 1000) //milliseconds
+        //         << " " << (DURATION(tp_start, interval->end) * 1000) //milliseconds
+        //         << " " << interval->info[0]->obs_name 
+        //         << " " << obs_to_hex[interval->info[0]->obs_name]
+        //         << " " << obs_to_int[interval->info[0]->obs_name]
+        //         << std::endl;
+        // }
 
         for (auto &interval : item.second.full_schedule){
-            out_schedule << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                << " " << interval->info[0]->sat_name
-                << " " << interval->info[0]->sat_type
-                << " "
-                << (DURATION(tp_start, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(tp_start, interval->end) * 1000)  //milliseconds
-                << " " << interval->info[0]->state
-                << " " << interval->capacity_change
-                << " " << obs_to_hex[interval->info[0]->obs_name]
-                << " " << obs_to_int[interval->info[0]->obs_name]
-                << " " << interval->info[0]->obs_name
-                << std::endl;
+            // out_schedule << std::fixed << satName_to_num[interval->info[0]->sat_name] 
+            //     << " " << interval->info[0]->sat_name
+            //     << " " << interval->info[0]->sat_type
+            //     << " "
+            //     << (DURATION(tp_start, interval->start) * 1000) //milliseconds
+            //     << " " << (DURATION(tp_start, interval->end) * 1000)  //milliseconds
+            //     << " " << interval->info[0]->state
+            //     << " " << interval->capacity_change
+            //     << " " << obs_to_hex[interval->info[0]->obs_name]
+            //     << " " << obs_to_int[interval->info[0]->obs_name]
+            //     << " " << interval->info[0]->obs_name
+            //     << std::endl;
 
             if (interval->info[0]->state == State::BROADCAST)
                 sum_data += interval->capacity_change;
         }
 
     }
+    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gb \n";
 
     out.close();
     out_schedule.close();
@@ -92,7 +93,6 @@ int main()
     double obs_total_length = countObsTotalLength(sats);
     std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
 
-    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << "\n";
 
     Schedule sats_to_check;
     std::string filename_sats_to_check = "sats_schedule.txt";
