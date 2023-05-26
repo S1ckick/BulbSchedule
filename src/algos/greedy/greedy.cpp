@@ -183,6 +183,8 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
 
                         // this observatory busy now
                         obs_actors.erase(cur_obs);
+
+                        break;
                     }
                 }
             }
