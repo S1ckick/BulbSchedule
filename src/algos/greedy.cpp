@@ -87,7 +87,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
                 Interval ii(inter->start, inter->end, {pair.second});
                 std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
 
-                if (pair.second->state == State::RECORDING) {
+                if (pair.second->state == State::RECORDING && sats.at(pair.first).capacity < sats.at(pair.first).max_capacity) {
                     new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
                 }
                 else {
@@ -130,8 +130,9 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
         // unique actors
         std::set<SatName> sat_actors;
         std::set<ObsName> obs_actors;
-        // maps to group actions by satellite 
+        // maps to group actions by actors
         std::unordered_map<SatName, std::vector<std::shared_ptr<IntervalInfo>>> visible_obs;
+        std::unordered_map<ObsName, std::vector<std::shared_ptr<IntervalInfo>>> visible_sat;
         std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> can_record;
         // get all actors in interval
         for (auto &action: inter->info) {
@@ -140,7 +141,11 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                 if (!visible_obs.count(action->sat_name)) {
                     visible_obs[action->sat_name] = {};
                 }
+                if (!visible_sat.count(action->obs_name)) {
+                    visible_sat[action->obs_name] = {};
+                }
                 visible_obs[action->sat_name].push_back(action);
+                visible_sat[action->obs_name].push_back(action);
                 obs_actors.insert(action->obs_name);
             }
             else {
@@ -155,11 +160,23 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
             sat_cap[cnt] = {sa, sats.at(sa).capacity / sats.at(sa).max_capacity};
             cnt++;
         }
-        std::sort(sat_cap.begin(), sat_cap.end(), 
-            [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){ 
-                return a.second * 0.5 * visible_obs.at(a.first).size() / obs_actors.size() > b.second * 0.5 * visible_obs.at(b.first).size() / obs_actors.size();
+
+        std::sort(sat_cap.begin(), sat_cap.end(),
+            [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){
+                double a_visibility = visible_obs.at(a.first).size() / obs_actors.size();
+                double b_visibility = visible_obs.at(b.first).size() / obs_actors.size();
+                return a.second * a_visibility > b.second * b_visibility;
             }
         );
+
+        // sort observatories by visibility
+        for (auto &vis_obs: visible_obs) {
+            std::sort(vis_obs.second.begin(), vis_obs.second.end(), 
+                [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
+                    return visible_sat.at(a->obs_name).size() > visible_sat.at(b->obs_name).size();
+                }
+            );
+        }
 
         // fill observatories with capacity priority
         for (auto &pair: sat_cap) {
@@ -189,7 +206,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                     }
                 }
             }
-            if (!pair_found && can_record.count(satellite)) {
+            if (!pair_found && can_record.count(satellite) && sats.at(satellite).capacity < sats.at(satellite).max_capacity) {
                 // satellite can't broadcast but can record
                 Interval ii(inter->start, inter->end, {can_record.at(satellite)});
                 auto new_inter = std::make_shared<Interval>(ii);

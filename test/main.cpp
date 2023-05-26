@@ -78,8 +78,8 @@ int main()
                 << " " << interval->info[0]->obs_name
                 << '\n';
 
-                if (interval->info[0]->state == State::BROADCAST)
-                    sum_data += interval->capacity_change;
+            if (interval->info[0]->state == State::BROADCAST)
+                sum_data += interval->capacity_change;
         }
 
     }
