@@ -248,8 +248,6 @@ int parse_schedule(VecSchedule &schedule) {
         else
             obs_name = "0";
 
-        std::cout << sat_num << ' ' << sat_name << ' ' << sat_type << " " << start_str << " " << end_str << " " << state_str << " " << capacity_change << std::endl;
-
         std::istringstream start_date("1/Jun/2027 00:00:00.000");
         timepoint tp_start;
         start_date >> date::parse("%d/%b/%Y %T", tp_start);
