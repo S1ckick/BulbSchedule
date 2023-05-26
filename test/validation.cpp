@@ -48,7 +48,27 @@ std::ostream& operator << (std::ostream& os, const State& obj)
    return os;
 }
 
-
+int checkZeroIntervals(Schedule &schedule_to_check, std::string &res) {
+    for(auto &interval : schedule_to_check) {
+        if(interval->start == interval->end) {
+            std::stringstream res_ss;
+            std::istringstream start_date("1/Jun/2027 00:00:00.000");
+            timepoint tp_start;
+            start_date >> date::parse("%d/%b/%Y %T", tp_start);
+            res_ss << std::fixed << "Error: \n" << interval->info[0]->sat_name <<
+                          " " << (DURATION(tp_start, interval->start) * 1000) <<
+                          " " << (DURATION(tp_start, interval->end) * 1000) <<
+                          " " << interval->info[0]->state <<
+                          " " << interval->capacity_change <<
+                          " " << obs_to_hex[interval->info[0]->obs_name] <<
+                          " " << obs_to_int[interval->info[0]->obs_name] <<
+                          " " << interval->info[0]->obs_name << std::endl;
+            res = res_ss.str();
+            return -1;
+        }
+    }
+    return 0;
+}
 
 int checkValidity(Schedule &schedule_to_check, std::string &res) {
     std::unordered_map<std::string, std::vector<std::shared_ptr<Interval>>> obs_to_check;
@@ -72,23 +92,23 @@ int checkValidity(Schedule &schedule_to_check, std::string &res) {
                 start_date >> date::parse("%d/%b/%Y %T", tp_start);
                     std::stringstream res_ss;
                     res_ss << std::fixed << "Error: \n" << item.second[i]->info[0]->sat_name <<
-                          " " << (long) (DURATION(tp_start, item.second[i]->start) * 1000) <<
-                          " " << (long) (DURATION(tp_start, item.second[i]->end) * 1000) <<
+                          " " << (DURATION(tp_start, item.second[i]->start) * 1000) <<
+                          " " << (DURATION(tp_start, item.second[i]->end) * 1000) <<
                           " " << item.second[i]->info[0]->state <<
                           " " << item.second[i]->capacity_change <<
                           " " << obs_to_hex[item.second[i]->info[0]->obs_name] <<
                           " " << obs_to_int[item.second[i]->info[0]->obs_name] <<
                           " " << item.second[i]->info[0]->obs_name << 
-                          "\n"<< 
+                          std::endl << 
                                 item.second[i+1]->info[0]->sat_name <<
-                          " " << (long) (DURATION(tp_start, item.second[i+1]->start) * 1000) <<
-                          " " << (long) (DURATION(tp_start, item.second[i+1]->end) * 1000) <<
+                          " " << (DURATION(tp_start, item.second[i+1]->start) * 1000) <<
+                          " " << (DURATION(tp_start, item.second[i+1]->end) * 1000) <<
                           " " << item.second[i+1]->info[0]->state <<
                           " " << item.second[i+1]->capacity_change <<
                           " " << obs_to_hex[item.second[i+1]->info[0]->obs_name] <<
                           " " << obs_to_int[item.second[i+1]->info[0]->obs_name] <<
                           " " << item.second[i+1]->info[0]->obs_name <<
-                          "\n";
+                          std::endl;
                 res = res_ss.str();
                 return -1;     
                }

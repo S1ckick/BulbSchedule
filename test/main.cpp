@@ -99,8 +99,14 @@ int main()
     parse_schedule(sats_to_check, filename_sats_to_check);
 
     std::string err_check_str;
-    int err_check_int = checkValidity(sats_to_check, err_check_str);
-    if(err_check_int == -1) {
+
+    if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
+        std::cout << "Zero interval " << err_check_str;
+    } else {
+        std::cout << "No zero intervals." << std::endl;
+    }
+    
+    if(checkValidity(sats_to_check, err_check_str) == -1) {
         std::cout << "Error while checking obs: " << err_check_str;
     } else {
         std::cout << "obs are fine!" << std::endl;
