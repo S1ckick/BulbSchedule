@@ -43,11 +43,9 @@ std::unordered_map<std::string, std::string> obs_to_hex = {
     {"Sumatra", "#388357"}
 };
 
-timepoint TP_START;
-
 int main()
 {
-
+    timepoint TP_START;
     std::istringstream start_date("1/Jun/2027 00:00:00.000");
     start_date >> date::parse("%d/%b/%Y %T", TP_START);
 
@@ -101,20 +99,21 @@ int main()
         }
 
         for (auto &interval : item.second.full_schedule){
-            out_schedule << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                << " " << interval->info[0]->sat_name
-                << " " << interval->info[0]->sat_type
+            auto &cur_info = interval->info[0];
+            out_schedule << std::fixed << satName_to_num[cur_info->sat_name] 
+                << " " << cur_info->sat_name
+                << " " << cur_info->sat_type
                 << " "
                 << (DURATION(TP_START, interval->start) * 1000) //milliseconds
                 << " " << (DURATION(TP_START, interval->end) * 1000)  //milliseconds
-                << " " << interval->info[0]->state
+                << " " << cur_info->state
                 << " " << interval->capacity_change
-                << " " << obs_to_hex[interval->info[0]->obs_name]
-                << " " << obs_to_int[interval->info[0]->obs_name]
-                << " " << interval->info[0]->obs_name
+                << " " << obs_to_hex[cur_info->obs_name]
+                << " " << obs_to_int[cur_info->obs_name]
+                << " " << cur_info->obs_name
                 << std::endl;
 
-            if (interval->info[0]->state == State::BROADCAST)
+            if (cur_info->state == State::BROADCAST)
                 sum_data += interval->capacity_change;
         }
 
@@ -131,7 +130,7 @@ int main()
 
     VecSchedule sats_to_check;
     std::string filename_sats_to_check = "sats_schedule.txt";
-    parse_schedule(sats_to_check, filename_sats_to_check);
+    parse_schedule(sats_to_check, filename_sats_to_check, TP_START);
     std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
 
     std::cout << sats_to_check.size() << std::endl;

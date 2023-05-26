@@ -2,14 +2,6 @@
 
 #include <algorithm>
 
-void print_time(const timepoint &a, const timepoint &b) {
-    std::cout << (std::chrono::duration<double, std::milli>(a - TP_START) * std::chrono::milliseconds::period::num /
-        std::chrono::milliseconds::period::den).count()
-                << " " << (std::chrono::duration<double, std::milli>(b - TP_START) * std::chrono::milliseconds::period::num /
-        std::chrono::milliseconds::period::den).count()
-                << '\n';
-}
-
 void algos::greedy_random(Satellites &sats, Observatories &obs) {
     using namespace std::chrono;
 

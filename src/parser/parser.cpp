@@ -41,7 +41,7 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     return interval;
 }
 
-int parse_russia_to_satellites(const char *location, std::unordered_map<SatName, Satellite> &sats)
+int parse_russia_to_satellites(const char *location, Satellites &sats)
 {
     std::cout << "\nStart parsing satellites\n";
 
@@ -225,7 +225,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
     return 0;
 }
 
-int parse_schedule(VecSchedule &schedule, std::string &filename) {
+int parse_schedule(VecSchedule &schedule, const std::string &filename, const timepoint &tp_start) {
     std::ifstream fp(filename);
     if (!fp)
     {
@@ -250,8 +250,8 @@ int parse_schedule(VecSchedule &schedule, std::string &filename) {
 
         long int start_int = std::stol(start_str);
         long int end_int = std::stol(end_str);
-        const timepoint start = TP_START + std::chrono::milliseconds(start_int);
-        const timepoint end = TP_START + std::chrono::milliseconds(end_int);
+        const timepoint start = tp_start + std::chrono::milliseconds(start_int);
+        const timepoint end = tp_start + std::chrono::milliseconds(end_int);
 
         Interval inter(start, end, std::stoi(sat_name), str_to_sat_type.at(sat_type), obs_name);
         inter.info[0]->state = str_to_state.at(state_str);
