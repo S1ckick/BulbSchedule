@@ -225,7 +225,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
     return 0;
 }
 
-int parse_schedule(Schedule &schedule, std::string &filename) {
+int parse_schedule(VecSchedule &schedule, std::string &filename) {
     std::ifstream fp(filename);
     if (!fp)
     {
@@ -248,19 +248,16 @@ int parse_schedule(Schedule &schedule, std::string &filename) {
         else
             obs_name = "0";
 
-        std::istringstream start_date("1/Jun/2027 00:00:00.000");
-        timepoint tp_start;
-        start_date >> date::parse("%d/%b/%Y %T", tp_start);
         long int start_int = std::stol(start_str);
         long int end_int = std::stol(end_str);
-        const timepoint start = tp_start + std::chrono::milliseconds(start_int);
-        const timepoint end = tp_start + std::chrono::milliseconds(end_int);
+        const timepoint start = TP_START + std::chrono::milliseconds(start_int);
+        const timepoint end = TP_START + std::chrono::milliseconds(end_int);
 
         Interval inter(start, end, std::stoi(sat_name), str_to_sat_type.at(sat_type), obs_name);
         inter.info[0]->state = str_to_state.at(state_str);
         inter.capacity_change = std::stod(capacity_change);
 
-        schedule.insert(std::make_shared<Interval>(inter));
+        schedule.push_back(std::make_shared<Interval>(inter));
     }
 
     fp.close();
