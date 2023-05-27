@@ -62,6 +62,11 @@ struct IntervalInfo {
     IntervalInfo(const IntervalInfo &base_interval) = default;
     //IntervalInfo(IntervalInfo &base_interval) = default;
 
+    bool operator==(const IntervalInfo &r)
+    {        
+        return sat_name == r.sat_name && state == r.state && obs_name == r.obs_name;
+    }
+
     IntervalInfo(
         const SatName &sat, const SatType &type,
         const ObsName &obs = {}) : sat_name(sat), sat_type(type), obs_name(obs)
