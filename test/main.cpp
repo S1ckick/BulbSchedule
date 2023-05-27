@@ -5,7 +5,9 @@
 #include <vector>
 #include <iomanip>
 
+
 #include "validation.h"
+#include "writer.h"
 
 using namespace date;
 
@@ -137,7 +139,7 @@ int main()
                 sum_data += interval->capacity_change;
         }
     }
-    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gb \n";
+    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
 
     out.close();
     out_schedule.close();
@@ -147,6 +149,12 @@ int main()
     std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
 
 
+    // write result
+
+    write_res_obs(sats, obs_to_int);
+
+    // Validation
+
     VecSchedule sats_to_check;
     std::string filename_sats_to_check = "sats_schedule.txt";
     parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
@@ -154,12 +162,6 @@ int main()
 
     std::cout << sats_to_check.size() << std::endl;
     std::string err_check_str;
-
-    // if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
-    //     std::cout << "Intervals intersection " << err_check_str;
-    // } else {
-    //     std::cout << "No intervals intersections." << std::endl;
-    // }
 
     if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
         std::cout << "Zero interval " << err_check_str;
@@ -184,7 +186,6 @@ int main()
     // } else {
     //     std::cout << "all satellites record in right area" << std::endl;
     // }
-
 
     return 0;
 }
