@@ -219,8 +219,8 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
     int cur_step = 0;
 
     for (auto &inter: plan) {
-        if (cnt / (plan.size() / 100) > cur_step) {
-            std::cout << cur_step++ << "/100\n";
+        if (cnt / (plan.size() / 100000) > cur_step) {
+            std::cout << cur_step++ << "/100000\n";
         }
         cnt++;
 
@@ -232,7 +232,7 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
         for (auto &action: inter->info) {
             // sat_actors.insert(action->sat_name);
             if (action->state == State::BROADCAST) {
-                if (sats.at(action->sat_name).capacity > 0) {
+                if (sats.at(action->sat_name).capacity / sats.at(action->sat_name).max_capacity > 0.5) {
                     if (!visible_obs.count(action->sat_name)) {
                         visible_obs[action->sat_name] = {};
                     }
@@ -251,14 +251,23 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
 
         // mb sort stations before
 
-        std::vector<std::pair<ObsName, std::vector<std::shared_ptr<IntervalInfo>>>> obs_sat(visible_sat.begin(), visible_sat.end());
+        std::vector<std::pair<ObsName, std::vector<SatName>>> obs_sat;
+        for (auto &vis_sat: visible_sat) {
+            std::vector<SatName> obs_satels;
+            for (auto &event: vis_sat.second) {
+                obs_satels.push_back(event->sat_name);
+            }
+            obs_sat.push_back({vis_sat.first, obs_satels});
+        }
 
         // sort satellite for observatories by capacity
         for (auto &vis_sat: obs_sat) {
             std::sort(vis_sat.second.begin(), vis_sat.second.end(), 
-                [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
-                    return 1.0 * sats.at(a->sat_name).capacity / sats.at(a->sat_name).max_capacity
-                         > 1.0 * sats.at(b->sat_name).capacity / sats.at(b->sat_name).max_capacity;
+                [&](const SatName &a, const SatName &b) {
+                    double a_visibility = 1.0 * visible_obs.at(a).size() / visible_sat.size();
+                    double b_visibility = 1.0 * visible_obs.at(b).size() / visible_sat.size();
+                    return 1.0 * sats.at(a).capacity / sats.at(a).max_capacity * a_visibility
+                         > 1.0 * sats.at(b).capacity / sats.at(b).max_capacity * b_visibility;
                 }
             );
         }
@@ -274,44 +283,74 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
             double opt_data = 0;
 
             int obs_cnt = 0;
+            unsigned int cases_num = 1;
             for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
+                //cases_space.push_back(obs_sat[cur_obs].second.begin(), obs_sat[cur_obs].second.end());
                 max_case[cur_obs] = obs_sat[cur_obs].second.size() - 1;
+                cases_num *= obs_sat[cur_obs].second.size();
             }
+            //std::cout << cases_num << "\n";
+
+            // alloc data for full search
+            bool finish = false;
+            std::unordered_map<SatName, bool> used;
+            for (auto &satel: visible_obs) {
+                used[satel.first] = false;
+            }
+            std::unordered_map<SatName, double> fullness;
+            double mean_fullness = 0;
+            for (auto &satel: visible_obs) {
+                fullness[satel.first] = 1.0 * sats.at(satel.first).capacity / sats.at(satel.first).max_capacity;
+                mean_fullness += fullness[satel.first];
+            }
+            mean_fullness /= fullness.size();
 
             // check all possible cases
-            bool finish = false;
             while (!finish) {
-                std::set<SatName> used;
-                double cur_fullness = 0;
+                //double cur_fullness = 0;
+                int used_num = 0;
+                for (auto &satel: used) {
+                    used[satel.first] = false;
+                }
 
                 // fill observatories
-                for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
-                    auto &cur_sat = obs_sat[cur_obs].second[cur_case[cur_obs]]->sat_name;
-                    if (!used.count(cur_sat)) {
-                        used.insert(cur_sat);
-                        cur_fullness += 1.0 * sats.at(cur_sat).capacity / sats.at(cur_sat).max_capacity;//sats.at(cur_sat).can_broadcast(inter->duration);
+                for (int cur_obs = 0; cur_obs < obs_num; ++cur_obs) {
+                    auto &cur_sat = obs_sat[cur_obs].second[cur_case[cur_obs]];
+                    if (!used[cur_sat]) {
+                        used[cur_sat] = true;
+                        used_num++;
+                        //cur_fullness += fullness[cur_sat];//sats.at(cur_sat).can_broadcast(inter->duration);
                     }
                 }
 
-                // save new optimal solution
-                if (opt_data < cur_fullness) {
-                    opt_data = cur_fullness;
+                // ok to stop
+                //std::cout << used_num << " " << obs_num << "\n";
+                if (used_num == obs_num) { //cur_fullness > mean_fullness * obs_num && 
                     opt_case = cur_case;
+                    break;
                 }
 
-                // increase case number
-                for (int cur_obs = obs_num - 1; cur_obs >= 0; cur_obs--) {
+                // // save new optimal solution
+                // if (opt_data < cur_fullness) {
+                //     opt_data = cur_fullness;
+                //     opt_case = cur_case;
+                // }
+
+                if (cur_case == max_case)
+                    break;
+                
+                for (int cur_obs = 0; cur_obs < obs_num; ++cur_obs) {
                     if (cur_case[cur_obs] < max_case[cur_obs]) {
                         cur_case[cur_obs]++;
-                        if (cur_case == max_case)
-                            finish = true;
                         break;
+                    } else {
+                        cur_case[cur_obs] = 0;
                     }
                 }
             }
             // restore optimal case
             for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
-                auto cur_action = obs_sat[cur_obs].second[opt_case[cur_obs]];
+                auto cur_action = visible_sat[obs_sat[cur_obs].first][opt_case[cur_obs]];
                 if (!used_sats.count(cur_action->sat_name)) {
                     used_sats.insert(cur_action->sat_name);
                     Interval ii(inter->start, inter->end, {cur_action});
