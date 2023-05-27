@@ -155,10 +155,15 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
 
         std::sort(sat_cap.begin(), sat_cap.end(),
             [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){
-                double a_visibility = 1.0 * visible_obs.at(a.first).size() / obs_actors.size();
-                double b_visibility = 1.0 * visible_obs.at(b.first).size() / obs_actors.size();
-                 return a_visibility * a.second > b_visibility * b.second;
-                // return a.second * 0.35 + a_visibility * 0.65 > b.second * 0.35 + b_visibility * 0.65;
+                double is_kinosat_a = sats.at(a.first).type == SatType::KINOSAT;
+                double is_kinosat_b = sats.at(b.first).type == SatType::KINOSAT;
+
+                double a_visibility = (1 - 1.0 * visible_obs.at(a.first).size() / obs_actors.size());
+                double b_visibility = (1 - 1.0 * visible_obs.at(b.first).size() / obs_actors.size());
+
+                double a_fullness = a.second;
+                double b_fullness = b.second;
+                return a_visibility * a_fullness * 0.9 + 0.1 * is_kinosat_a > b_visibility * b_fullness * 0.9 + 0.1 * is_kinosat_b;
             }
         );
 
