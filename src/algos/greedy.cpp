@@ -54,7 +54,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
             if (broadcasting_count < obs.size() && action->state == State::BROADCAST)
             {
                 if (sat_state.at(action->sat_name)->state != State::BROADCAST && 
-                    obs_state.at(action->obs_name)->state != State::BROADCAST) 
+                    obs_state.at(action->obs_name)->state != State::BROADCAST && sats.at(action->sat_name).capacity > 0) 
                 {
                     broadcasting_count++;
                     sat_state.at(action->sat_name) = action;
@@ -78,10 +78,10 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
                 Interval ii(inter->start, inter->end, {pair.second});
                 std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
 
-                if (pair.second->state == State::RECORDING && sats.at(pair.first).capacity < sats.at(pair.first).max_capacity) {
+                if (pair.second->state == State::RECORDING) {
                     new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
                 }
-                else {
+                else if (pair.second->state == State::BROADCAST) {
                     if (pair.second->obs_name.empty()) {
                         throw std::logic_error("Obs and sat state dont coresspond");
                     }
@@ -197,7 +197,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                     }
                 }
             }
-            if (!pair_found && can_record.count(satellite) && sats.at(satellite).capacity < sats.at(satellite).max_capacity) {
+            if (!pair_found && can_record.count(satellite)) {
                 // satellite can't broadcast but can record
                 Interval ii(inter->start, inter->end, {can_record.at(satellite)});
                 auto new_inter = std::make_shared<Interval>(ii);
@@ -257,69 +257,75 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
         for (auto &vis_sat: obs_sat) {
             std::sort(vis_sat.second.begin(), vis_sat.second.end(), 
                 [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
-                    return sats.at(a->sat_name).capacity < sats.at(b->sat_name).capacity;
+                    return 1.0 * sats.at(a->sat_name).capacity / sats.at(a->sat_name).max_capacity
+                         > 1.0 * sats.at(b->sat_name).capacity / sats.at(b->sat_name).max_capacity;
                 }
             );
         }
 
         int obs_num = obs_sat.size();
+        std::set<SatName> used_sats;
 
-        // sats < 200 so string is acceptable and easier to manipulate
-        std::string max_case(obs_num, char(0));
-        std::string cur_case(obs_num, char(0));
-        std::string opt_case(obs_num, char(0));
-        double opt_data = 0;
+        if (obs_num > 0) {
+            // sats < 200 so string is acceptable and easier to manipulate
+            std::string max_case(obs_num, char(0));
+            std::string cur_case(obs_num, char(0));
+            std::string opt_case(obs_num, char(0));
+            double opt_data = 0;
 
-        int obs_cnt = 0;
-        for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
-            max_case[cur_obs] = obs_sat[cur_obs].second.size() - 1;
-        }
-
-        // check all possible cases
-        while (cur_case < max_case) {
-            std::set<SatName> used;
-            double cur_data = 0;
-
-            // fill observatories
+            int obs_cnt = 0;
             for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
-                auto &cur_sat = obs_sat[cur_obs].second[cur_case[cur_obs]]->sat_name;
-                if (!used.count(cur_sat)) {
-                    used.insert(cur_sat);
-                    cur_data += sats.at(cur_sat).can_broadcast(inter->duration);
+                max_case[cur_obs] = obs_sat[cur_obs].second.size() - 1;
+            }
+
+            // check all possible cases
+            bool finish = false;
+            while (!finish) {
+                std::set<SatName> used;
+                double cur_fullness = 0;
+
+                // fill observatories
+                for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
+                    auto &cur_sat = obs_sat[cur_obs].second[cur_case[cur_obs]]->sat_name;
+                    if (!used.count(cur_sat)) {
+                        used.insert(cur_sat);
+                        cur_fullness += 1.0 * sats.at(cur_sat).capacity / sats.at(cur_sat).max_capacity;//sats.at(cur_sat).can_broadcast(inter->duration);
+                    }
+                }
+
+                // save new optimal solution
+                if (opt_data < cur_fullness) {
+                    opt_data = cur_fullness;
+                    opt_case = cur_case;
+                }
+
+                // increase case number
+                for (int cur_obs = obs_num - 1; cur_obs >= 0; cur_obs--) {
+                    if (cur_case[cur_obs] < max_case[cur_obs]) {
+                        cur_case[cur_obs]++;
+                        if (cur_case == max_case)
+                            finish = true;
+                        break;
+                    }
                 }
             }
+            // restore optimal case
+            for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
+                auto cur_action = obs_sat[cur_obs].second[opt_case[cur_obs]];
+                if (!used_sats.count(cur_action->sat_name)) {
+                    used_sats.insert(cur_action->sat_name);
+                    Interval ii(inter->start, inter->end, {cur_action});
+                    auto new_inter = std::make_shared<Interval>(ii);
+                    new_inter->capacity_change = sats.at(cur_action->sat_name).broadcast(ii.duration);
 
-            // save new optimal solution
-            if (opt_data <= cur_data) {
-                opt_data = cur_data;
-                opt_case = cur_case;
-            }
-
-            // increase case number
-            for (int cur_obs = obs_num - 1; cur_obs >= 0; cur_obs--) {
-                if (cur_case[cur_obs] < max_case[cur_obs]) {
-                    cur_case[cur_obs]++;
-                    break;
+                    sats.at(cur_action->sat_name).full_schedule.push_back(new_inter);
+                    obs.at(obs_sat[cur_obs].first).full_schedule.push_back(new_inter);
                 }
-            }
-        }
-
-        // restore optimal case
-        std::set<SatName> used;
-        for (int cur_obs = 0; cur_obs < obs_num; cur_obs++) {
-            auto cur_action = obs_sat[cur_obs].second[cur_case[cur_obs]];
-            if (!used.count(cur_action->sat_name)) {
-                Interval ii(inter->start, inter->end, {cur_action});
-                auto new_inter = std::make_shared<Interval>(ii);
-                new_inter->capacity_change = sats.at(cur_action->sat_name).broadcast(ii.duration);
-
-                sats.at(cur_action->sat_name).full_schedule.push_back(new_inter);
-                obs.at(obs_sat[cur_obs].first).full_schedule.push_back(new_inter);
             }
         }
 
         for (auto &sat_info: can_record) {
-            if (!used.count(sat_info.first)) {
+            if (!used_sats.count(sat_info.first)) {
                 Interval ii(inter->start, inter->end, {can_record.at(sat_info.first)});
                 auto new_inter = std::make_shared<Interval>(ii);
                 new_inter->capacity_change = sats.at(sat_info.first).record(ii.duration);

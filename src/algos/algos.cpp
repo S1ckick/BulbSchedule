@@ -48,7 +48,7 @@ Schedule algos::great_plan(const Satellites &sats) {
 		//std::cout << event_tp << "\n";
 
 		if (event_dir == 1) { // start
-			if (info_stack.size() > 1) {
+			if (!info_stack.empty()) {
 				if (last_trigger != event_tp) {
 					Interval i(last_trigger, event_tp, info_stack);
 					great_plan.insert(std::make_shared<Interval>(i));

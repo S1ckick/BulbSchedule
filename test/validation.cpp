@@ -1,6 +1,6 @@
 #include "validation.h"
 
-std::ostream& operator << (std::ostream& os, const State& obj)
+std::ostream& operator<<(std::ostream& os, const State& obj)
 {
    if(obj == State::IDLE) {
     os << "IDLE";
@@ -16,26 +16,29 @@ std::ostream& operator << (std::ostream& os, const State& obj)
 
 int checkRecordingInRightArea(VecSchedule &schedule_to_check, Satellites &sats, std::string &res)
 {
+    auto one_ms = std::chrono::milliseconds(1);
     for (auto &interval : schedule_to_check)
     {
-        auto &sat = sats.at(interval->info[0]->sat_name);
-        int found = 0;
-        for (auto &area : sat.ints_in_area)
-        {
-            if (interval->start >= area->start && interval->end <= area->end)
+        if (interval->info[0]->state == State::RECORDING) {
+            auto &sat = sats.at(interval->info[0]->sat_name);
+            bool found = false;
+            for (auto &area : sat.ints_in_area)
             {
-                found = 1;
-                break;
+                if (interval->start >= area->start - one_ms && interval->end <= area->end + one_ms)
+                {
+                    found = true;
+                    break;
+                }
             }
-        }
-        if (found == 0)
-        {
-            std::stringstream res_ss;
-            res_ss << std::fixed
-                   << "Error: \n"
-                   << (interval.get()) << std::endl;
-            res = res_ss.str();
-            return -1;
+            if (!found)
+            {
+                std::stringstream res_ss;
+                res_ss << std::fixed
+                    << "Error: \n"
+                    << (interval->info[0]->sat_name) << " " << (interval->capacity_change) << std::endl;
+                res = res_ss.str();
+                return -1;
+            }
         }
     }
     return 0;
@@ -53,8 +56,8 @@ int checkForIntervalsIntersection(VecSchedule &schedule_to_check, std::string &r
         {
             std::stringstream res_ss;
             res_ss << std::fixed << "Error: \n"
-                   << schedule_to_check[i].get() << std::endl
-                   << schedule_to_check[i + 1].get() << std::endl;
+                   << schedule_to_check[i]->info[0]->sat_name << schedule_to_check[i]->info[0]->state << std::endl
+                   << schedule_to_check[i + 1]->info[0]->sat_name << schedule_to_check[i + 1]->info[0]->state << std::endl;
             res = res_ss.str();
             return -1;
         }
@@ -84,7 +87,7 @@ int checkValidity(VecSchedule &schedule_to_check, std::string &res)
 
     for (auto &item : schedule_to_check)
     {
-        if (item->info[0]->obs_name != "0")
+        if (item->info[0]->obs_name.empty())
             obs_to_check[item->info[0]->obs_name].push_back(item);
     }
 

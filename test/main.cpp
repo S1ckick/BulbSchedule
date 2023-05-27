@@ -56,11 +56,45 @@ int main()
     Observatories obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
-    algos::greedy_exhaustive(sats, obs);
+    algos::greedy_capacity(sats, obs);
 
-    std::ofstream out("sats.txt", std::ofstream::out);
-    std::ofstream out_schedule("sats_schedule.txt", std::ofstream::out);
-    std::ofstream sats_obs_out("sats_obs.txt", std::ofstream::out);
+    std::cout << "Schedule builded\n";
+
+    // connect same actions
+    // TODO: Remove to some schedule insertion function
+    for (auto &sat: sats) {
+        auto &sched = sat.second.full_schedule;
+        for (int i = 0; i < sched.size() - 1; i++) {
+            int next = i;
+            while ((next + 1) < sched.size() &&
+                   sched[i]->info[0] == sched[next + 1]->info[0] &&
+                   sched[i]->end == sched[next + 1]->start
+                   ) 
+            {
+                (*sched[i]) += (*sched[next + 1]);
+                next++;
+            }
+            if (next >= sched.size())
+                std::cout << "govno";
+            if (next == i + 1)
+                sched.erase(sched.begin() + i + 1);
+            else if (next != i) {
+                auto was = sched.begin() + next;
+                sched.erase(sched.begin() + i + 1, sched.begin() + next + 1);
+                auto now = sched.begin() + i + 1;
+            }
+        }
+    }
+
+    std::cout << "Schedule packed\n";
+
+    std::ofstream out("sats.txt");
+    std::ofstream out_schedule("sats_schedule.txt");
+    std::ofstream sats_obs_out("sats_obs.txt");
+
+    if (!out || !out_schedule || !sats_obs_out) {
+        std::cout << "Can't create files\n";
+    }
 
     std::unordered_map<int,int> satName_to_num;
 
@@ -77,7 +111,9 @@ int main()
     }
 
     double sum_data = 0;
+    int cnt_sat = 1;
     for (auto &item : sats){
+        std::cout << "Writing shedule: " << cnt_sat++ << "/" << sats.size() << "\n";
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
@@ -104,8 +140,8 @@ int main()
                 << " " << cur_info->sat_name
                 << " " << cur_info->sat_type
                 << " "
-                << (DURATION(TP_START, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(TP_START, interval->end) * 1000)  //milliseconds
+                << int(DURATION(TP_START, interval->start) * 1000) //milliseconds
+                << " " << int(DURATION(TP_START, interval->end) * 1000)  //milliseconds
                 << " " << cur_info->state
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[cur_info->obs_name]
@@ -136,11 +172,11 @@ int main()
     std::cout << sats_to_check.size() << std::endl;
     std::string err_check_str;
 
-    if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
-        std::cout << "Intervals intersection " << err_check_str;
-    } else {
-        std::cout << "No intervals intersections." << std::endl;
-    }
+    // if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
+    //     std::cout << "Intervals intersection " << err_check_str;
+    // } else {
+    //     std::cout << "No intervals intersections." << std::endl;
+    // }
 
     if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
         std::cout << "Zero interval " << err_check_str;

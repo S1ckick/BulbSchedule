@@ -202,11 +202,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
                         }
 
                     cur_sat_name = std::stoi(&line[start_number]);
-
-                    if (strncmp(&line[prefix_size], KinosatName.data(), KinosatName.size()) == 0)
-                        cur_sat_type = SatType::KINOSAT;
-                    else
-                        cur_sat_type = SatType::ZORKIY;
+                    cur_sat_type = sats.at(cur_sat_name).type;
 
                     headerRead = true;
                     // pass header lines

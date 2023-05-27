@@ -101,6 +101,16 @@ struct Interval
     Interval(const Interval &base_interval) = default;
     //Interval(Interval &base_interval) = default;
 
+    // use only for same interval info and consecutive intervals
+    Interval &operator+=(const Interval &r)
+    {
+        duration += r.duration;
+        capacity_change += r.capacity_change;
+        end = r.end;
+        
+        return *this;
+    }
+
     // Constructor for parser
     Interval(
         const timepoint &tp_start,
