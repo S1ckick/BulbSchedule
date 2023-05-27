@@ -1,17 +1,42 @@
 #include "validation.h"
 
-std::ostream& operator<<(std::ostream& os, const State& obj)
+extern std::unordered_map<std::string, std::string> obs_to_hex;
+extern std::unordered_map<std::string, int> obs_to_int;
+extern timepoint START_MODELLING;
+
+inline std::ostream& operator << (std::ostream& o, Interval& a)
 {
-   if(obj == State::IDLE) {
-    os << "IDLE";
-   }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
-   }
-   if(obj == State::RECORDING) {
-    os << "RECORDING";
-   }
-   return os;
+    o << a.info[0]->sat_name <<
+    " " << (DURATION(START_MODELLING, a.start) * 1000) <<
+    " " << (DURATION(START_MODELLING, a.end) * 1000) <<
+    " " << a.capacity_change <<
+    " " << obs_to_hex[a.info[0]->obs_name] <<
+    " " << obs_to_int[a.info[0]->obs_name] <<
+    " " << a.info[0]->obs_name;
+    return o;
+}
+
+int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Observatories &obs, std::string &res) {
+    for(auto &interval : schedule_to_check) {
+        if(interval->info[0]->state != State::BROADCAST)
+            continue;
+        auto &ob = obs.at(interval->info[0]->obs_name);
+        int found = 0;
+        for(auto &area : ob.ints_satellite) {
+            if(interval->start >= area->start && interval->end <= area->end) {
+                found = 1;
+                break;
+            }
+        }
+    
+        if(found == 0) {
+            std::stringstream res_ss;
+            res_ss << std::fixed << "Error: \n" << *interval << std::endl;
+            res = res_ss.str();
+            return -1;
+        }
+    }
+    return 0;
 }
 
 int checkRecordingInRightArea(VecSchedule &schedule_to_check, Satellites &sats, std::string &res)
@@ -35,7 +60,7 @@ int checkRecordingInRightArea(VecSchedule &schedule_to_check, Satellites &sats, 
                 std::stringstream res_ss;
                 res_ss << std::fixed
                     << "Error: \n"
-                    << (interval->info[0]->sat_name) << " " << (interval->capacity_change) << std::endl;
+                    << *interval << std::endl;
                 res = res_ss.str();
                 return -1;
             }
@@ -56,8 +81,8 @@ int checkForIntervalsIntersection(VecSchedule &schedule_to_check, std::string &r
         {
             std::stringstream res_ss;
             res_ss << std::fixed << "Error: \n"
-                   << schedule_to_check[i]->info[0]->sat_name << schedule_to_check[i]->info[0]->state << std::endl
-                   << schedule_to_check[i + 1]->info[0]->sat_name << schedule_to_check[i + 1]->info[0]->state << std::endl;
+                   << *schedule_to_check[i] << std::endl
+                   << *schedule_to_check[i + 1] << std::endl;
             res = res_ss.str();
             return -1;
         }
@@ -73,7 +98,7 @@ int checkZeroIntervals(VecSchedule &schedule_to_check, std::string &res)
         {
             std::stringstream res_ss;
             res_ss << std::fixed << "Error: \n"
-                   << interval.get() << std::endl;
+                   << *interval << std::endl;
             res = res_ss.str();
             return -1;
         }
@@ -104,8 +129,8 @@ int checkValidity(VecSchedule &schedule_to_check, std::string &res)
                 // not all is fine
                 std::stringstream res_ss;
                 res_ss << std::fixed << "Error: \n"
-                       << item.second[i].get() << std::endl
-                       << item.second[i + 1].get() << std::endl;
+                       << *item.second[i] << std::endl
+                       << *item.second[i + 1] << std::endl;
                 res = res_ss.str();
                 return -1;
             }
