@@ -72,34 +72,6 @@ int main()
 
     std::cout << "Schedule builded\n";
 
-    // connect same actions
-    // TODO: Remove to some schedule insertion function
-    for (auto &sat: sats) {
-        auto &sched = sat.second.full_schedule;
-        for (int i = 0; i < sched.size() - 1; i++) {
-            int next = i;
-            while ((next + 1) < sched.size() &&
-                   *(sched[i]->info[0]) == *(sched[next + 1]->info[0]) &&
-                   sched[i]->end == sched[next + 1]->start
-                   ) 
-            {
-                (*sched[i]) += (*sched[next + 1]);
-                next++;
-            }
-            if (next >= sched.size())
-                std::cout << "govno";
-            if (next == i + 1)
-                sched.erase(sched.begin() + i + 1);
-            else if (next != i) {
-                auto was = sched.begin() + next;
-                sched.erase(sched.begin() + i + 1, sched.begin() + next + 1);
-                auto now = sched.begin() + i + 1;
-            }
-        }
-    }
-
-    std::cout << "Schedule packed\n";
-
     std::ofstream out("sats.txt");
     std::ofstream out_schedule("sats_schedule.txt");
     std::ofstream sats_obs_out("sats_obs.txt");

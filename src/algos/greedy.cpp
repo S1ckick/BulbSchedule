@@ -77,18 +77,19 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
             if (pair.second->state != State::IDLE) {
                 Interval ii(inter->start, inter->end, {pair.second});
                 std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
+                algos::add2schedule(new_inter, sats.at(pair.first), obs.at(pair.second->obs_name));
 
-                if (pair.second->state == State::RECORDING) {
-                    new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
-                }
-                else if (pair.second->state == State::BROADCAST) {
-                    if (pair.second->obs_name.empty()) {
-                        throw std::logic_error("Obs and sat state dont coresspond");
-                    }
-                    new_inter->capacity_change = sats.at(pair.first).broadcast(ii.duration);
-                    obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
-                }
-                sats.at(pair.first).full_schedule.push_back(new_inter);
+                // if (pair.second->state == State::RECORDING) {
+                //     new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
+                // }
+                // else if (pair.second->state == State::BROADCAST) {
+                //     if (pair.second->obs_name.empty()) {
+                //         throw std::logic_error("Obs and sat state dont coresspond");
+                //     }
+                //     new_inter->capacity_change = sats.at(pair.first).broadcast(ii.duration);
+                //     obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
+                // }
+                // sats.at(pair.first).full_schedule.push_back(new_inter);
             }
         }
 
@@ -156,7 +157,8 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
             [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){
                 double a_visibility = 1.0 * visible_obs.at(a.first).size() / obs_actors.size();
                 double b_visibility = 1.0 * visible_obs.at(b.first).size() / obs_actors.size();
-                return a.second * a_visibility > b.second * b_visibility;
+                 return a_visibility * a.second > b_visibility * b.second;
+                // return a.second * 0.35 + a_visibility * 0.65 > b.second * 0.35 + b_visibility * 0.65;
             }
         );
 
@@ -185,10 +187,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                         // fill interval
                         Interval ii(inter->start, inter->end, {visible});
                         auto new_inter = std::make_shared<Interval>(ii);
-                        new_inter->capacity_change = sats.at(satellite).broadcast(ii.duration);
-
-                        sats.at(satellite).full_schedule.push_back(new_inter);
-                        obs.at(cur_obs).full_schedule.push_back(new_inter);
+                        algos::add2schedule(new_inter, sats.at(satellite), obs.at(cur_obs));
 
                         // this observatory busy now
                         obs_actors.erase(cur_obs);
@@ -201,8 +200,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                 // satellite can't broadcast but can record
                 Interval ii(inter->start, inter->end, {can_record.at(satellite)});
                 auto new_inter = std::make_shared<Interval>(ii);
-                new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
-                sats.at(satellite).full_schedule.push_back(new_inter);
+                algos::add2schedule(new_inter, sats.at(satellite));
             }
         }
     }
@@ -305,16 +303,20 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
             }
             mean_fullness /= fullness.size();
 
+            int changed_last = 0;
+            int changed_first = 0;
+            bool is_overflow = false;
+
             // check all possible cases
             while (!finish) {
                 //double cur_fullness = 0;
                 int used_num = 0;
-                for (auto &satel: used) {
-                    used[satel.first] = false;
-                }
 
                 // fill observatories
-                for (int cur_obs = 0; cur_obs < obs_num; ++cur_obs) {
+                int start_idx = changed_last;
+                if (is_overflow)
+                    start_idx = 0;
+                for (int cur_obs = start_idx; cur_obs <= changed_last; ++cur_obs) {
                     auto &cur_sat = obs_sat[cur_obs].second[cur_case[cur_obs]];
                     if (!used[cur_sat]) {
                         used[cur_sat] = true;
@@ -339,12 +341,17 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
                 if (cur_case == max_case)
                     break;
                 
-                for (int cur_obs = 0; cur_obs < obs_num; ++cur_obs) {
+                is_overflow = false;
+                for (int cur_obs = start_idx; cur_obs < obs_num; ++cur_obs) {
+                    used[obs_sat[cur_obs].second[cur_case[cur_obs]]] = false;
+                    used_num--;
                     if (cur_case[cur_obs] < max_case[cur_obs]) {
                         cur_case[cur_obs]++;
+                        changed_last = cur_obs;
                         break;
                     } else {
                         cur_case[cur_obs] = 0;
+                        is_overflow = true;
                     }
                 }
             }
@@ -355,10 +362,7 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
                     used_sats.insert(cur_action->sat_name);
                     Interval ii(inter->start, inter->end, {cur_action});
                     auto new_inter = std::make_shared<Interval>(ii);
-                    new_inter->capacity_change = sats.at(cur_action->sat_name).broadcast(ii.duration);
-
-                    sats.at(cur_action->sat_name).full_schedule.push_back(new_inter);
-                    obs.at(obs_sat[cur_obs].first).full_schedule.push_back(new_inter);
+                    algos::add2schedule(new_inter, sats.at(cur_action->sat_name), obs.at(cur_action->obs_name));
                 }
             }
         }
@@ -367,8 +371,7 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
             if (!used_sats.count(sat_info.first)) {
                 Interval ii(inter->start, inter->end, {can_record.at(sat_info.first)});
                 auto new_inter = std::make_shared<Interval>(ii);
-                new_inter->capacity_change = sats.at(sat_info.first).record(ii.duration);
-                sats.at(sat_info.first).full_schedule.push_back(new_inter);
+                algos::add2schedule(new_inter, sats.at(sat_info.first));
             }
         }
    }

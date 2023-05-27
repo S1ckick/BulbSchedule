@@ -67,3 +67,29 @@ Schedule algos::great_plan(const Satellites &sats) {
 
 	return std::move(great_plan);
 }
+
+Observatory empty_obs({"", {}, {}});
+
+void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat, Observatory &cur_obs) {
+	if (interval->info[0]->state == State::RECORDING)
+		interval->capacity_change = cur_sat.record(interval->duration);
+	else if (interval->info[0]->state == State::BROADCAST)
+		interval->capacity_change = cur_sat.broadcast(interval->duration);
+
+	// its pointer so it affects observatory interval too
+	if (!cur_sat.full_schedule.empty())
+	{
+		auto last_sat = cur_sat.full_schedule[cur_sat.full_schedule.size() - 1];
+		if (interval->start == last_sat->end && interval->info[0] == last_sat->info[0]) {
+			(*last_sat) += (*interval);
+			return;
+		}
+	}
+
+	else if (interval->info[0]->state == State::BROADCAST) {
+		if (cur_obs.name.empty())
+			throw std::logic_error("Pass observatoty in add2schedule to add broadcsting interval");
+		cur_obs.full_schedule.push_back(interval);
+	}
+	cur_sat.full_schedule.push_back(interval);
+}
