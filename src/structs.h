@@ -171,8 +171,11 @@ struct sort_schedule
 {
     bool operator()(const std::shared_ptr<Interval> &a, const std::shared_ptr<Interval> &b) const
     {
-        if (a->start == b->start)
+        if (a->start == b->start) {
+            if (a->end == b->end)
+                return a->info[0]->obs_name < b->info[0]->obs_name;
             return a->duration > b->duration;
+        }
         return a->start < b->start;
     }
 };
