@@ -190,8 +190,14 @@ int main()
         std::cout << "obs are fine!" << std::endl;
     }
 
+    if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
+       std::cout << "Error while checking broadcast area: " << err_check_str;
+    } else {
+        std::cout << "all satellites broadcast in right area" << std::endl;
+    }
+
     if(checkRecordingInRightArea(sats_to_check, sats, err_check_str) == -1) {
-       std::cout << "Error while checking recording in right area: " << err_check_str;
+       std::cout << "Error while checking recording area: " << err_check_str;
     } else {
         std::cout << "all satellites record in right area" << std::endl;
     }
