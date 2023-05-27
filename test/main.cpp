@@ -43,6 +43,20 @@ std::unordered_map<std::string, std::string> obs_to_hex = {
     {"Sumatra", "#388357"}
 };
 
+inline std::ostream& operator<<(std::ostream& os, const State& obj)
+{
+   if(obj == State::IDLE) {
+    os << "IDLE";
+   }
+   if(obj == State::BROADCAST){
+    os << "BROADCAST";
+   }
+   if(obj == State::RECORDING) {
+    os << "RECORDING";
+   }
+   return os;
+}
+
 timepoint START_MODELLING{std::chrono::milliseconds{1811808000000}};
 
 int main()
@@ -140,6 +154,7 @@ int main()
                 << " "
                 << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
                 << " " << (DURATION(START_MODELLING, interval->end) * 1000)  //milliseconds
+                << " " << interval->info[0]->state
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[cur_info->obs_name]
                 << " " << obs_to_int[cur_info->obs_name]
@@ -149,7 +164,6 @@ int main()
             if (cur_info->state == State::BROADCAST)
                 sum_data += interval->capacity_change;
         }
-
     }
     std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gb \n";
 

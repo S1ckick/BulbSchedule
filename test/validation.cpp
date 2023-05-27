@@ -4,26 +4,11 @@ extern std::unordered_map<std::string, std::string> obs_to_hex;
 extern std::unordered_map<std::string, int> obs_to_int;
 extern timepoint START_MODELLING;
 
-inline std::ostream& operator<<(std::ostream& os, const State& obj)
-{
-   if(obj == State::IDLE) {
-    os << "IDLE";
-   }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
-   }
-   if(obj == State::RECORDING) {
-    os << "RECORDING";
-   }
-   return os;
-}
-
 inline std::ostream& operator << (std::ostream& o, Interval& a)
 {
     o << a.info[0]->sat_name <<
     " " << (DURATION(START_MODELLING, a.start) * 1000) <<
     " " << (DURATION(START_MODELLING, a.end) * 1000) <<
-    " " << a.info[0]->state <<
     " " << a.capacity_change <<
     " " << obs_to_hex[a.info[0]->obs_name] <<
     " " << obs_to_int[a.info[0]->obs_name] <<
