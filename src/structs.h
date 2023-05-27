@@ -23,10 +23,6 @@ using SatName = uint32_t;
 using ObsName = std::string;
 using timepoint = std::chrono::system_clock::time_point;
 
-extern std::unordered_map<std::string, std::string> obs_to_hex;
-extern std::unordered_map<std::string, int> obs_to_int;
-extern timepoint TP_START;
-
 enum class SatType
 {
     KINOSAT,
@@ -51,20 +47,6 @@ enum class State
     BROADCAST,
     RECORDING // for satellite
 };
-
-inline std::ostream& operator << (std::ostream& os, const State& obj)
-{
-   if(obj == State::IDLE) {
-    os << "IDLE";
-   }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
-   }
-   if(obj == State::RECORDING) {
-    os << "RECORDING";
-   }
-   return os;
-}
 
 const std::map<SatType, std::string> SatNames = {{SatType::KINOSAT, "KinoSat"}, {SatType::ZORKIY, "Zorkiy"}};
 const std::string KinosatName = SatNames.at(SatType::KINOSAT);
@@ -173,21 +155,6 @@ struct Interval
         std::copy(new_info.begin(), new_info.end(), info.begin());
     }
 };
-
-inline std::ostream& operator << (std::ostream& o, Interval& a)
-{
-
-    o << a.info[0]->sat_name <<
-    " " << (DURATION(TP_START, a.start) * 1000) <<
-    " " << (DURATION(TP_START, a.end) * 1000) <<
-    " " << a.info[0]->state <<
-    " " << a.capacity_change <<
-    " " << obs_to_hex[a.info[0]->obs_name] <<
-    " " << obs_to_int[a.info[0]->obs_name] <<
-    " " << a.info[0]->obs_name;
-
-    return o;
-}
 
 inline bool sort_obs(std::shared_ptr<Interval> a, std::shared_ptr<Interval> b) {
     if (a->start == b->start)

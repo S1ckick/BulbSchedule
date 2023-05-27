@@ -237,12 +237,17 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
         std::istringstream line_stream(line);
         std::string sat_num, sat_name, sat_type, start_str, end_str, state_str, capacity_change,
                     obs_hex, obs_int, obs_name;
-        line_stream >> sat_num >> sat_name >> sat_type >> start_str >> end_str >> state_str >> capacity_change >>
+        line_stream >> sat_num >> sat_name >> sat_type >> start_str >> end_str >> capacity_change >>
                     obs_hex;
-        if(obs_hex != "0")
+        if(obs_hex != "0") {
             line_stream >> obs_int >> obs_name;
-        else
+            state_str = "BROADCAST";
+        }
+        else {
             obs_name = "0";
+            state_str = "RECORDING";
+        }
+            
 
         long int start_int = std::stol(start_str);
         long int end_int = std::stol(end_str);

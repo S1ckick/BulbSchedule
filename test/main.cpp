@@ -43,12 +43,10 @@ std::unordered_map<std::string, std::string> obs_to_hex = {
     {"Sumatra", "#388357"}
 };
 
+timepoint START_MODELLING{std::chrono::milliseconds{1811808000000}};
+
 int main()
 {
-    timepoint TP_START;
-    std::istringstream start_date("1/Jun/2027 00:00:00.000");
-    start_date >> date::parse("%d/%b/%Y %T", TP_START);
-
     Satellites sats;
     const char russia_location[] = "../../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
@@ -117,8 +115,8 @@ int main()
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (DURATION(TP_START, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(TP_START, interval->end) * 1000) //milliseconds
+                << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
                 << " " 
                 << std::endl;
         }
@@ -126,8 +124,8 @@ int main()
         for (auto &interval : item.second.ints_observatories){
             sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
-                << (DURATION(TP_START, interval->start) * 1000) //milliseconds
-                << " " << (DURATION(TP_START, interval->end) * 1000) //milliseconds
+                << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
                 << " " << interval->info[0]->obs_name 
                 << " " << obs_to_hex[interval->info[0]->obs_name]
                 << " " << obs_to_int[interval->info[0]->obs_name]
@@ -140,9 +138,8 @@ int main()
                 << " " << cur_info->sat_name
                 << " " << cur_info->sat_type
                 << " "
-                << int(DURATION(TP_START, interval->start) * 1000) //milliseconds
-                << " " << int(DURATION(TP_START, interval->end) * 1000)  //milliseconds
-                << " " << cur_info->state
+                << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
+                << " " << (DURATION(START_MODELLING, interval->end) * 1000)  //milliseconds
                 << " " << interval->capacity_change
                 << " " << obs_to_hex[cur_info->obs_name]
                 << " " << obs_to_int[cur_info->obs_name]
@@ -166,17 +163,17 @@ int main()
 
     VecSchedule sats_to_check;
     std::string filename_sats_to_check = "sats_schedule.txt";
-    parse_schedule(sats_to_check, filename_sats_to_check, TP_START);
+    parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
     std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
 
     std::cout << sats_to_check.size() << std::endl;
     std::string err_check_str;
 
-    // if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
-    //     std::cout << "Intervals intersection " << err_check_str;
-    // } else {
-    //     std::cout << "No intervals intersections." << std::endl;
-    // }
+    if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
+        std::cout << "Intervals intersection " << err_check_str;
+    } else {
+        std::cout << "No intervals intersections." << std::endl;
+    }
 
     if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
         std::cout << "Zero interval " << err_check_str;
@@ -190,17 +187,17 @@ int main()
         std::cout << "obs are fine!" << std::endl;
     }
 
-    if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
-       std::cout << "Error while checking broadcast area: " << err_check_str;
-    } else {
-        std::cout << "all satellites broadcast in right area" << std::endl;
-    }
+    // if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
+    //    std::cout << "Error while checking broadcast area: " << err_check_str;
+    // } else {
+    //     std::cout << "all satellites broadcast in right area" << std::endl;
+    // }
 
-    if(checkRecordingInRightArea(sats_to_check, sats, err_check_str) == -1) {
-       std::cout << "Error while checking recording area: " << err_check_str;
-    } else {
-        std::cout << "all satellites record in right area" << std::endl;
-    }
+    // if(checkRecordingInRightArea(sats_to_check, sats, err_check_str) == -1) {
+    //    std::cout << "Error while checking recording area: " << err_check_str;
+    // } else {
+    //     std::cout << "all satellites record in right area" << std::endl;
+    // }
 
 
     return 0;
