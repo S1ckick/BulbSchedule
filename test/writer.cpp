@@ -37,7 +37,7 @@ int write_res_obs(Satellites &sats, std::string &path, std::unordered_map<std::s
     for (auto &item : sats){
         for (auto &interval : item.second.full_schedule){
             auto &cur_info = interval->info[0];
-            if(cur_info->state != State::BROADCAST)
+            if(cur_info->state != State::TRANSMISSION)
                 continue;
             std::ofstream & out_f = obs_files_to_save[cur_info->obs_name].first;
             out_f << std::fixed << std::setprecision(9) << obs_files_to_save[cur_info->obs_name].second++ 
