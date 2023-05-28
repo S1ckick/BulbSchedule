@@ -69,8 +69,8 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                 uniqueness_conditions_sat[info->sat_name] += v;
                 can_record[info->sat_name] = true;
                 
-                optimized += v * (int)(1000 * inter->duration * sat.recording_speed *
-                                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
+                optimized += v * (int)(1200 * inter->duration * sat.recording_speed *
+                                              (sat.max_capacity * 0.7 - sat.capacity) / sat.max_capacity);
             }
             else if (info->state == State::TRANSMISSION)
             {
@@ -154,6 +154,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
     std::cout << "Starting scheduler\n";
     auto plan_ = great_plan(sats);
     VecSchedule plan(plan_.begin(), plan_.end());
+    typedef std::tuple<int, SatName, ObsName> SegmentSatObs;
     
     std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
 
@@ -163,16 +164,13 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
     std::unique_ptr<LinearExpr> optimized(new LinearExpr());
     std::unique_ptr<std::map<SatName, LinearExpr>> underflow_conditions(new std::map<SatName, LinearExpr>());
     
-    typedef std::tuple<int, SatName, ObsName> SegmentSatObs;
-    
     std::map<SegmentSatObs, BoolVar> vars;
     std::map<SegmentSatObs, std::shared_ptr<IntervalInfo>> id_to_info;
+    int nconstraints = 0;
     
     for (int cnt = 0; cnt < plan.size(); cnt++)
     {
         auto &inter = plan[cnt];
-        
-        printf("%6d/%d ", cnt, plan.size());
         
         auto infos = inter->info;
         
@@ -184,15 +182,14 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
         for (auto & sat : sats)
         {
             SatName name = sat.second.name;
-            underflow_conditions->at(name) = LinearExpr();
-            underflow_conditions->at(name) -= (int)(1000 * sats.at(sat.second.name).capacity);
+            (*underflow_conditions)[name] = LinearExpr();
+            (*underflow_conditions)[name] -= (int)(1000 * sats.at(sat.second.name).capacity);
             uniqueness_conditions_sat[name] = LinearExpr();
             can_record[name] = false;
         }
         
         for (auto & ob : obs)
             uniqueness_conditions_obs[ob.second.name] = LinearExpr();
-        
         
         for (auto &info : infos)
         {
@@ -203,7 +200,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                 Satellite &sat = sats.at(info->sat_name);
                 vars.insert({id, v});
                 id_to_info[id] = info;
-                underflow_conditions->at(info->sat_name) -= v * (int)(1000 * inter->duration * sat.recording_speed);
+                (*underflow_conditions)[info->sat_name] -= v * (int)(1000 * inter->duration * sat.recording_speed);
                 uniqueness_conditions_sat[info->sat_name] += v;
                 can_record[info->sat_name] = true;
                 
@@ -218,14 +215,13 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                 
                 vars.insert({id, v}); 
                 id_to_info[id] = info;
-                underflow_conditions->at(info->sat_name) += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
+                (*underflow_conditions)[info->sat_name] += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
                 uniqueness_conditions_obs[info->obs_name] += v;
                 uniqueness_conditions_sat[info->sat_name] += v;
                 (*optimized) += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
             }
         }
         
-        int nconstraints = 0;
         for (auto & sat : sats)
         {
             if (can_record[sat.second.name])
@@ -233,7 +229,11 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             else
                 cp_model->AddLessOrEqual(uniqueness_conditions_sat[sat.second.name], 1);
             nconstraints++;
-            cp_model->AddLessOrEqual(underflow_conditions->at(sat.second.name), 0);
+            // I am not sure the copying is needed.
+            // Anyway, the goal is to put this linear condition as it is,
+            // and then continue to grow it for future segments
+            LinearExpr underflow_copy((*underflow_conditions)[sat.second.name]);
+            cp_model->AddLessOrEqual(underflow_copy, 0);
             nconstraints++;
         }
         
@@ -243,10 +243,11 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             nconstraints++;
         }
         
-        printf("%d v, %d c ", vars.size(), nconstraints);
-        
-        if (cnt % 10 == 0)
+        if (cnt % 50 == 0 || cnt == plan.size() - 1)
         {
+            printf("%6d/%d ", cnt, plan.size());
+            printf("%d v, %d c ", vars.size(), nconstraints);
+            fflush(stdout);
             cp_model->Maximize(*optimized);
 
             const CpSolverResponse response = Solve(cp_model->Build());
@@ -292,9 +293,10 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             cp_model.reset(new CpModelBuilder());
             optimized.reset(new LinearExpr());
             underflow_conditions.reset(new std::map<SatName, LinearExpr>());
+            nconstraints = 0;
+            printf("\n");
         }
          
-        printf("\n");
         //break;
     }
     
