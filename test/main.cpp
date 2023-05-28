@@ -4,8 +4,12 @@
 #include <cstring>
 #include <vector>
 #include <iomanip>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 #include "validation.h"
+#include "writer.h"
 
 using namespace date;
 
@@ -68,13 +72,23 @@ int main()
     Observatories obs;
     const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
+
+    auto start_algo = std::chrono::high_resolution_clock::now();
     algos::greedy_capacity(sats, obs);
+    auto end_algo = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Schedule built\n";
+    std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
 
-    std::ofstream out("sats.txt");
-    std::ofstream out_schedule("sats_schedule.txt");
+
+    fs::current_path(fs::current_path());
+
+    std::string res_dir = "results/";
+
+    fs::create_directories(res_dir);
+    std::ofstream out_schedule(res_dir + "all_schedule.txt");
+
     std::ofstream sats_obs_out("sats_obs.txt");
+    std::ofstream out("sats.txt");
 
     if (!out || !out_schedule || !sats_obs_out) {
         std::cout << "Can't create files\n";
@@ -97,7 +111,7 @@ int main()
     double sum_data = 0;
     int cnt_sat = 1;
     for (auto &item : sats){
-        std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
+        //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
         for (auto &interval : item.second.ints_in_area){
             out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
                 << " " << interval->info[0]->sat_name << " "
@@ -137,7 +151,8 @@ int main()
                 sum_data += interval->capacity_change;
         }
     }
-    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gb \n";
+    std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
+    std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 
     out.close();
     out_schedule.close();
@@ -147,19 +162,22 @@ int main()
     std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
 
 
+    // write result
+
+    std::string path_to_res_obs = res_dir + "observatories/";
+    write_res_obs(sats, path_to_res_obs, obs_to_int);
+    std::string path_to_res_sats = res_dir + "satellites/";
+    write_res_sats(sats, path_to_res_sats);
+
+    // Validation
+
     VecSchedule sats_to_check;
-    std::string filename_sats_to_check = "sats_schedule.txt";
+    std::string filename_sats_to_check = res_dir + "all_schedule.txt";
     parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
     std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
 
     std::cout << sats_to_check.size() << std::endl;
     std::string err_check_str;
-
-    // if(checkForIntervalsIntersection(sats_to_check, err_check_str) == -1){
-    //     std::cout << "Intervals intersection " << err_check_str;
-    // } else {
-    //     std::cout << "No intervals intersections." << std::endl;
-    // }
 
     if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
         std::cout << "Zero interval " << err_check_str;
@@ -184,7 +202,6 @@ int main()
     // } else {
     //     std::cout << "all satellites record in right area" << std::endl;
     // }
-
 
     return 0;
 }

@@ -145,20 +145,29 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
             }
         }
 
-        // sort all satellites by current capacity
-        std::vector<std::pair<SatName, double>> sat_cap(sat_actors.size());
+        std::vector<std::pair<SatName, double>> sat_cap(visible_obs.size());
         int cnt = 0;
-        for (auto &sa: sat_actors) {
-            sat_cap[cnt] = {sa, sats.at(sa).capacity / sats.at(sa).max_capacity};
+        for (auto &sa: visible_obs) {
+            sat_cap[cnt] = {sa.first, sats.at(sa.first).capacity / sats.at(sa.first).max_capacity};
             cnt++;
         }
 
+        // sort all satellites by current priority estimation
         std::sort(sat_cap.begin(), sat_cap.end(),
             [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){
-                double a_visibility = 1.0 * visible_obs.at(a.first).size() / obs_actors.size();
-                double b_visibility = 1.0 * visible_obs.at(b.first).size() / obs_actors.size();
-                 return a_visibility * a.second > b_visibility * b.second;
-                // return a.second * 0.35 + a_visibility * 0.65 > b.second * 0.35 + b_visibility * 0.65;
+                double is_kinosat_a = (sats.at(a.first).type == SatType::KINOSAT);
+                double is_kinosat_b = (sats.at(b.first).type == SatType::KINOSAT);
+
+                double a_visibility = (1 - 1.0 * visible_obs.at(a.first).size() / obs_actors.size());
+                double b_visibility = (1 - 1.0 * visible_obs.at(b.first).size() / obs_actors.size());
+
+                double a_fullness = a.second;
+                double b_fullness = b.second;
+
+                double a_enough_data = (sats.at(a.first).capacity > inter->duration * sats.at(a.first).broadcasting_speed);
+                double b_enough_data = (sats.at(b.first).capacity > inter->duration * sats.at(b.first).broadcasting_speed);
+                //return (a_fullness) > (b_fullness);
+                return (a_visibility * 0.6 + a_fullness * 0.2 + 0.1 * is_kinosat_a + 0.4 * a_enough_data) > (b_visibility * 0.6 + b_fullness * 0.2 + 0.1 * is_kinosat_b + 0.4 * b_enough_data);
             }
         );
 
@@ -166,7 +175,9 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
         for (auto &vis_obs: visible_obs) {
             std::sort(vis_obs.second.begin(), vis_obs.second.end(), 
                 [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
-                    return visible_sat.at(a->obs_name).size() > visible_sat.at(b->obs_name).size();
+                    if (visible_sat.at(a->obs_name).size() == visible_sat.at(b->obs_name).size())
+                        return a->obs_name < b->obs_name; // always order double city-observatory same way
+                    return visible_sat.at(a->obs_name).size() < visible_sat.at(b->obs_name).size();
                 }
             );
         }

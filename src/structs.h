@@ -171,8 +171,11 @@ struct sort_schedule
 {
     bool operator()(const std::shared_ptr<Interval> &a, const std::shared_ptr<Interval> &b) const
     {
-        if (a->start == b->start)
+        if (a->start == b->start) {
+            if (a->end == b->end)
+                return a->info[0]->obs_name < b->info[0]->obs_name;
             return a->duration > b->duration;
+        }
         return a->start < b->start;
     }
 };
@@ -200,13 +203,13 @@ struct Satellite
         capacity = 0;
         if (sat_type == SatType::KINOSAT)
         {
-            max_capacity = 8192;
+            max_capacity = 8000;
             broadcasting_speed = 1;
             recording_speed = 4;
         }
         else
         { // ZORKIY
-            max_capacity = 4096;
+            max_capacity = 4000;
             broadcasting_speed = 0.25;
             recording_speed = 4;
         }
