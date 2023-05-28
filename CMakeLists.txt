@@ -8,7 +8,7 @@ endif()
 
 set(RESOURCE_FILES DATA_Files/*)
 
-set(CMAKE_PREFIX_PATH "./or-tools-linux/lib/cmake") 
+set(CMAKE_PREFIX_PATH "../third-party/or-tools-linux/lib/cmake") 
 find_package(ortools REQUIRED CONFIG)
 
 add_library(solver INTERFACE)
