@@ -188,6 +188,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
                     cur_obs = start_of_line;
+                    obs[cur_obs] = Observatory{cur_obs, {}};
                     size_t prefix_size = prefix.size();
                     int start_number = -1;
                     for (int i = 0; i < line.size(); i++)
