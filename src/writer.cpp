@@ -45,7 +45,7 @@ int write_res_obs(Satellites &sats, std::string &path, std::unordered_map<std::s
                   << " " << date::format("%e %b %Y %T", interval->end)
                   << " " << DURATION(interval->start, interval->end)
                   << " " << cur_info->sat_name 
-                  << " " << interval->capacity_change * 125.0 << std::endl;
+                  << " " << interval->capacity_change * 128.0 << std::endl;
         }
     }
 
@@ -72,7 +72,7 @@ int write_res_sats(Satellites &sats, std::string &path) {
                   << " " << date::format("%e %b %Y %T", interval->start)
                   << " " << date::format("%e %b %Y %T", interval->end)
                   << " " << DURATION(interval->start, interval->end)
-                  << " " << interval->capacity_change * 125.0
+                  << " " << interval->capacity_change * 128.0
                   << " " << interval->info[0]->state 
                   << " " << interval->info[0]->obs_name
                   << std::endl;

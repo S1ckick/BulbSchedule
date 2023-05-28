@@ -203,13 +203,13 @@ struct Satellite
         capacity = 0;
         if (sat_type == SatType::KINOSAT)
         {
-            max_capacity = 8000;
+            max_capacity = 8192;
             broadcasting_speed = 1;
             recording_speed = 4;
         }
         else
         { // ZORKIY
-            max_capacity = 4000;
+            max_capacity = 4096;
             broadcasting_speed = 0.25;
             recording_speed = 4;
         }
