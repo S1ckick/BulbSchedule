@@ -69,10 +69,10 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                 uniqueness_conditions_sat[info->sat_name] += v;
                 can_record[info->sat_name] = true;
                 
-                optimized += v * (int)(1200 * inter->duration * sat.recording_speed *
+                optimized += v * (int)(1500 * inter->duration * sat.recording_speed *
                                               (sat.max_capacity * 0.7 - sat.capacity) / sat.max_capacity);
             }
-            else if (info->state == State::BROADCAST)
+            else if (info->state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model.NewBoolVar();
                 std::string id = std::to_string(info->sat_name) + "_" + info->obs_name;
@@ -207,7 +207,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                 //optimized += v * (int)(1000 * inter->duration * sat.recording_speed *
                 //                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
-            else if (info->state == State::BROADCAST)
+            else if (info->state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model->NewBoolVar();
                 SegmentSatObs id(cnt, info->sat_name, info->obs_name);
@@ -243,7 +243,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             nconstraints++;
         }
         
-        if (cnt % 50 == 0 || cnt == plan.size() - 1)
+        if (cnt % 10 == 0 || cnt == plan.size() - 1)
         {
             printf("%6d/%d ", cnt, plan.size());
             printf("%d v, %d c ", vars.size(), nconstraints);
