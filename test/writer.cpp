@@ -10,8 +10,8 @@ inline std::ostream& operator<<(std::ostream& os, const State& obj)
    if(obj == State::IDLE) {
     os << "IDLE";
    }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
+   if(obj == State::TRANSMISSION){
+    os << "TRANSMISSION";
    }
    if(obj == State::RECORDING) {
     os << "RECORDING";
@@ -33,16 +33,19 @@ int write_res_obs(Satellites &sats, std::string &path, std::unordered_map<std::s
         obs_files_to_save[item.first] = std::make_pair<std::ofstream, long int>(std::move(obs_out_f), 1);
     }
 
+    double total = 0.0;
     for (auto &item : sats){
         for (auto &interval : item.second.full_schedule){
             auto &cur_info = interval->info[0];
+            if(cur_info->state != State::BROADCAST)
+                continue;
             std::ofstream & out_f = obs_files_to_save[cur_info->obs_name].first;
             out_f << std::fixed << std::setprecision(9) << obs_files_to_save[cur_info->obs_name].second++ 
                   << " " << date::format("%e %b %Y %T", interval->start)
                   << " " << date::format("%e %b %Y %T", interval->end)
                   << " " << DURATION(interval->start, interval->end)
                   << " " << cur_info->sat_name 
-                  << " " << interval->capacity_change / 1000.0 << std::endl;
+                  << " " << interval->capacity_change * 125.0 << std::endl;
         }
     }
 
@@ -69,7 +72,7 @@ int write_res_sats(Satellites &sats, std::string &path) {
                   << " " << date::format("%e %b %Y %T", interval->start)
                   << " " << date::format("%e %b %Y %T", interval->end)
                   << " " << DURATION(interval->start, interval->end)
-                  << " " << interval->capacity_change / 1000.0 
+                  << " " << interval->capacity_change * 125.0
                   << " " << interval->info[0]->state 
                   << " " << interval->info[0]->obs_name
                   << std::endl;

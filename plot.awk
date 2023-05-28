@@ -12,7 +12,7 @@ BEGIN {
             printf("set arrow from %s,%s to %s,%s nohead front lt 1 lw 4 lc rgb \"#11FF11\"\n",
                    $4, $1, $5, $1)
         }
-        else if ($5 == "BROADCAST")
+        else if ($5 == "TRANSMISSION")
         {
             printf("set arrow from %s,%s to %s,%s nohead lw 3 lc rgb \"%s\" \n",
                    $4, $1, $5, $1, $8)

@@ -5,6 +5,10 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 
 using namespace date;
 
@@ -26,13 +30,9 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     timepoint tp_end;
     end_date >> date::parse("%d/%b/%Y %T", tp_end);
 
-    double duration = DURATION(tp_start, tp_end);
-    // (std::chrono::duration<double, std::milli>(tp_end - tp_start) * std::chrono::milliseconds::period::num /
-    //                    std::chrono::milliseconds::period::den)
-    //                       .count();
     State new_state;
     if (!obs_name.empty())
-        new_state = State::BROADCAST;
+        new_state = State::TRANSMISSION;
     else
         new_state = State::RECORDING;
 
@@ -44,14 +44,15 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
 int parse_russia_to_satellites(const char *location, Satellites &sats)
 {
     std::cout << "\nStart parsing satellites\n";
-
-    std::vector<std::string> file_names = {"Russia-To-Satellite-SatPlanes_1_5.txt", "Russia-To-Satellite-SatPlanes_6_20.txt"};
     std::vector<SatType> sat_types = {SatType::KINOSAT, SatType::ZORKIY};
-    // Read Russia intervals for each satellite
-    for (int file_idx = 0; file_idx < file_names.size(); file_idx++)
+    for (const auto & entry : fs::directory_iterator(location))
     {
-        std::string filename;
-        filename = std::string(location) + file_names[file_idx];
+        std::string name = entry.path().filename();
+        //check filename
+        if(name.rfind("Russia-To", 0) != 0)
+            continue;
+        // Read Russia intervals for each satellite
+        std::string filename = entry.path();
         std::cout << "Reading file " + filename + "\n";
 
         std::ifstream fp(filename);
@@ -105,7 +106,7 @@ int parse_russia_to_satellites(const char *location, Satellites &sats)
 
                     cur_sat = std::stoi(&sat_name[start_number]);
                     if (!sats.count(cur_sat)) {
-                        SatType cur_type = sat_types[file_idx];
+                        SatType cur_type = (cur_sat < 110600) ? SatType::KINOSAT : SatType::ZORKIY;
                         auto new_sat = Satellite(cur_sat, cur_type);
                         sats.insert(std::make_pair(cur_sat, new_sat));
                     }
@@ -139,23 +140,16 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
 
     // TODO: call OS (in)dependent function to get files list
 
-    std::vector<ObsName> obs_names = {"Anadyr1", "Anadyr2", "CapeTown",
-                                          "Delhi", "Irkutsk", "Magadan1",
-                                          "Magadan2", "Moscow", "Murmansk1",
-                                          "Murmansk2", "Norilsk", "Novosib",
-                                          "RioGallegos", "Sumatra"};
-
-    size_t obs_num = obs_names.size();
     std::cout << "\nStart parsing observatories\n";
     // Read each observatory
-    for (int i = 0; i < obs_num; i++)
+    for (const auto & entry : fs::directory_iterator(location))
     {
-        std::string filename;
-        ObsName cur_obs = obs_names[i].data();
-        obs[cur_obs] = Observatory{cur_obs, {}};
-
-        filename = std::string(location) + "Facility-" + obs_names[i] + ".txt";
-
+        std::string name = entry.path().filename();
+        //check filename
+        if(name.rfind("Facility", 0) != 0)
+            continue;
+        // Read Russia intervals for each satellite
+        std::string filename = entry.path();
         std::cout << "Reading file " + filename + "\n";
         
         std::ifstream fp(filename);
@@ -169,6 +163,7 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
         std::string line;
 
         bool headerRead = false;
+        ObsName cur_obs;
 
         while ((std::getline(fp, line)))
         {
@@ -188,12 +183,12 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
             }
             else
             {
-                std::string prefix = obs_names[i] + "-To-";
-
+                std::string start_of_line = line.substr(0, line.find('-'));
+                std::string prefix = start_of_line + "-To-";
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
+                    cur_obs = start_of_line;
                     size_t prefix_size = prefix.size();
-
                     int start_number = -1;
                     for (int i = 0; i < line.size(); i++)
                         if (line[i] == '_') {
@@ -231,7 +226,7 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
 
     std::string line;
     std::unordered_map<std::string,SatType> const str_to_sat_type = { {"KINOSAT", SatType::KINOSAT}, {"ZORKIY", SatType::ZORKIY} };
-    std::unordered_map<std::string,State> const str_to_state = { {"BROADCAST", State::BROADCAST}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
+    std::unordered_map<std::string,State> const str_to_state = { {"TRANSMISSION", State::TRANSMISSION}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
     
     while ((std::getline(fp, line))) {
         std::istringstream line_stream(line);
@@ -246,7 +241,6 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
             obs_name = "0";
         }
             
-
         long int start_int = std::stol(start_str);
         long int end_int = std::stol(end_str);
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
