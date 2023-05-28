@@ -63,14 +63,16 @@ inline std::ostream& operator<<(std::ostream& os, const State& obj)
 
 timepoint START_MODELLING{std::chrono::milliseconds{1811808000000}};
 
-int main()
+int main(int argc, char* argv[])
 {
     Satellites sats;
-    const char russia_location[] = "DATA_Files/Russia2Constellation2/";
+
+    std::string russia_location = (argc > 1) ? argv[1] : "../../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
     Observatories obs;
-    const char facility_location[] = "DATA_Files/Facility2Constellation/";
+    std::string facility_location = (argc > 2) ? argv[2] : "../../DATA_Files/Facility2Constellation/";
+
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
 
     auto start_algo = std::chrono::high_resolution_clock::now();
@@ -171,25 +173,25 @@ int main()
 
     // Validation
 
-    VecSchedule sats_to_check;
-    std::string filename_sats_to_check = res_dir + "all_schedule.txt";
-    parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
-    std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
+    // VecSchedule sats_to_check;
+    // std::string filename_sats_to_check = res_dir + "all_schedule.txt";
+    // parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
+    // std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
 
-    std::cout << sats_to_check.size() << std::endl;
-    std::string err_check_str;
+    // std::cout << sats_to_check.size() << std::endl;
+    // std::string err_check_str;
 
-    if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
-        std::cout << "Zero interval " << err_check_str;
-    } else {
-        std::cout << "No zero intervals." << std::endl;
-    }
+    // if(checkZeroIntervals(sats_to_check, err_check_str) == -1){
+    //     std::cout << "Zero interval " << err_check_str;
+    // } else {
+    //     std::cout << "No zero intervals." << std::endl;
+    // }
     
-    if(checkValidity(sats_to_check, err_check_str) == -1) {
-        std::cout << "Error while checking obs: " << err_check_str;
-    } else {
-        std::cout << "obs are fine!" << std::endl;
-    }
+    // if(checkValidity(sats_to_check, err_check_str) == -1) {
+    //     std::cout << "Error while checking obs: " << err_check_str;
+    // } else {
+    //     std::cout << "obs are fine!" << std::endl;
+    // }
 
     // if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
     //    std::cout << "Error while checking transmission area: " << err_check_str;

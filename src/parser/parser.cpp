@@ -41,7 +41,7 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     return interval;
 }
 
-int parse_russia_to_satellites(const char *location, Satellites &sats)
+int parse_russia_to_satellites(std::string &location, Satellites &sats)
 {
     std::cout << "\nStart parsing satellites\n";
     std::vector<SatType> sat_types = {SatType::KINOSAT, SatType::ZORKIY};
@@ -132,7 +132,7 @@ int parse_russia_to_satellites(const char *location, Satellites &sats)
     return 0;
 }
 
-int parse_observatory(const char *location, Observatories &obs, Satellites &sats)
+int parse_observatory(std::string &location, Observatories &obs, Satellites &sats)
 {
     int int_idx = 0;
     SatName cur_sat_name;
