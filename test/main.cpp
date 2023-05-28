@@ -158,8 +158,8 @@ int main()
     out_schedule.close();
     sats_obs_out.close();
 
-    double obs_total_length = countObsTotalLength(sats);
-    std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
+    // double obs_total_length = countObsTotalLength(sats);
+    // std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
 
 
     // write result
