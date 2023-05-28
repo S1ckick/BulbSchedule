@@ -73,8 +73,8 @@ Observatory empty_obs({"", {}, {}});
 void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat, Observatory &cur_obs) {
 	if (interval->info[0]->state == State::RECORDING)
 		interval->capacity_change = cur_sat.record(interval->duration);
-	else if (interval->info[0]->state == State::BROADCAST)
-		interval->capacity_change = cur_sat.broadcast(interval->duration);
+	else if (interval->info[0]->state == State::TRANSMISSION)
+		interval->capacity_change = cur_sat.transmission(interval->duration);
 
 	// its pointer so it affects observatory interval too
 	if (!cur_sat.full_schedule.empty())
@@ -86,7 +86,7 @@ void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat
 		}
 	}
 
-	else if (interval->info[0]->state == State::BROADCAST) {
+	else if (interval->info[0]->state == State::TRANSMISSION) {
 		if (cur_obs.name.empty())
 			throw std::logic_error("Pass observatoty in add2schedule to add broadcsting interval");
 		cur_obs.full_schedule.push_back(interval);

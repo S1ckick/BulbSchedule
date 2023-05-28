@@ -51,10 +51,10 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
         }
 
         for (auto &action: inter->info) {
-            if (broadcasting_count < obs.size() && action->state == State::BROADCAST)
+            if (broadcasting_count < obs.size() && action->state == State::TRANSMISSION)
             {
-                if (sat_state.at(action->sat_name)->state != State::BROADCAST && 
-                    obs_state.at(action->obs_name)->state != State::BROADCAST && sats.at(action->sat_name).capacity > 0) 
+                if (sat_state.at(action->sat_name)->state != State::TRANSMISSION && 
+                    obs_state.at(action->obs_name)->state != State::TRANSMISSION && sats.at(action->sat_name).capacity > 0) 
                 {
                     broadcasting_count++;
                     sat_state.at(action->sat_name) = action;
@@ -62,7 +62,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
                 }
             }
 
-            if (action->state == State::RECORDING && sat_state.at(action->sat_name)->state != State::BROADCAST)
+            if (action->state == State::RECORDING && sat_state.at(action->sat_name)->state != State::TRANSMISSION)
             {
                 if (sat_state.at(action->sat_name)->state == State::IDLE) {
                     sat_state.at(action->sat_name) = action;
@@ -82,11 +82,11 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
                 // if (pair.second->state == State::RECORDING) {
                 //     new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
                 // }
-                // else if (pair.second->state == State::BROADCAST) {
+                // else if (pair.second->state == State::TRANSMISSION) {
                 //     if (pair.second->obs_name.empty()) {
                 //         throw std::logic_error("Obs and sat state dont coresspond");
                 //     }
-                //     new_inter->capacity_change = sats.at(pair.first).broadcast(ii.duration);
+                //     new_inter->capacity_change = sats.at(pair.first).transmission(ii.duration);
                 //     obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
                 // }
                 // sats.at(pair.first).full_schedule.push_back(new_inter);
@@ -129,7 +129,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
         // get all actors in interval
         for (auto &action: inter->info) {
             sat_actors.insert(action->sat_name);
-            if (action->state == State::BROADCAST) {
+            if (action->state == State::TRANSMISSION) {
                 if (!visible_obs.count(action->sat_name)) {
                     visible_obs[action->sat_name] = {};
                 }
@@ -187,7 +187,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
             SatName satellite = pair.first;
             bool pair_found = false;
 
-            // check if some obs available, sat can broadcast and its not empty
+            // check if some obs available, sat can transmission and its not empty
             if (!obs_actors.empty() && visible_obs.count(satellite) && pair.second != 0)
             {
                 // choose observatory
@@ -208,7 +208,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                 }
             }
             if (!pair_found && can_record.count(satellite)) {
-                // satellite can't broadcast but can record
+                // satellite can't transmission but can record
                 Interval ii(inter->start, inter->end, {can_record.at(satellite)});
                 auto new_inter = std::make_shared<Interval>(ii);
                 algos::add2schedule(new_inter, sats.at(satellite));
@@ -240,7 +240,7 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
         // get all actors in interval
         for (auto &action: inter->info) {
             // sat_actors.insert(action->sat_name);
-            if (action->state == State::BROADCAST) {
+            if (action->state == State::TRANSMISSION) {
                 if (sats.at(action->sat_name).capacity / sats.at(action->sat_name).max_capacity > 0.5) {
                     if (!visible_obs.count(action->sat_name)) {
                         visible_obs[action->sat_name] = {};

@@ -10,8 +10,8 @@ inline std::ostream& operator<<(std::ostream& os, const State& obj)
    if(obj == State::IDLE) {
     os << "IDLE";
    }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
+   if(obj == State::TRANSMISSION){
+    os << "TRANSMISSION";
    }
    if(obj == State::RECORDING) {
     os << "RECORDING";

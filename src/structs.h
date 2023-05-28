@@ -44,7 +44,7 @@ inline std::ostream& operator << (std::ostream& os, const SatType& obj)
 enum class State
 {
     IDLE,
-    BROADCAST,
+    TRANSMISSION,
     RECORDING // for satellite
 };
 
@@ -76,17 +76,17 @@ struct IntervalInfo {
 
     // Constructor for scheduling algorithm
     // RECORDING -> only satelitte info
-    // BROADCAST -> satelitte and observartory info
+    // TRANSMISSION -> satelitte and observartory info
     IntervalInfo(
         const SatName &sat, const SatType &type,
         const State &new_state, const ObsName &obs = {}) : IntervalInfo(sat, type, obs)
     {
         state = new_state;
 
-        if (new_state == State::BROADCAST)
+        if (new_state == State::TRANSMISSION)
         {
             if (obs.empty()) {
-                std::cout << "Broadcast interval should contain observatory\n";
+                std::cout << "Transmission interval should contain observatory\n";
                 throw std::runtime_error("No observatory info");
             }
             obs_name = obs;
@@ -129,7 +129,7 @@ struct Interval
 
     // Constructor for scheduling algorithm
     // RECORDING -> only satelitte info
-    // BROADCAST -> satelitte and observartory info
+    // TRANSMISSION -> satelitte and observartory info
     Interval(
         const timepoint &tp_start,
         const timepoint &tp_end,
@@ -251,7 +251,7 @@ struct Satellite
     }
 
     // change capacity, return transmitted amount
-    double broadcast(const double &duration)
+    double transmission(const double &duration)
     {
         if (capacity == 0)
             return 0;

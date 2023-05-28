@@ -52,8 +52,8 @@ inline std::ostream& operator<<(std::ostream& os, const State& obj)
    if(obj == State::IDLE) {
     os << "IDLE";
    }
-   if(obj == State::BROADCAST){
-    os << "BROADCAST";
+   if(obj == State::TRANSMISSION){
+    os << "TRANSMISSION";
    }
    if(obj == State::RECORDING) {
     os << "RECORDING";
@@ -66,11 +66,11 @@ timepoint START_MODELLING{std::chrono::milliseconds{1811808000000}};
 int main()
 {
     Satellites sats;
-    const char russia_location[] = "../../DATA_Files/Russia2Constellation2/";
+    const char russia_location[] = "DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
     Observatories obs;
-    const char facility_location[] = "../../DATA_Files/Facility2Constellation/";
+    const char facility_location[] = "DATA_Files/Facility2Constellation/";
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
 
     auto start_algo = std::chrono::high_resolution_clock::now();
@@ -149,7 +149,7 @@ int main()
                 << " " << cur_info->obs_name
                 << std::endl;
 
-            if (cur_info->state == State::BROADCAST)
+            if (cur_info->state == State::TRANSMISSION)
                 sum_data += interval->capacity_change;
         }
     }
@@ -194,9 +194,9 @@ int main()
     }
 
     // if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
-    //    std::cout << "Error while checking broadcast area: " << err_check_str;
+    //    std::cout << "Error while checking transmission area: " << err_check_str;
     // } else {
-    //     std::cout << "all satellites broadcast in right area" << std::endl;
+    //     std::cout << "all satellites transmission in right area" << std::endl;
     // }
 
     // if(checkRecordingInRightArea(sats_to_check, sats, err_check_str) == -1) {

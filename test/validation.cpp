@@ -18,7 +18,7 @@ inline std::ostream& operator << (std::ostream& o, Interval& a)
 
 int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Observatories &obs, std::string &res) {
     for(auto &interval : schedule_to_check) {
-        if(interval->info[0]->state != State::BROADCAST)
+        if(interval->info[0]->state != State::TRANSMISSION)
             continue;
         auto &ob = obs.at(interval->info[0]->obs_name);
         int found = 0;

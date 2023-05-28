@@ -32,7 +32,7 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     //                       .count();
     State new_state;
     if (!obs_name.empty())
-        new_state = State::BROADCAST;
+        new_state = State::TRANSMISSION;
     else
         new_state = State::RECORDING;
 
@@ -231,7 +231,7 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
 
     std::string line;
     std::unordered_map<std::string,SatType> const str_to_sat_type = { {"KINOSAT", SatType::KINOSAT}, {"ZORKIY", SatType::ZORKIY} };
-    std::unordered_map<std::string,State> const str_to_state = { {"BROADCAST", State::BROADCAST}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
+    std::unordered_map<std::string,State> const str_to_state = { {"TRANSMISSION", State::TRANSMISSION}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
     
     while ((std::getline(fp, line))) {
         std::istringstream line_stream(line);
