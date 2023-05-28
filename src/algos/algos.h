@@ -15,6 +15,7 @@ namespace algos
     void greedy_exhaustive(Satellites &sats, Observatories &obs);
     
     void bysolver(Satellites &sats, Observatories &obs);
+    void bysolver2(Satellites &sats, Observatories &obs);
 }
 
 #endif // SCHEDULE_GREEDY
