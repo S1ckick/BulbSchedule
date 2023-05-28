@@ -67,11 +67,11 @@ int main(int argc, char* argv[])
 {
     Satellites sats;
 
-    std::string russia_location = (argc > 1) ? argv[1] : "../../DATA_Files/Russia2Constellation2/";
+    std::string russia_location = (argc > 1) ? argv[1] : "../DATA_Files/Russia2Constellation2/";
     int res_parse_russia = parse_russia_to_satellites(russia_location, sats);
 
     Observatories obs;
-    std::string facility_location = (argc > 2) ? argv[2] : "../../DATA_Files/Facility2Constellation/";
+    std::string facility_location = (argc > 2) ? argv[2] : "../DATA_Files/Facility2Constellation/";
 
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
 
