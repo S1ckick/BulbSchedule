@@ -6,6 +6,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-add_subdirectory(third-party)
-add_subdirectory(src)
-add_subdirectory(test)
+set(RESOURCE_FILES DATA_Files/*)
+
+add_executable(scheduler src/algos.cpp src/greedy.cpp src/parser.cpp
+  src/writer.cpp src/main.cpp src/validation.cpp)
+
+target_include_directories(scheduler PUBLIC src third-party)
+

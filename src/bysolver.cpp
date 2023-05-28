@@ -21,8 +21,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
     int cnt = 0;
     
     double transmitted = 0;
-        
-    
+
     for (auto &inter: plan)
     {
         cnt++;
@@ -204,8 +203,8 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                 uniqueness_conditions_sat[info->sat_name] += v;
                 can_record[info->sat_name] = true;
                 
-                //optimized += v * (int)(1000 * inter->duration * sat.recording_speed *
-                //                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
+                (*optimized) += v * (int)(1000 * inter->duration * sat.recording_speed *
+                                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
             else if (info->state == State::TRANSMISSION)
             {
@@ -243,7 +242,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             nconstraints++;
         }
         
-        if (cnt % 10 == 0 || cnt == plan.size() - 1)
+        if (cnt % 50 == 0 || cnt == plan.size() - 1)
         {
             printf("%6d/%d ", cnt, plan.size());
             printf("%d v, %d c ", vars.size(), nconstraints);
@@ -269,7 +268,6 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
 
                         if (obsname[0] == '0') // recording
                         {
-                            
                             Interval ii(cur_inter->start, cur_inter->end, {id_to_info[v.first]});
                             auto new_inter = std::make_shared<Interval>(ii);
                             algos::add2schedule(new_inter, sats.at(satname));
