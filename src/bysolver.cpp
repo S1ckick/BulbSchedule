@@ -16,7 +16,6 @@ using namespace operations_research::sat;
 void algos::bysolver (Satellites &sats, Observatories &obs) {
     std::cout << "Starting scheduler\n";
     auto plan = great_plan(sats);
-    std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
 
     int cnt = 0;
     
@@ -25,7 +24,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
     for (auto &inter: plan)
     {
         cnt++;
-        printf("%6d/%d ", cnt, plan.size());
+        printf("Interval %6d/%d : ", cnt, plan.size());
         
         auto infos = inter->info;
 
@@ -104,17 +103,12 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
             nconstraints++;
         }
         
-        printf("%d v, %d c ", vars.size(), nconstraints);
         cp_model.Maximize(optimized);
         
         const CpSolverResponse response = Solve(cp_model.Build());
         
         if (response.status() == CpSolverStatus::OPTIMAL ||
             response.status() == CpSolverStatus::FEASIBLE) {
-            if (response.status() == CpSolverStatus::OPTIMAL)
-                printf("o ");
-            if (response.status() == CpSolverStatus::FEASIBLE)
-                printf("f ");
             int r = 0, b = 0;
             for (const auto &v : vars)
                 if (SolutionBooleanValue(response, v.second))
@@ -138,7 +132,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                         b++;
                     }
                 }
-            printf("%2d r, %2d b; total transmitted %lf", r, b, transmitted);
+            printf("%2d recording, %2d transmitting; total transmitted %lf", r, b, transmitted);
         } else {
            LOG(INFO) << "No solution found.";
         }
