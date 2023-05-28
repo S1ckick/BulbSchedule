@@ -72,7 +72,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                 optimized += v * (int)(1000 * inter->duration * sat.recording_speed *
                                               (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
-            else if (info->state == State::BROADCAST)
+            else if (info->state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model.NewBoolVar();
                 std::string id = std::to_string(info->sat_name) + "_" + info->obs_name;
@@ -210,7 +210,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                 //optimized += v * (int)(1000 * inter->duration * sat.recording_speed *
                 //                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
-            else if (info->state == State::BROADCAST)
+            else if (info->state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model->NewBoolVar();
                 SegmentSatObs id(cnt, info->sat_name, info->obs_name);

@@ -47,12 +47,12 @@ int parse_russia_to_satellites(const char *location, Satellites &sats)
     std::vector<SatType> sat_types = {SatType::KINOSAT, SatType::ZORKIY};
     for (const auto & entry : fs::directory_iterator(location))
     {
-        std::string name = entry.path().filename();
+        std::string name = entry.path().filename().string();
         //check filename
         if(name.rfind("Russia-To", 0) != 0)
             continue;
         // Read Russia intervals for each satellite
-        std::string filename = entry.path();
+        std::string filename = entry.path().string();
         std::cout << "Reading file " + filename + "\n";
 
         std::ifstream fp(filename);
@@ -144,12 +144,12 @@ int parse_observatory(const char *location, Observatories &obs, Satellites &sats
     // Read each observatory
     for (const auto & entry : fs::directory_iterator(location))
     {
-        std::string name = entry.path().filename();
+        std::string name = entry.path().filename().string();
         //check filename
         if(name.rfind("Facility", 0) != 0)
             continue;
         // Read Russia intervals for each satellite
-        std::string filename = entry.path();
+        std::string filename = entry.path().string();
         std::cout << "Reading file " + filename + "\n";
         
         std::ifstream fp(filename);
