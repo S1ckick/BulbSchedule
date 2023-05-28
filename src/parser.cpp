@@ -43,7 +43,7 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
 
 int parse_russia_to_satellites(std::string &location, Satellites &sats)
 {
-    std::cout << "\nStart parsing satellites\n";
+    std::cout << "Parsing satellites...\n";
     std::vector<SatType> sat_types = {SatType::KINOSAT, SatType::ZORKIY};
     for (const auto & entry : fs::directory_iterator(location))
     {
@@ -140,7 +140,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
 
     // TODO: call OS (in)dependent function to get files list
 
-    std::cout << "\nStart parsing observatories\n";
+    std::cout << "Parsing stations...\n";
     // Read each observatory
     for (const auto & entry : fs::directory_iterator(location))
     {
