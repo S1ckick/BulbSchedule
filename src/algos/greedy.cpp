@@ -163,8 +163,11 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
 
                 double a_fullness = a.second;
                 double b_fullness = b.second;
+
+                double a_enough_data = (sats.at(a.first).capacity > inter->duration * sats.at(a.first).broadcasting_speed);
+                double b_enough_data = (sats.at(b.first).capacity > inter->duration * sats.at(b.first).broadcasting_speed);
                 //return (a_fullness) > (b_fullness);
-                return (a_visibility * 0.6 + a_fullness * 0.3 + 0.1 * is_kinosat_a) > (b_visibility * 0.6 + b_fullness * 0.3 + 0.1 * is_kinosat_b);
+                return (a_visibility * 0.6 + a_fullness * 0.2 + 0.1 * is_kinosat_a + 0.4 * a_enough_data) > (b_visibility * 0.6 + b_fullness * 0.2 + 0.1 * is_kinosat_b + 0.4 * b_enough_data);
             }
         );
 
