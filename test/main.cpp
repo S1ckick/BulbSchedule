@@ -70,7 +70,7 @@ int main()
     int res_parse_obs = parse_observatory(facility_location, obs, sats);
     algos::greedy_capacity(sats, obs);
 
-    std::cout << "Schedule builded\n";
+    std::cout << "Schedule built\n";
 
     std::ofstream out("sats.txt");
     std::ofstream out_schedule("sats_schedule.txt");
