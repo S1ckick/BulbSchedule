@@ -88,7 +88,7 @@ void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat
 
 	else if (interval->info[0]->state == State::TRANSMISSION) {
 		if (cur_obs.name.empty())
-			throw std::logic_error("Pass observatoty in add2schedule to add broadcsting interval");
+			throw std::logic_error("Pass an observatory to add2schedule to add broadcasting interval");
 		cur_obs.full_schedule.push_back(interval);
 	}
 	cur_sat.full_schedule.push_back(interval);

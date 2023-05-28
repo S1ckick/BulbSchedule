@@ -13,6 +13,9 @@ namespace algos
     void greedy_random(Satellites &sats, Observatories &obs);
     void greedy_capacity(Satellites &sats, Observatories &obs);
     void greedy_exhaustive(Satellites &sats, Observatories &obs);
+    
+    void bysolver(Satellites &sats, Observatories &obs);
+    void bysolver2(Satellites &sats, Observatories &obs);
 }
 
 #endif // SCHEDULE_GREEDY

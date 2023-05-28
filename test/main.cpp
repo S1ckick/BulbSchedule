@@ -87,8 +87,6 @@ int main()
     fs::create_directories(res_dir);
     std::ofstream out_schedule(res_dir + "all_schedule.txt");
 
-
-
     std::ofstream sats_obs_out("sats_obs.txt");
     std::ofstream out("sats.txt");
 
@@ -160,8 +158,8 @@ int main()
     out_schedule.close();
     sats_obs_out.close();
 
-    double obs_total_length = countObsTotalLength(sats);
-    std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
+    // double obs_total_length = countObsTotalLength(sats);
+    // std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
 
 
     // write result
