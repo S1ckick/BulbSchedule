@@ -14,6 +14,7 @@ namespace fs = std::filesystem;
 using namespace date;
 
 std::unordered_map<std::string, int> obs_to_int = {
+    {"0", 0},
     {"Anadyr1",1},
     {"Anadyr2", 2},
     {"CapeTown", 3},
@@ -30,21 +31,21 @@ std::unordered_map<std::string, int> obs_to_int = {
     {"Sumatra", 14}
 };
 
-std::unordered_map<std::string, std::string> obs_to_hex = {
-    {"Anadyr1","#FF2D00"},
-    {"Anadyr2", "#FF8700"},
-    {"CapeTown", "#FAFF00"},
-    {"Delhi", "#05FFAF"},
-    {"Irkutsk", "#05FFF7"},
-    {"Magadan1", "#05C5FF"},
-    {"Magadan2", "#0599FF"},
-    {"Moscow", "#0546FF"},
-    {"Murmansk1", "#9705FF"},
-    {"Murmansk2", "#D905FF"},
-    {"Norilsk", "#FF05ED"},
-    {"Novosib", "#FF059A"},
-    {"RioGallegos", "#5890A7"},
-    {"Sumatra", "#388357"}
+std::unordered_map<int, std::string> obs_to_hex = {
+    {1,"#FF2D00"},
+    {2, "#FF8700"},
+    {3, "#FAFF00"},
+    {4, "#05FFAF"},
+    {5, "#05FFF7"},
+    {6, "#05C5FF"},
+    {7, "#0599FF"},
+    {8, "#0546FF"},
+    {9, "#9705FF"},
+    {10, "#D905FF"},
+    {11, "#FF05ED"},
+    {12, "#FF059A"},
+    {13, "#5890A7"},
+    {14, "#388357"}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const State& obj)
@@ -177,7 +178,7 @@ int main(int argc, char* argv[])
                     << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
                     << " " << interval->info[0]->obs_name 
                     << " " << obs_to_hex[interval->info[0]->obs_name]
-                    << " " << obs_to_int[interval->info[0]->obs_name]
+                    << " " << interval->info[0]->obs_name
                     << std::endl;
             }
 
@@ -185,14 +186,12 @@ int main(int argc, char* argv[])
                 auto &cur_info = interval->info[0];
                 out_schedule << std::fixed << satName_to_num[cur_info->sat_name] 
                     << " " << cur_info->sat_name
-                    << " " << cur_info->sat_type
                     << " "
                     << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
                     << " " << (DURATION(START_MODELLING, interval->end) * 1000)  //milliseconds
                     << " " << interval->info[0]->state
                     << " " << interval->capacity_change
                     << " " << obs_to_hex[cur_info->obs_name]
-                    << " " << obs_to_int[cur_info->obs_name]
                     << " " << cur_info->obs_name
                     << std::endl;
 

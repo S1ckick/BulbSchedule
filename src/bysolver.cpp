@@ -24,7 +24,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
     for (auto &inter: plan)
     {
         cnt++;
-        printf("Interval %6d/%d : ", cnt, plan.size());
+        printf("Interval %6d/%ld : ", cnt, plan.size());
         
         auto infos = inter->info;
 
@@ -73,7 +73,8 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
             else if (info->state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model.NewBoolVar();
-                std::string id = std::to_string(info->sat_name) + "_" + info->obs_name;
+                // obs_name must be counted from one not from zero
+                std::string id = std::to_string(info->sat_name) + "_" + std::to_string(info->obs_name);
                 Satellite &sat = sats.at(info->sat_name);
                 
                 vars.insert({id, v}); 
@@ -124,7 +125,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                     else
                     {
                         int satname = std::atoi(v.first.substr(0, 6).c_str());
-                        std::string obsname = v.first.substr(7);
+                        int obsname = std::atoi(v.first.substr(7).c_str());
                         Interval ii(inter->start, inter->end, {id_to_info[v.first]});
                         auto new_inter = std::make_shared<Interval>(ii);
                         algos::add2schedule(new_inter, sats.at(satname), obs.at(obsname));
@@ -189,7 +190,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             if (info->state == State::RECORDING) 
             {
                 BoolVar v = cp_model->NewBoolVar();
-                SegmentSatObs id(cnt, info->sat_name, "0");
+                SegmentSatObs id(cnt, info->sat_name, 0);
                 Satellite &sat = sats.at(info->sat_name);
                 vars.insert({id, v});
                 id_to_info[id] = info;
@@ -238,7 +239,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
         
         if (cnt % 50 == 0 || cnt == plan.size() - 1)
         {
-            printf("%6d/%d ", cnt, plan.size());
+            printf("%6d/%ld ", cnt, plan.size());
             printf("%d v, %d c ", vars.size(), nconstraints);
             fflush(stdout);
             cp_model->Maximize(*optimized);
@@ -257,10 +258,10 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                     {
                         int interval_idx =  std::get<0>(v.first);
                         int satname = std::get<1>(v.first);
-                        std::string obsname = std::get<2>(v.first);
+                        int obsname = std::get<2>(v.first);
                         auto &cur_inter = plan[interval_idx];
 
-                        if (obsname[0] == '0') // recording
+                        if (obsname == 0) // recording
                         {
                             Interval ii(cur_inter->start, cur_inter->end, {id_to_info[v.first]});
                             auto new_inter = std::make_shared<Interval>(ii);
