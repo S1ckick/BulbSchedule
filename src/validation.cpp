@@ -1,6 +1,6 @@
 #include "validation.h"
 
-extern std::unordered_map<int, std::string> obs_to_hex;
+extern std::unordered_map<std::string, std::string> obs_to_hex;
 extern std::unordered_map<std::string, int> obs_to_int;
 extern timepoint START_MODELLING;
 

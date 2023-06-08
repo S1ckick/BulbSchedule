@@ -12,7 +12,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
     std::vector<std::pair<SatName, std::shared_ptr<IntervalInfo>>> init_sat_idle;
     std::vector<std::pair<ObsName, std::shared_ptr<IntervalInfo>>> init_obs_idle;
 
-    std::shared_ptr<IntervalInfo> chill = std::make_shared<IntervalInfo>(IntervalInfo({}, State::IDLE, {}));
+    std::shared_ptr<IntervalInfo> chill = std::make_shared<IntervalInfo>(IntervalInfo({}, SatType::KINOSAT, State::IDLE, {}));
 
     int cnt = 0;
     int cur_step = 0;
@@ -155,8 +155,8 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
         // sort all satellites by current priority estimation
         std::sort(sat_cap.begin(), sat_cap.end(),
             [&](const std::pair<SatName, double> &a, const std::pair<SatName, double> &b){
-                double is_kinosat_a = a.first < 110600;
-                double is_kinosat_b = b.first < 110600;
+                double is_kinosat_a = (sats.at(a.first).type == SatType::KINOSAT);
+                double is_kinosat_b = (sats.at(b.first).type == SatType::KINOSAT);
 
                 double a_visibility = (1 - 1.0 * visible_obs.at(a.first).size() / obs_actors.size());
                 double b_visibility = (1 - 1.0 * visible_obs.at(b.first).size() / obs_actors.size());
