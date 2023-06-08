@@ -258,10 +258,10 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                     {
                         int interval_idx =  std::get<0>(v.first);
                         int satname = std::get<1>(v.first);
-                        std::string obsname = std::get<2>(v.first);
+                        int obsname = std::get<2>(v.first);
                         auto &cur_inter = plan[interval_idx];
 
-                        if (obsname[0] == '0') // recording
+                        if (obsname == 0) // recording
                         {
                             algos::add2schedule(cur_inter.start, cur_inter.end, id_to_info[v.first], sats.at(satname));
                             r++;

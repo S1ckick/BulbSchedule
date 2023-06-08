@@ -42,13 +42,13 @@ int write_res_obs(const Satellites &sats, const std::string &path, const std::un
     fs::current_path(fs::current_path());
     fs::create_directories(path);
     for(auto &item : obs_to_int) {
-        if(item.first == "")
+        if(item.first == "" || item.first == "0")
             continue;
         std::ofstream obs_out_f(path + item.first + "_result.txt");
         obs_out_f << item.first << std::endl 
                   << "Access StartTime(UTCG) StopTime(UTCG) Duration(sec) Satname Data(Mbytes)"
                   << std::endl;
-        obs_files_to_save[item.first] = std::make_pair<std::ofstream, long int>(std::move(obs_out_f), 1);
+        obs_files_to_save[item.second] = std::make_pair<std::ofstream, long int>(std::move(obs_out_f), 1);
     }
 
     double total = 0.0;

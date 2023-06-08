@@ -23,24 +23,6 @@ using SatName = uint32_t;
 using ObsName = uint32_t;
 using timepoint = std::chrono::system_clock::time_point;
 
-enum class SatType
-{
-    KINOSAT,
-    ZORKIY
-};
-
-inline std::ostream& operator << (std::ostream& os, const SatType& obj)
-{
-
-   if(obj == SatType::KINOSAT) {
-    os << "KINOSAT";
-   }
-   if(obj == SatType::ZORKIY){
-    os << "ZORKIY";
-   }
-   return os;
-}
-
 enum class State
 {
     IDLE,
@@ -48,13 +30,8 @@ enum class State
     RECORDING // for satellite
 };
 
-const std::map<SatType, std::string> SatNames = {{SatType::KINOSAT, "KinoSat"}, {SatType::ZORKIY, "Zorkiy"}};
-const std::string KinosatName = SatNames.at(SatType::KINOSAT);
-const std::string ZorkiyName = SatNames.at(SatType::ZORKIY);
-
 struct IntervalInfo {
     SatName sat_name;
-    SatType sat_type;
     State state = State::IDLE;
     ObsName obs_name;
 
@@ -68,8 +45,7 @@ struct IntervalInfo {
     }
 
     IntervalInfo(
-        const SatName &sat, const SatType &type,
-        const ObsName &obs = {}) : sat_name(sat), sat_type(type), obs_name(obs)
+        const SatName &sat, const ObsName &obs = 0) : sat_name(sat), obs_name(obs)
     {
         
     }
@@ -78,14 +54,14 @@ struct IntervalInfo {
     // RECORDING -> only satelitte info
     // TRANSMISSION -> satelitte and observartory info
     IntervalInfo(
-        const SatName &sat, const SatType &type,
-        const State &new_state, const ObsName &obs = {}) : IntervalInfo(sat, type, obs)
+        const SatName &sat,
+        const State &new_state, const ObsName &obs = 0) : IntervalInfo(sat, obs)
     {
         state = new_state;
 
         if (new_state == State::TRANSMISSION)
         {
-            if (obs.empty()) {
+            if (obs == 0) {
                 std::cout << "Transmission interval should contain observatory\n";
                 throw std::runtime_error("No observatory info");
             }
@@ -187,7 +163,6 @@ using LinkVecSchedule = std::vector<std::unique_ptr<Interval>>;
 struct Satellite
 {
     SatName name;
-    SatType type;
     Schedule ints_in_area;
     Schedule ints_observatories;
     VecSchedule full_schedule;
@@ -198,11 +173,11 @@ struct Satellite
     double recording_speed;
     double broadcasting_speed;
 
-    Satellite(const SatName &sat_name, const SatType &sat_type) : name(sat_name), type(sat_type)
+    Satellite(const SatName &sat_name) : name(sat_name)
     {
         capacity = 0;
-        if (sat_type == SatType::KINOSAT)
-        {
+        if (sat_name < 110600)
+        { // KINOSAT
             max_capacity = 8192;
             broadcasting_speed = 1;
             recording_speed = 4;
