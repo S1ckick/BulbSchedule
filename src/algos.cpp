@@ -68,7 +68,7 @@ Schedule algos::great_plan(const Satellites &sats) {
 	return std::move(great_plan);
 }
 
-Observatory empty_obs({-1, {}, {}});
+Observatory empty_obs({0, {}, {}});
 
 void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat, Observatory &cur_obs) {
 	if (interval->info[0]->state == State::RECORDING)

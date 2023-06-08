@@ -72,6 +72,27 @@ void help ()
     
 }
 
+void countDailySum(std::shared_ptr<Interval> interval, std::vector<double> & daily_sums) {
+
+    for(int i = 0; i < 14; i++){
+        if(interval->start < START_MODELLING + std::chrono::hours((i+1) * 24)){
+            if(interval->end < START_MODELLING + std::chrono::hours((i+1) * 24))
+                daily_sums[i] += interval->capacity_change;
+            else {
+                double speed = (interval->info[0]->sat_name < 110600) ? 1 : 0.25;
+                double eval_change = DURATION(interval->start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
+                if(eval_change < interval->capacity_change){
+                    daily_sums[i] += eval_change;
+                    daily_sums[i+1] += (interval->capacity_change - eval_change);
+                } else {
+                    daily_sums[i] += interval->capacity_change;
+                }
+            }
+            return;
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
     Satellites sats;
@@ -159,6 +180,7 @@ int main(int argc, char* argv[])
         }
 
         double sum_data = 0;
+        std::vector<double> daily_sums(14,0.0);
         int cnt_sat = 1;
         for (auto &item : sats){
             //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
@@ -195,10 +217,21 @@ int main(int argc, char* argv[])
                     << " " << cur_info->obs_name
                     << std::endl;
 
-                if (cur_info->state == State::TRANSMISSION)
+                if (cur_info->state == State::TRANSMISSION){
                     sum_data += interval->capacity_change;
+                    countDailySum(interval, daily_sums);
+                }
+                    
             }
         }
+
+        double daily_checksum = 0.0;
+        std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
+        for(int i = 0; i < daily_sums.size(); i++){
+            std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
+            daily_checksum += daily_sums[i];
+        }
+        std::cout << "Checksum: " << daily_checksum << std::endl;
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
         std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 
