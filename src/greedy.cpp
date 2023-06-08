@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-void algos::greedy_random(Satellites &sats, Observatories &obs) {
+void algos::greedy_random(Satellites &sats) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -21,9 +21,8 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
         sat.second.full_schedule.reserve(55000);
         init_sat_idle.push_back({sat.first, chill});
     }
-    for (auto &observ: obs) {
-        observ.second.full_schedule.reserve(40000);
-        init_obs_idle.push_back({observ.first, chill});
+    for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++) {
+        init_obs_idle.push_back({obs, chill});
     }
 
     float mean_big1 = 0;
@@ -50,22 +49,23 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
             os.second = chill;
         }
 
-        for (auto &action: inter->info) {
-            if (broadcasting_count < obs.size() && action->state == State::TRANSMISSION)
+        for (auto &action: inter.info) {
+            auto action_ptr = std::make_shared<IntervalInfo>(action);
+            if (broadcasting_count < OBS_NUM && action.state == State::TRANSMISSION)
             {
-                if (sat_state.at(action->sat_name)->state != State::TRANSMISSION && 
-                    obs_state.at(action->obs_name)->state != State::TRANSMISSION && sats.at(action->sat_name).capacity > 0) 
+                if (sat_state.at(action.sat_name)->state != State::TRANSMISSION && 
+                    obs_state.at(action.obs_name)->state != State::TRANSMISSION && sats.at(action.sat_name).capacity > 0) 
                 {
                     broadcasting_count++;
-                    sat_state.at(action->sat_name) = action;
-                    obs_state.at(action->obs_name) = action;
+                    sat_state.at(action.sat_name) = action_ptr;
+                    obs_state.at(action.obs_name) = action_ptr;
                 }
             }
 
-            if (action->state == State::RECORDING && sat_state.at(action->sat_name)->state != State::TRANSMISSION)
+            if (action.state == State::RECORDING && sat_state.at(action.sat_name)->state != State::TRANSMISSION)
             {
-                if (sat_state.at(action->sat_name)->state == State::IDLE) {
-                    sat_state.at(action->sat_name) = action;
+                if (sat_state.at(action.sat_name)->state == State::IDLE) {
+                    sat_state.at(action.sat_name) = action_ptr;
                 }
             }
         }
@@ -75,21 +75,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
         // save states in shedule intervals
         for (auto &pair: sat_state) {
             if (pair.second->state != State::IDLE) {
-                Interval ii(inter->start, inter->end, {pair.second});
-                std::shared_ptr<Interval> new_inter = std::make_shared<Interval>(ii);
-                algos::add2schedule(new_inter, sats.at(pair.first), obs.at(pair.second->obs_name));
-
-                // if (pair.second->state == State::RECORDING) {
-                //     new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
-                // }
-                // else if (pair.second->state == State::TRANSMISSION) {
-                //     if (pair.second->obs_name.empty()) {
-                //         throw std::logic_error("Obs and sat state dont coresspond");
-                //     }
-                //     new_inter->capacity_change = sats.at(pair.first).transmission(ii.duration);
-                //     obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
-                // }
-                // sats.at(pair.first).full_schedule.push_back(new_inter);
+                algos::add2schedule(inter.start, inter.end, *(pair.second.get()), sats.at(pair.first));
             }
         }
 
@@ -103,7 +89,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
     // std::cout << mean_big2 / plan.size() << "\n";
 }
 
-void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
+void algos::greedy_capacity(Satellites &sats) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -127,21 +113,22 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
         std::unordered_map<ObsName, std::vector<std::shared_ptr<IntervalInfo>>> visible_sat;
         std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> can_record;
         // get all actors in interval
-        for (auto &action: inter->info) {
-            sat_actors.insert(action->sat_name);
-            if (action->state == State::TRANSMISSION) {
-                if (!visible_obs.count(action->sat_name)) {
-                    visible_obs[action->sat_name] = {};
+        for (auto &action: inter.info) {
+            auto action_ptr = std::make_shared<IntervalInfo>(action);
+            sat_actors.insert(action.sat_name);
+            if (action.state == State::TRANSMISSION) {
+                if (!visible_obs.count(action.sat_name)) {
+                    visible_obs[action.sat_name] = {};
                 }
-                if (!visible_sat.count(action->obs_name)) {
-                    visible_sat[action->obs_name] = {};
+                if (!visible_sat.count(action.obs_name)) {
+                    visible_sat[action.obs_name] = {};
                 }
-                visible_obs[action->sat_name].push_back(action);
-                visible_sat[action->obs_name].push_back(action);
-                obs_actors.insert(action->obs_name);
+                visible_obs[action.sat_name].push_back(action_ptr);
+                visible_sat[action.obs_name].push_back(action_ptr);
+                obs_actors.insert(action.obs_name);
             }
             else {
-                can_record[action->sat_name] = action;
+                can_record[action.sat_name] = action_ptr;
             }
         }
 
@@ -164,10 +151,13 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                 double a_fullness = a.second;
                 double b_fullness = b.second;
 
-                double a_enough_data = (sats.at(a.first).capacity > inter->duration * sats.at(a.first).broadcasting_speed);
-                double b_enough_data = (sats.at(b.first).capacity > inter->duration * sats.at(b.first).broadcasting_speed);
+                auto dur = DURATION(inter.start, inter.end);
+
+                double a_enough_data = (sats.at(a.first).capacity > dur * sats.at(a.first).broadcasting_speed);
+                double b_enough_data = (sats.at(b.first).capacity > dur * sats.at(b.first).broadcasting_speed);
                 //return (a_fullness) > (b_fullness);
-                return (a_visibility * 0.6 + a_fullness * 0.2 + 0.1 * is_kinosat_a + 0.4 * a_enough_data) > (b_visibility * 0.6 + b_fullness * 0.2 + 0.1 * is_kinosat_b + 0.4 * b_enough_data);
+                return (a_visibility * 0.6 + a_fullness * 0.2 + 0.1 * is_kinosat_a + 0.4 * a_enough_data) >
+                    (b_visibility * 0.6 + b_fullness * 0.2 + 0.1 * is_kinosat_b + 0.4 * b_enough_data);
             }
         );
 
@@ -196,9 +186,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                     if (obs_actors.count(cur_obs)) {
                         pair_found = true;
                         // fill interval
-                        Interval ii(inter->start, inter->end, {visible});
-                        auto new_inter = std::make_shared<Interval>(ii);
-                        algos::add2schedule(new_inter, sats.at(satellite), obs.at(cur_obs));
+                        algos::add2schedule(inter.start, inter.end, *(visible.get()), sats.at(satellite));
 
                         // this observatory busy now
                         obs_actors.erase(cur_obs);
@@ -209,15 +197,13 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
             }
             if (!pair_found && can_record.count(satellite)) {
                 // satellite can't transmission but can record
-                Interval ii(inter->start, inter->end, {can_record.at(satellite)});
-                auto new_inter = std::make_shared<Interval>(ii);
-                algos::add2schedule(new_inter, sats.at(satellite));
+                algos::add2schedule(inter.start, inter.end, *(can_record.at(satellite).get()), sats.at(satellite));
             }
         }
     }
 }
 
-void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
+void algos::greedy_exhaustive(Satellites &sats) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -238,23 +224,24 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
         std::unordered_map<ObsName, std::vector<std::shared_ptr<IntervalInfo>>> visible_sat;
         std::unordered_map<SatName, std::shared_ptr<IntervalInfo>> can_record;
         // get all actors in interval
-        for (auto &action: inter->info) {
+        for (auto &action: inter.info) {
+            auto action_ptr = std::make_shared<IntervalInfo>(action);
             // sat_actors.insert(action->sat_name);
-            if (action->state == State::TRANSMISSION) {
-                if (sats.at(action->sat_name).capacity / sats.at(action->sat_name).max_capacity > 0.5) {
-                    if (!visible_obs.count(action->sat_name)) {
-                        visible_obs[action->sat_name] = {};
+            if (action.state == State::TRANSMISSION) {
+                if (sats.at(action.sat_name).capacity / sats.at(action.sat_name).max_capacity > 0.5) {
+                    if (!visible_obs.count(action.sat_name)) {
+                        visible_obs[action.sat_name] = {};
                     }
-                    if (!visible_sat.count(action->obs_name)) {
-                        visible_sat[action->obs_name] = {};
+                    if (!visible_sat.count(action.obs_name)) {
+                        visible_sat[action.obs_name] = {};
                     }
-                    visible_obs[action->sat_name].push_back(action);
-                    visible_sat[action->obs_name].push_back(action);
+                    visible_obs[action.sat_name].push_back(action_ptr);
+                    visible_sat[action.obs_name].push_back(action_ptr);
                 }
                 // obs_actors.insert(action->obs_name);
             }
             else {
-                can_record[action->sat_name] = action;
+                can_record[action.sat_name] = action_ptr;
             }
         }
 
@@ -371,18 +358,14 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
                 auto cur_action = visible_sat[obs_sat[cur_obs].first][opt_case[cur_obs]];
                 if (!used_sats.count(cur_action->sat_name)) {
                     used_sats.insert(cur_action->sat_name);
-                    Interval ii(inter->start, inter->end, {cur_action});
-                    auto new_inter = std::make_shared<Interval>(ii);
-                    algos::add2schedule(new_inter, sats.at(cur_action->sat_name), obs.at(cur_action->obs_name));
+                    algos::add2schedule(inter.start, inter.end, *(cur_action.get()), sats.at(cur_action->sat_name));
                 }
             }
         }
 
         for (auto &sat_info: can_record) {
             if (!used_sats.count(sat_info.first)) {
-                Interval ii(inter->start, inter->end, {can_record.at(sat_info.first)});
-                auto new_inter = std::make_shared<Interval>(ii);
-                algos::add2schedule(new_inter, sats.at(sat_info.first));
+                algos::add2schedule(inter.start, inter.end, *(can_record.at(sat_info.first).get()), sats.at(sat_info.first));
             }
         }
    }

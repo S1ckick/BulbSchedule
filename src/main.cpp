@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 using namespace date;
 
-std::unordered_map<std::string, int> obs_to_int = {
+std::unordered_map<std::string, uint32_t> obs_to_int = {
     {"0", 0},
     {"Anadyr1",1},
     {"Anadyr2", 2},
@@ -31,7 +31,7 @@ std::unordered_map<std::string, int> obs_to_int = {
     {"Sumatra", 14}
 };
 
-std::unordered_map<int, std::string> obs_to_hex = {
+std::unordered_map<uint32_t, std::string> obs_to_hex = {
     {1,"#FF2D00"},
     {2, "#FF8700"},
     {3, "#FAFF00"},
@@ -72,26 +72,26 @@ void help ()
     
 }
 
-void countDailySum(std::shared_ptr<Interval> interval, std::vector<double> & daily_sums) {
+// void countDailySum(Interval interval, std::vector<double> & daily_sums) {
 
-    for(int i = 0; i < 14; i++){
-        if(interval->start < START_MODELLING + std::chrono::hours((i+1) * 24)){
-            if(interval->end < START_MODELLING + std::chrono::hours((i+1) * 24))
-                daily_sums[i] += interval->capacity_change;
-            else {
-                double speed = (interval->info[0]->sat_name < 110600) ? 1 : 0.25;
-                double eval_change = DURATION(interval->start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
-                if(eval_change < interval->capacity_change){
-                    daily_sums[i] += eval_change;
-                    daily_sums[i+1] += (interval->capacity_change - eval_change);
-                } else {
-                    daily_sums[i] += interval->capacity_change;
-                }
-            }
-            return;
-        }
-    }
-}
+//     for(int i = 0; i < 14; i++){
+//         if(interval->start < START_MODELLING + std::chrono::hours((i+1) * 24)){
+//             if(interval->end < START_MODELLING + std::chrono::hours((i+1) * 24))
+//                 daily_sums[i] += interval->capacity_change;
+//             else {
+//                 double speed = (interval->info[0]->sat_name < 110600) ? 1 : 0.25;
+//                 double eval_change = DURATION(interval->start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
+//                 if(eval_change < interval->capacity_change){
+//                     daily_sums[i] += eval_change;
+//                     daily_sums[i+1] += (interval->capacity_change - eval_change);
+//                 } else {
+//                     daily_sums[i] += interval->capacity_change;
+//                 }
+//             }
+//             return;
+//         }
+//     }
+// }
 
 int main(int argc, char* argv[])
 {
@@ -141,11 +141,10 @@ int main(int argc, char* argv[])
     try
     {
         int res_parse_russia = parse_russia_to_satellites(path1, sats);
-        Observatories obs;
-        int res_parse_obs = parse_observatory(path2, obs, sats);
+        int res_parse_obs = parse_observatory(path2, sats);
 
         auto start_algo = std::chrono::high_resolution_clock::now();
-        algos::bysolver(sats, obs);
+        algos::bysolver(sats);
         auto end_algo = std::chrono::high_resolution_clock::now();
 
         std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
@@ -157,9 +156,9 @@ int main(int argc, char* argv[])
 
         fs::create_directories(res_dir);
         std::ofstream out_schedule(res_dir + "all_schedule.txt");
-
         std::ofstream sats_obs_out("sats_obs.txt");
         std::ofstream out("sats.txt");
+        std::ofstream sat_full(res_dir + "time_sat_full.txt");
 
         if (!out || !out_schedule || !sats_obs_out) {
             std::cout << "Can't create files\n";
@@ -179,65 +178,93 @@ int main(int argc, char* argv[])
             satName_to_num[all_sat_names[ii]] = ii;
         }
 
-        double sum_data = 0;
         std::vector<double> daily_sums(14,0.0);
         int cnt_sat = 1;
+
         for (auto &item : sats){
             //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
             for (auto &interval : item.second.ints_in_area){
-                out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                    << " " << interval->info[0]->sat_name << " "
-                    << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
-                    << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
+                out << std::fixed << satName_to_num[interval.info.sat_name] 
+                    << " " << interval.info.sat_name << " "
+                    << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
+                    << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
                     << " " 
                     << std::endl;
             }
+        }
+        out.close();
 
+        for (auto &item : sats){
             for (auto &interval : item.second.ints_observatories){
-                sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                    << " " << interval->info[0]->sat_name << " "
-                    << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
-                    << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
-                    << " " << interval->info[0]->obs_name 
-                    << " " << obs_to_hex[interval->info[0]->obs_name]
-                    << " " << interval->info[0]->obs_name
+                sats_obs_out << std::fixed << satName_to_num[interval.info.sat_name] 
+                    << " " << interval.info.sat_name << " "
+                    << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
+                    << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
+                    << " " << interval.info.obs_name 
+                    << " " << obs_to_hex[interval.info.obs_name]
+                    << " " << interval.info.obs_name
                     << std::endl;
             }
+        }
+        sats_obs_out.close();
+
+        double sum_data = 0;
+
+        for (auto &item : sats){
+            item.second.capacity = 0; // simulate satellite work from beginning
+
+            double time_full = 0;
+            timepoint became_full = item.second.full_schedule[0].start;
 
             for (auto &interval : item.second.full_schedule){
-                auto &cur_info = interval->info[0];
-                out_schedule << std::fixed << satName_to_num[cur_info->sat_name] 
-                    << " " << cur_info->sat_name
+                auto &cur_info = interval.info;
+                double capacity_change = 0;
+                if (interval.info.state == State::RECORDING) {
+                    capacity_change = item.second.record(DURATION(interval.start, interval.end));
+                    if (item.second.capacity >= item.second.max_capacity - 1e-8) {
+                        became_full = interval.end;
+                    }
+                }
+                else if (interval.info.state == State::TRANSMISSION) {
+                    if (item.second.capacity >= item.second.max_capacity - 1e-8) {
+                        time_full += DURATION(became_full, interval.start) * 1000;
+                    }
+                    capacity_change = item.second.transmission(DURATION(interval.start, interval.end));
+                    sum_data += capacity_change;
+                }
+
+
+                out_schedule << std::fixed << satName_to_num[cur_info.sat_name] 
+                    << " " << cur_info.sat_name
                     << " "
-                    << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
-                    << " " << (DURATION(START_MODELLING, interval->end) * 1000)  //milliseconds
-                    << " " << interval->info[0]->state
-                    << " " << interval->capacity_change
-                    << " " << obs_to_hex[cur_info->obs_name]
-                    << " " << cur_info->obs_name
+                    << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
+                    << " " << (DURATION(START_MODELLING, interval.end) * 1000)  //milliseconds
+                    << " " << interval.info.state
+                    << " " << capacity_change
+                    << " " << obs_to_hex[cur_info.obs_name]
+                    << " " << cur_info.obs_name
                     << std::endl;
 
-                if (cur_info->state == State::TRANSMISSION){
-                    sum_data += interval->capacity_change;
-                    countDailySum(interval, daily_sums);
-                }
+                // if (cur_info.state == State::TRANSMISSION){
+                //     countDailySum(interval, daily_sums);
+                // }
                     
             }
+                sat_full << std::fixed << item.first << ": " << int(time_full) << " ms\n";
         }
 
-        double daily_checksum = 0.0;
-        std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
-        for(int i = 0; i < daily_sums.size(); i++){
-            std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
-            daily_checksum += daily_sums[i];
-        }
-        std::cout << "Checksum: " << daily_checksum << std::endl;
+        // double daily_checksum = 0.0;
+        // std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
+        // for(int i = 0; i < daily_sums.size(); i++){
+        //     std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
+        //     daily_checksum += daily_sums[i];
+        // }
+        // std::cout << "Checksum: " << daily_checksum << std::endl;
+        sat_full.close();
+        out_schedule.close();
+
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
         std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
-
-        out.close();
-        out_schedule.close();
-        sats_obs_out.close();
 
         // double obs_total_length = countObsTotalLength(sats);
         // std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
@@ -245,17 +272,17 @@ int main(int argc, char* argv[])
 
         // write result
 
-        std::string path_to_res_obs = res_dir + "observatories/";
-        write_res_obs(sats, path_to_res_obs, obs_to_int);
-        std::string path_to_res_sats = res_dir + "satellites/";
-        write_res_sats(sats, path_to_res_sats);
+        // std::string path_to_res_obs = res_dir + "observatories/";
+        // write_res_obs(sats, path_to_res_obs, obs_to_int);
+        // std::string path_to_res_sats = res_dir + "satellites/";
+        // write_res_sats(sats, path_to_res_sats);
 
         // Validation
 
         // VecSchedule sats_to_check;
         // std::string filename_sats_to_check = res_dir + "all_schedule.txt";
         // parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
-        // std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
+        // std::sort(sats_to_check.begin(), sats_to_check.end(), sort_for_parsed_schedule);
 
         // std::cout << sats_to_check.size() << std::endl;
         // std::string err_check_str;
@@ -272,7 +299,7 @@ int main(int argc, char* argv[])
         //     std::cout << "obs are fine!" << std::endl;
         // }
 
-        // if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
+        // if(checkBroadcastInRightArea(sats_to_check, sats, err_check_str) == -1) {
         //    std::cout << "Error while checking transmission area: " << err_check_str;
         // } else {
         //     std::cout << "all satellites transmission in right area" << std::endl;

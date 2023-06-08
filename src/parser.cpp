@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-extern std::unordered_map<std::string, int> obs_to_int;
+extern std::unordered_map<std::string, uint32_t> obs_to_int;
 
 using namespace date;
 
@@ -84,7 +84,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
 
                 cnt++;
                 
-                sats.at(cur_sat).ints_in_area.insert(std::make_shared<Interval>(interval));
+                sats.at(cur_sat).ints_in_area.insert(interval);
             }
             else
             {
@@ -131,7 +131,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
     return 0;
 }
 
-int parse_observatory(std::string &location, Observatories &obs, Satellites &sats)
+int parse_observatory(std::string &location, Satellites &sats)
 {
     int int_idx = 0;
     SatName cur_sat_name;
@@ -162,7 +162,6 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
 
         bool headerRead = false;
         ObsName cur_obs;
-        bool init = true;
         while ((std::getline(fp, line)))
         {
             if (headerRead)
@@ -174,10 +173,10 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                     continue;
                 }
 
-                auto interval = std::make_shared<Interval>(parse_interval(line, cur_sat_name, cur_obs));
+                auto interval = parse_interval(line, cur_sat_name, cur_obs);
 
-                obs[cur_obs].ints_satellite.insert(interval);
-                sats.at(cur_sat_name).ints_observatories.insert(interval);
+                auto inserted = sats.at(cur_sat_name).ints_observatories.insert(interval);
+                Interval &int_inserted = const_cast<Interval&>(*inserted.first);
             }
             else
             {
@@ -186,10 +185,6 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
                     cur_obs = obs_to_int[start_of_line];
-                    if(init){
-                        obs[cur_obs] = Observatory{cur_obs, {}};
-                        init = false;
-                    }
                     size_t prefix_size = prefix.size();
                     int start_number = -1;
                     for (int i = 0; i < line.size(); i++)
@@ -211,7 +206,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
 
         fp.close();
 
-        std::cout << "Read " + std::to_string(cur_obs) + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
+        std::cout << "Read " << cur_obs  << "\n";
     }
 
     return 0;
@@ -246,10 +241,10 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
         Interval inter(start, end, std::stoi(sat_name), std::stoi(obs_name));
-        inter.info[0]->state = str_to_state.at(state_str);
-        inter.capacity_change = std::stod(capacity_change);
+        inter.info.state = str_to_state.at(state_str);
+        //inter.capacity_change = std::stod(capacity_change);
 
-        schedule.push_back(std::make_shared<Interval>(inter));
+        schedule.push_back(inter);
     }
 
     fp.close();
