@@ -20,7 +20,7 @@
                                   .count())
 
 using SatName = uint32_t;
-using ObsName = int;
+using ObsName = uint32_t;
 using timepoint = std::chrono::system_clock::time_point;
 
 enum class State
@@ -74,33 +74,21 @@ struct Interval
 {
     timepoint start;
     timepoint end;
-    double duration;
-    double capacity_change = 0;
+    // double duration;
+    // double capacity_change = 0;
 
-    std::vector<std::shared_ptr<IntervalInfo>> info;
+    IntervalInfo info;
 
     Interval(const Interval &base_interval) = default;
     //Interval(Interval &base_interval) = default;
-
-    // use only for same interval info and consecutive intervals
-    Interval &operator+=(const Interval &r)
-    {
-        duration += r.duration;
-        capacity_change += r.capacity_change;
-        end = r.end;
-        
-        return *this;
-    }
 
     // Constructor for parser
     Interval(
         const timepoint &tp_start,
         const timepoint &tp_end,
         const SatName &sat,
-        const ObsName &obs = 0) : start(tp_start), end(tp_end)
+        const ObsName &obs = 0) : start(tp_start), end(tp_end), info(sat, obs)
     {
-        duration = DURATION(start, end);
-        info.push_back(std::make_shared<IntervalInfo>(IntervalInfo(sat, obs)));
     }
 
     // Constructor for scheduling algorithm
@@ -110,55 +98,67 @@ struct Interval
         const timepoint &tp_start,
         const timepoint &tp_end,
         const SatName &sat,
-        const State &new_state, const ObsName &obs = 0) : start(tp_start), end(tp_end)
+        const State &new_state, const ObsName &obs = 0) : start(tp_start), end(tp_end), info(sat, new_state, obs)
     {
-        duration = DURATION(start, end);
-        info.push_back(std::make_shared<IntervalInfo>(IntervalInfo(sat, new_state, obs)));
     }
 
-    void add_info(const std::vector<std::shared_ptr<IntervalInfo>> &new_info)
-    {
-        auto start_size = info.size();
-
-        info.resize(start_size + new_info.size());
-        for (int i = 0; i < new_info.size(); ++i)
-            info[start_size + i] = new_info[i];
-    }
-
-    // Constructor for plan
     Interval(
         const timepoint &tp_start,
         const timepoint &tp_end,
-        const std::vector<std::shared_ptr<IntervalInfo>> &new_info) : start(tp_start), end(tp_end)
+        const IntervalInfo &new_info) : start(tp_start), end(tp_end), info(new_info)
     {
-        duration = DURATION(start, end);
-        info.resize(new_info.size());
-        std::copy(new_info.begin(), new_info.end(), info.begin());
+    }
+
+    Interval &operator+=(const Interval &r)
+    {
+        end = r.end;
+        
+        return *this;
     }
 };
 
-inline bool sort_obs(std::shared_ptr<Interval> a, std::shared_ptr<Interval> b) {
-    if (a->start == b->start)
-        return a->duration > b->duration;
-    return a->start < b->start;
-}
-
 struct sort_schedule
 {
-    bool operator()(const std::shared_ptr<Interval> &a, const std::shared_ptr<Interval> &b) const
+    bool operator()(const Interval &a, const Interval &b) const
+    {
+        if (a.start == b.start) {
+            if (a.end == b.end)
+                return a.info.obs_name < b.info.obs_name;
+            return DURATION(a.start, a.end) > DURATION(b.start, b.end);
+        }
+        return a.start < b.start;
+    }
+};
+
+struct sort_schedule_link
+{
+    bool operator()(const std::unique_ptr<Interval> &a, const std::unique_ptr<Interval> &b) const
     {
         if (a->start == b->start) {
             if (a->end == b->end)
-                return a->info[0]->obs_name < b->info[0]->obs_name;
-            return a->duration > b->duration;
+                return a->info.obs_name < b->info.obs_name;
+            return DURATION(a->start, a->end) > DURATION(b->start, b->end);
         }
         return a->start < b->start;
     }
 };
 
+struct Segment
+{
+    timepoint start;
+    timepoint end;
 
-using Schedule = std::set<std::shared_ptr<Interval>, sort_schedule>;
-using VecSchedule = std::vector<std::shared_ptr<Interval>>;
+    std::vector<IntervalInfo> info;
+};
+
+// origin
+using Schedule = std::set<Interval, sort_schedule>;
+using LinkSchedule = std::set<std::unique_ptr<Interval>, sort_schedule_link>;
+// algos
+using VecSegment = std::vector<Segment>;
+// result
+using VecSchedule = std::vector<Interval>;
+using LinkVecSchedule = std::vector<std::unique_ptr<Interval>>;
 
 struct Satellite
 {
@@ -240,11 +240,12 @@ struct Satellite
 
 typedef std::unordered_map<SatName, Satellite> Satellites;
 
+// links for intervals grouped by observatories
 struct Observatory
 {
-    int name;
-    Schedule ints_satellite;
-    VecSchedule full_schedule;
+    ObsName name;
+    LinkSchedule ints_satellite;
+    LinkVecSchedule full_schedule;
 };
 
 typedef std::unordered_map<ObsName, Observatory> Observatories;

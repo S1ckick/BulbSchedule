@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 using namespace date;
 
-std::unordered_map<std::string, int> obs_to_int = {
+std::unordered_map<std::string, uint32_t> obs_to_int = {
     {"0", 0},
     {"Anadyr1",1},
     {"Anadyr2", 2},
@@ -31,7 +31,7 @@ std::unordered_map<std::string, int> obs_to_int = {
     {"Sumatra", 14}
 };
 
-std::unordered_map<int, std::string> obs_to_hex = {
+std::unordered_map<uint32_t, std::string> obs_to_hex = {
     {1,"#FF2D00"},
     {2, "#FF8700"},
     {3, "#FAFF00"},
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         int res_parse_obs = parse_observatory(path2, obs, sats);
 
         auto start_algo = std::chrono::high_resolution_clock::now();
-        algos::bysolver(sats, obs);
+        algos::greedy_capacity(sats, obs);
         auto end_algo = std::chrono::high_resolution_clock::now();
 
         std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
@@ -161,42 +161,47 @@ int main(int argc, char* argv[])
         double sum_data = 0;
         int cnt_sat = 1;
         for (auto &item : sats){
+            item.second.capacity = 0;
             //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
             for (auto &interval : item.second.ints_in_area){
-                out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                    << " " << interval->info[0]->sat_name << " "
-                    << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
-                    << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
-                    << " " 
-                    << std::endl;
+                // out << std::fixed << satName_to_num[interval.info[0].sat_name] 
+                //     << " " << interval.info[0].sat_name << " "
+                //     << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
+                //     << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
+                //     << " " 
+                //     << std::endl;
             }
 
             for (auto &interval : item.second.ints_observatories){
-                sats_obs_out << std::fixed << satName_to_num[interval->info[0]->sat_name] 
-                    << " " << interval->info[0]->sat_name << " "
-                    << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
-                    << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
-                    << " " << interval->info[0]->obs_name 
-                    << " " << obs_to_hex[interval->info[0]->obs_name]
-                    << " " << interval->info[0]->obs_name
-                    << std::endl;
+                // sats_obs_out << std::fixed << satName_to_num[interval.info[0].sat_name] 
+                //     << " " << interval.info[0].sat_name << " "
+                //     << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
+                //     << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
+                //     << " " << interval.info[0].obs_name 
+                //     << " " << obs_to_hex[interval.info[0].obs_name]
+                //     << " " << interval.info[0].obs_name
+                //     << std::endl;
             }
 
             for (auto &interval : item.second.full_schedule){
-                auto &cur_info = interval->info[0];
-                out_schedule << std::fixed << satName_to_num[cur_info->sat_name] 
-                    << " " << cur_info->sat_name
-                    << " "
-                    << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
-                    << " " << (DURATION(START_MODELLING, interval->end) * 1000)  //milliseconds
-                    << " " << interval->info[0]->state
-                    << " " << interval->capacity_change
-                    << " " << obs_to_hex[cur_info->obs_name]
-                    << " " << cur_info->obs_name
-                    << std::endl;
+                auto &cur_info = interval.info;
+                if (interval.info.state == State::RECORDING)
+                    item.second.record(DURATION(interval.start, interval.end));
+                else if (interval.info.state == State::TRANSMISSION)
+                    sum_data += item.second.transmission(DURATION(interval.start, interval.end));
+                // out_schedule << std::fixed << satName_to_num[cur_info.sat_name] 
+                //     << " " << cur_info.sat_name
+                //     << " "
+                //     << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
+                //     << " " << (DURATION(START_MODELLING, interval.end) * 1000)  //milliseconds
+                //     << " " << interval.info[0].state
+                //     << " " << interval.capacity_change
+                //     << " " << obs_to_hex[cur_info.obs_name]
+                //     << " " << cur_info.obs_name
+                //     << std::endl;
 
-                if (cur_info->state == State::TRANSMISSION)
-                    sum_data += interval->capacity_change;
+                // if (cur_info.state == State::TRANSMISSION)
+                //     sum_data += interval.capacity_change;
             }
         }
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";

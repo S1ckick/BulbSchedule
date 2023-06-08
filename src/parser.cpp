@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-extern std::unordered_map<std::string, int> obs_to_int;
+extern std::unordered_map<std::string, uint32_t> obs_to_int;
 
 using namespace date;
 
@@ -84,7 +84,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
 
                 cnt++;
                 
-                sats.at(cur_sat).ints_in_area.insert(std::make_shared<Interval>(interval));
+                sats.at(cur_sat).ints_in_area.insert(interval);
             }
             else
             {
@@ -174,10 +174,12 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                     continue;
                 }
 
-                auto interval = std::make_shared<Interval>(parse_interval(line, cur_sat_name, cur_obs));
+                auto interval = parse_interval(line, cur_sat_name, cur_obs);
 
-                obs[cur_obs].ints_satellite.insert(interval);
-                sats.at(cur_sat_name).ints_observatories.insert(interval);
+                auto inserted = sats.at(cur_sat_name).ints_observatories.insert(interval);
+                Interval &int_inserted = const_cast<Interval&>(*inserted.first);
+                std::unique_ptr<Interval> uniq(&int_inserted);
+                obs[cur_obs].ints_satellite.insert(std::move(uniq));
             }
             else
             {
@@ -186,7 +188,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
                     cur_obs = obs_to_int[start_of_line];
-                    if(init){
+                    if (init) {
                         obs[cur_obs] = Observatory{cur_obs, {}};
                         init = false;
                     }
@@ -246,10 +248,10 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
         Interval inter(start, end, std::stoi(sat_name), std::stoi(obs_name));
-        inter.info[0]->state = str_to_state.at(state_str);
-        inter.capacity_change = std::stod(capacity_change);
+        inter.info.state = str_to_state.at(state_str);
+        //inter.capacity_change = std::stod(capacity_change);
 
-        schedule.push_back(std::make_shared<Interval>(inter));
+        schedule.push_back(inter);
     }
 
     fp.close();

@@ -7,8 +7,8 @@ extern Observatory empty_obs;
 
 namespace algos
 {
-    Schedule great_plan(const Satellites &sats);
-    void add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat, Observatory &cur_obs = empty_obs);
+    VecSegment great_plan(const Satellites &sats);
+    void add2schedule(const timepoint &start, const timepoint &end, const IntervalInfo &info, Satellite &cur_sat, Observatory &cur_obs = empty_obs);
 
     void greedy_random(Satellites &sats, Observatories &obs);
     void greedy_capacity(Satellites &sats, Observatories &obs);

@@ -25,8 +25,10 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
     {
         cnt++;
         printf("Interval %6d/%ld : ", cnt, plan.size());
+
+        auto inter_dur = DURATION(inter.start, inter.end);
         
-        auto infos = inter->info;
+        auto infos = inter.info;
 
         CpModelBuilder cp_model;
 
@@ -39,7 +41,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
         
         std::map<SatName, bool> can_record;
         
-        std::map<std::string, std::shared_ptr<IntervalInfo>> id_to_info;
+        std::map<std::string, IntervalInfo> id_to_info;
         
         for (auto & sat : sats)
         {
@@ -56,33 +58,33 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
         
         for (auto &info : infos)
         {
-            if (info->state == State::RECORDING) 
+            if (info.state == State::RECORDING) 
             {
                 BoolVar v = cp_model.NewBoolVar();
-                std::string id = std::to_string(info->sat_name) + "_0";
-                Satellite &sat = sats.at(info->sat_name);
+                std::string id = std::to_string(info.sat_name) + "_0";
+                Satellite &sat = sats.at(info.sat_name);
                 vars.insert({id, v});
                 id_to_info[id] = info;
-                underflow_conditions[info->sat_name] -= v * (int)(1000 * inter->duration * sat.recording_speed);
-                uniqueness_conditions_sat[info->sat_name] += v;
-                can_record[info->sat_name] = true;
+                underflow_conditions[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
+                uniqueness_conditions_sat[info.sat_name] += v;
+                can_record[info.sat_name] = true;
                 
-                optimized += v * (int)(1500 * inter->duration * sat.recording_speed *
+                optimized += v * (int)(1500 * inter_dur * sat.recording_speed *
                                               (sat.max_capacity * 0.7 - sat.capacity) / sat.max_capacity);
             }
-            else if (info->state == State::TRANSMISSION)
+            else if (info.state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model.NewBoolVar();
                 // obs_name must be counted from one not from zero
-                std::string id = std::to_string(info->sat_name) + "_" + std::to_string(info->obs_name);
-                Satellite &sat = sats.at(info->sat_name);
+                std::string id = std::to_string(info.sat_name) + "_" + std::to_string(info.obs_name);
+                Satellite &sat = sats.at(info.sat_name);
                 
                 vars.insert({id, v}); 
                 id_to_info[id] = info;
-                underflow_conditions[info->sat_name] += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
-                uniqueness_conditions_obs[info->obs_name] += v;
-                uniqueness_conditions_sat[info->sat_name] += v;
-                optimized += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
+                underflow_conditions[info.sat_name] += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
+                uniqueness_conditions_obs[info.obs_name] += v;
+                uniqueness_conditions_sat[info.sat_name] += v;
+                optimized += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
             }
         }
         
@@ -117,19 +119,15 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                     if (v.first[7] == '0') // recording
                     {
                         int satname = std::atoi(v.first.substr(0, 6).c_str());
-                        Interval ii(inter->start, inter->end, {id_to_info[v.first]});
-                        auto new_inter = std::make_shared<Interval>(ii);
-                        algos::add2schedule(new_inter, sats.at(satname));
+                        algos::add2schedule(inter.start, inter.end, id_to_info[v.first], sats.at(satname));
                         r++;
                     }
                     else
                     {
                         int satname = std::atoi(v.first.substr(0, 6).c_str());
                         int obsname = std::atoi(v.first.substr(7).c_str());
-                        Interval ii(inter->start, inter->end, {id_to_info[v.first]});
-                        auto new_inter = std::make_shared<Interval>(ii);
-                        algos::add2schedule(new_inter, sats.at(satname), obs.at(obsname));
-                        transmitted += inter->duration * sats.at(satname).broadcasting_speed;
+                        algos::add2schedule(inter.start, inter.end, id_to_info[v.first], sats.at(satname), obs.at(obsname));
+                        transmitted += inter_dur * sats.at(satname).broadcasting_speed;
                         b++;
                     }
                 }
@@ -146,8 +144,8 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
 
 void algos::bysolver2 (Satellites &sats, Observatories &obs) {
     std::cout << "Starting scheduler\n";
-    auto plan_ = great_plan(sats);
-    VecSchedule plan(plan_.begin(), plan_.end());
+    auto plan = great_plan(sats);
+    //std::vector<Interval> plan(plan_.begin(), plan_.end());
     typedef std::tuple<int, SatName, ObsName> SegmentSatObs;
     
     std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
@@ -159,14 +157,16 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
     std::unique_ptr<std::map<SatName, LinearExpr>> underflow_conditions(new std::map<SatName, LinearExpr>());
     
     std::map<SegmentSatObs, BoolVar> vars;
-    std::map<SegmentSatObs, std::shared_ptr<IntervalInfo>> id_to_info;
+    std::map<SegmentSatObs, IntervalInfo> id_to_info;
     int nconstraints = 0;
     
     for (int cnt = 0; cnt < plan.size(); cnt++)
     {
         auto &inter = plan[cnt];
+
+        auto inter_dur = DURATION(inter.start, inter.end);
         
-        auto infos = inter->info;
+        auto infos = inter.info;
         
         std::map<SatName, LinearExpr> uniqueness_conditions_sat;
         std::map<ObsName, LinearExpr> uniqueness_conditions_obs;
@@ -187,32 +187,32 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
         
         for (auto &info : infos)
         {
-            if (info->state == State::RECORDING) 
+            if (info.state == State::RECORDING) 
             {
                 BoolVar v = cp_model->NewBoolVar();
-                SegmentSatObs id(cnt, info->sat_name, 0);
-                Satellite &sat = sats.at(info->sat_name);
+                SegmentSatObs id(cnt, info.sat_name, 0);
+                Satellite &sat = sats.at(info.sat_name);
                 vars.insert({id, v});
                 id_to_info[id] = info;
-                (*underflow_conditions)[info->sat_name] -= v * (int)(1000 * inter->duration * sat.recording_speed);
-                uniqueness_conditions_sat[info->sat_name] += v;
-                can_record[info->sat_name] = true;
+                (*underflow_conditions)[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
+                uniqueness_conditions_sat[info.sat_name] += v;
+                can_record[info.sat_name] = true;
                 
-                (*optimized) += v * (int)(1000 * inter->duration * sat.recording_speed *
+                (*optimized) += v * (int)(1000 * inter_dur * sat.recording_speed *
                                               (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
-            else if (info->state == State::TRANSMISSION)
+            else if (info.state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model->NewBoolVar();
-                SegmentSatObs id(cnt, info->sat_name, info->obs_name);
-                Satellite &sat = sats.at(info->sat_name);
+                SegmentSatObs id(cnt, info.sat_name, info.obs_name);
+                Satellite &sat = sats.at(info.sat_name);
                 
                 vars.insert({id, v}); 
                 id_to_info[id] = info;
-                (*underflow_conditions)[info->sat_name] += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
-                uniqueness_conditions_obs[info->obs_name] += v;
-                uniqueness_conditions_sat[info->sat_name] += v;
-                (*optimized) += v * (int)(1000 * inter->duration * sat.broadcasting_speed);
+                (*underflow_conditions)[info.sat_name] += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
+                uniqueness_conditions_obs[info.obs_name] += v;
+                uniqueness_conditions_sat[info.sat_name] += v;
+                (*optimized) += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
             }
         }
         
@@ -240,7 +240,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
         if (cnt % 50 == 0 || cnt == plan.size() - 1)
         {
             printf("%6d/%ld ", cnt, plan.size());
-            printf("%d v, %d c ", vars.size(), nconstraints);
+            printf("%d v, %d c ", int(vars.size()), nconstraints);
             fflush(stdout);
             cp_model->Maximize(*optimized);
 
@@ -263,17 +263,13 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
 
                         if (obsname == 0) // recording
                         {
-                            Interval ii(cur_inter->start, cur_inter->end, {id_to_info[v.first]});
-                            auto new_inter = std::make_shared<Interval>(ii);
-                            algos::add2schedule(new_inter, sats.at(satname));
+                            algos::add2schedule(cur_inter.start, cur_inter.end, id_to_info[v.first], sats.at(satname));
                             r++;
                         }
                         else
                         {
-                            Interval ii(cur_inter->start, cur_inter->end, {id_to_info[v.first]});
-                            auto new_inter = std::make_shared<Interval>(ii);
-                            algos::add2schedule(new_inter, sats.at(satname), obs.at(obsname));
-                            transmitted += cur_inter->duration * sats.at(satname).broadcasting_speed;
+                            algos::add2schedule(cur_inter.start, cur_inter.end, id_to_info[v.first], sats.at(satname), obs.at(obsname));
+                            transmitted += DURATION(cur_inter.start, cur_inter.end) * sats.at(satname).broadcasting_speed;
                             b++;
                         }
                     }
