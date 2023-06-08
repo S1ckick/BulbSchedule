@@ -159,8 +159,8 @@ int main(int argc, char* argv[])
 
         double sum_data = 0;
         int cnt_sat = 1;
+
         for (auto &item : sats){
-            item.second.capacity = 0;
             //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
             for (auto &interval : item.second.ints_in_area){
                 out << std::fixed << satName_to_num[interval.info.sat_name] 
@@ -171,6 +171,10 @@ int main(int argc, char* argv[])
                     << std::endl;
             }
 
+            out.close();
+        }
+
+        for (auto &item : sats){
             for (auto &interval : item.second.ints_observatories){
                 sats_obs_out << std::fixed << satName_to_num[interval.info.sat_name] 
                     << " " << interval.info.sat_name << " "
@@ -182,6 +186,11 @@ int main(int argc, char* argv[])
                     << std::endl;
             }
 
+            sats_obs_out.close();
+        }
+
+        for (auto &item : sats){
+            item.second.capacity = 0;
             for (auto &interval : item.second.full_schedule){
                 auto &cur_info = interval.info;
                 double capacity_change = 0;
@@ -202,13 +211,11 @@ int main(int argc, char* argv[])
                     << " " << cur_info.obs_name
                     << std::endl;
             }
+
+            out_schedule.close();
         }
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
         std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
-
-        out.close();
-        out_schedule.close();
-        sats_obs_out.close();
 
         // double obs_total_length = countObsTotalLength(sats);
         // std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
