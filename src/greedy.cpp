@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-void algos::greedy_random(Satellites &sats, Observatories &obs) {
+void algos::greedy_random(Satellites &sats) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -21,9 +21,8 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
         sat.second.full_schedule.reserve(55000);
         init_sat_idle.push_back({sat.first, chill});
     }
-    for (auto &observ: obs) {
-        observ.second.full_schedule.reserve(40000);
-        init_obs_idle.push_back({observ.first, chill});
+    for (int obs = OBS_FIRST; obs < NUM; obs++) {
+        init_obs_idle.push_back({obs, chill});
     }
 
     float mean_big1 = 0;
@@ -52,7 +51,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
 
         for (auto &action: inter.info) {
             auto action_ptr = std::make_shared<IntervalInfo>(action);
-            if (broadcasting_count < obs.size() && action.state == State::TRANSMISSION)
+            if (broadcasting_count < OBS_NUM && action.state == State::TRANSMISSION)
             {
                 if (sat_state.at(action.sat_name)->state != State::TRANSMISSION && 
                     obs_state.at(action.obs_name)->state != State::TRANSMISSION && sats.at(action.sat_name).capacity > 0) 
@@ -76,19 +75,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
         // save states in shedule intervals
         for (auto &pair: sat_state) {
             if (pair.second->state != State::IDLE) {
-                algos::add2schedule(inter.start, inter.end, *(pair.second.get()), sats.at(pair.first), obs.at(pair.second->obs_name));
-
-                // if (pair.second->state == State::RECORDING) {
-                //     new_inter->capacity_change = sats.at(pair.first).record(ii.duration);
-                // }
-                // else if (pair.second->state == State::TRANSMISSION) {
-                //     if (pair.second->obs_name.empty()) {
-                //         throw std::logic_error("Obs and sat state dont coresspond");
-                //     }
-                //     new_inter->capacity_change = sats.at(pair.first).transmission(ii.duration);
-                //     obs.at(pair.second->obs_name).full_schedule.push_back(new_inter);
-                // }
-                // sats.at(pair.first).full_schedule.push_back(new_inter);
+                algos::add2schedule(inter.start, inter.end, *(pair.second.get()), sats.at(pair.first));
             }
         }
 
@@ -102,7 +89,7 @@ void algos::greedy_random(Satellites &sats, Observatories &obs) {
     // std::cout << mean_big2 / plan.size() << "\n";
 }
 
-void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
+void algos::greedy_capacity(Satellites &sats) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -199,7 +186,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
                     if (obs_actors.count(cur_obs)) {
                         pair_found = true;
                         // fill interval
-                        algos::add2schedule(inter.start, inter.end, *(visible.get()), sats.at(satellite), obs.at(cur_obs));
+                        algos::add2schedule(inter.start, inter.end, *(visible.get()), sats.at(satellite));
 
                         // this observatory busy now
                         obs_actors.erase(cur_obs);
@@ -216,7 +203,7 @@ void algos::greedy_capacity(Satellites &sats, Observatories &obs) {
     }
 }
 
-void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
+void algos::greedy_exhaustive(Satellites &sats) {
     using namespace std::chrono;
 
     std::cout << "Starting greedy algorithm\n";
@@ -371,7 +358,7 @@ void algos::greedy_exhaustive(Satellites &sats, Observatories &obs) {
                 auto cur_action = visible_sat[obs_sat[cur_obs].first][opt_case[cur_obs]];
                 if (!used_sats.count(cur_action->sat_name)) {
                     used_sats.insert(cur_action->sat_name);
-                    algos::add2schedule(inter.start, inter.end, *(cur_action.get()), sats.at(cur_action->sat_name), obs.at(cur_action->obs_name));
+                    algos::add2schedule(inter.start, inter.end, *(cur_action.get()), sats.at(cur_action->sat_name));
                 }
             }
         }

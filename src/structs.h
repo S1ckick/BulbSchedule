@@ -15,6 +15,9 @@
 
 #define PLANES_NUM 20
 
+#define OBS_FIRST 1
+#define OBS_NUM 14
+
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
                                std::chrono::milliseconds::period::num / std::chrono::milliseconds::period::den) \
                                   .count())
@@ -74,8 +77,6 @@ struct Interval
 {
     timepoint start;
     timepoint end;
-    // double duration;
-    // double capacity_change = 0;
 
     IntervalInfo info;
 
@@ -130,19 +131,6 @@ struct sort_schedule
     }
 };
 
-struct sort_schedule_link
-{
-    bool operator()(const std::unique_ptr<Interval> &a, const std::unique_ptr<Interval> &b) const
-    {
-        if (a->start == b->start) {
-            if (a->end == b->end)
-                return a->info.obs_name < b->info.obs_name;
-            return DURATION(a->start, a->end) > DURATION(b->start, b->end);
-        }
-        return a->start < b->start;
-    }
-};
-
 struct Segment
 {
     timepoint start;
@@ -153,12 +141,10 @@ struct Segment
 
 // origin
 using Schedule = std::set<Interval, sort_schedule>;
-using LinkSchedule = std::set<std::unique_ptr<Interval>, sort_schedule_link>;
 // algos
 using VecSegment = std::vector<Segment>;
 // result
 using VecSchedule = std::vector<Interval>;
-using LinkVecSchedule = std::vector<std::unique_ptr<Interval>>;
 
 struct Satellite
 {
@@ -240,14 +226,13 @@ struct Satellite
 
 typedef std::unordered_map<SatName, Satellite> Satellites;
 
-// links for intervals grouped by observatories
-struct Observatory
-{
-    ObsName name;
-    LinkSchedule ints_satellite;
-    LinkVecSchedule full_schedule;
-};
+// struct Observatory
+// {
+//     ObsName name;
+//     LinkSchedule ints_satellite;
+//     LinkVecSchedule full_schedule;
+// };
 
-typedef std::unordered_map<ObsName, Observatory> Observatories;
+//typedef std::unordered_map<ObsName, Observatory> Observatories;
 
 #endif

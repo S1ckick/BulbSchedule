@@ -15,28 +15,28 @@ inline std::ostream& operator << (std::ostream& o, const Interval& a)
     return o;
 }
 
-int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Observatories &obs, std::string &res) {
-    for(auto &interval : schedule_to_check) {
-        if(interval.info.state != State::TRANSMISSION)
-            continue;
-        auto &ob = obs.at(interval.info.obs_name);
-        int found = 0;
-        for(auto &area : ob.ints_satellite) {
-            if(interval.start >= area->start && interval.end <= area->end) {
-                found = 1;
-                break;
-            }
-        }
+// int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Observatories &obs, std::string &res) {
+//     for(auto &interval : schedule_to_check) {
+//         if(interval.info.state != State::TRANSMISSION)
+//             continue;
+//         auto &ob = obs.at(interval.info.obs_name);
+//         int found = 0;
+//         for(auto &area : ob.ints_satellite) {
+//             if(interval.start >= area->start && interval.end <= area->end) {
+//                 found = 1;
+//                 break;
+//             }
+//         }
     
-        if(found == 0) {
-            std::stringstream res_ss;
-            res_ss << std::fixed << "Error: \n" << interval << std::endl;
-            res = res_ss.str();
-            return -1;
-        }
-    }
-    return 0;
-}
+//         if(found == 0) {
+//             std::stringstream res_ss;
+//             res_ss << std::fixed << "Error: \n" << interval << std::endl;
+//             res = res_ss.str();
+//             return -1;
+//         }
+//     }
+//     return 0;
+// }
 
 int checkRecordingInRightArea(VecSchedule &schedule_to_check, Satellites &sats, std::string &res)
 {

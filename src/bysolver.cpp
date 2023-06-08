@@ -13,7 +13,7 @@ extern timepoint START_MODELLING;
 using namespace operations_research;
 using namespace operations_research::sat;
 
-void algos::bysolver (Satellites &sats, Observatories &obs) {
+void algos::bysolver (Satellites &sats) {
     std::cout << "Starting scheduler\n";
     auto plan = great_plan(sats);
 
@@ -52,8 +52,8 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
             can_record[name] = false;
         }
         
-        for (auto & ob : obs)
-            uniqueness_conditions_obs[ob.second.name] = LinearExpr();
+        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
+            uniqueness_conditions_obs[obs] = LinearExpr();
         
         
         for (auto &info : infos)
@@ -100,9 +100,9 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
             nconstraints++;
         }
         
-        for (auto &ob : obs)
+        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
         {
-            cp_model.AddLessOrEqual(uniqueness_conditions_obs[ob.second.name], 1);
+            cp_model.AddLessOrEqual(uniqueness_conditions_obs[obs], 1);
             nconstraints++;
         }
         
@@ -126,7 +126,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                     {
                         int satname = std::atoi(v.first.substr(0, 6).c_str());
                         int obsname = std::atoi(v.first.substr(7).c_str());
-                        algos::add2schedule(inter.start, inter.end, id_to_info[v.first], sats.at(satname), obs.at(obsname));
+                        algos::add2schedule(inter.start, inter.end, id_to_info[v.first], sats.at(satname));
                         transmitted += inter_dur * sats.at(satname).broadcasting_speed;
                         b++;
                     }
@@ -142,7 +142,7 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
     
 }
 
-void algos::bysolver2 (Satellites &sats, Observatories &obs) {
+void algos::bysolver2 (Satellites &sats) {
     std::cout << "Starting scheduler\n";
     auto plan = great_plan(sats);
     //std::vector<Interval> plan(plan_.begin(), plan_.end());
@@ -182,8 +182,8 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             can_record[name] = false;
         }
         
-        for (auto & ob : obs)
-            uniqueness_conditions_obs[ob.second.name] = LinearExpr();
+        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
+            uniqueness_conditions_obs[obs] = LinearExpr();
         
         for (auto &info : infos)
         {
@@ -231,9 +231,9 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
             nconstraints++;
         }
         
-        for (auto &ob : obs)
+        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
         {
-            cp_model->AddLessOrEqual(uniqueness_conditions_obs[ob.second.name], 1);
+            cp_model->AddLessOrEqual(uniqueness_conditions_obs[obs], 1);
             nconstraints++;
         }
         
@@ -268,7 +268,7 @@ void algos::bysolver2 (Satellites &sats, Observatories &obs) {
                         }
                         else
                         {
-                            algos::add2schedule(cur_inter.start, cur_inter.end, id_to_info[v.first], sats.at(satname), obs.at(obsname));
+                            algos::add2schedule(cur_inter.start, cur_inter.end, id_to_info[v.first], sats.at(satname));
                             transmitted += DURATION(cur_inter.start, cur_inter.end) * sats.at(satname).broadcasting_speed;
                             b++;
                         }

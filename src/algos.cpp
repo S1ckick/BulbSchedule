@@ -70,9 +70,7 @@ VecSegment algos::great_plan(const Satellites &sats) {
 	return std::move(great_plan);
 }
 
-Observatory empty_obs({0, {}, {}});
-
-void algos::add2schedule(const timepoint &start, const timepoint &end, const IntervalInfo &info, Satellite &cur_sat, Observatory &cur_obs) 
+void algos::add2schedule(const timepoint &start, const timepoint &end, const IntervalInfo &info, Satellite &cur_sat) 
 {
 	auto int_dur = DURATION(start, end);
 	Interval new_interval(start, end, info);
@@ -93,9 +91,7 @@ void algos::add2schedule(const timepoint &start, const timepoint &end, const Int
 
 	cur_sat.full_schedule.push_back(new_interval);
 	if (new_interval.info.state == State::TRANSMISSION) {
-		if (cur_obs.name == 0)
+		if (info.obs_name == 0)
 			throw std::logic_error("Pass an observatory to add2schedule to add broadcasting interval");
-		std::unique_ptr<Interval> uniq(&(cur_sat.full_schedule.back()));
-		cur_obs.full_schedule.push_back(std::move(uniq));
 	}
 }
