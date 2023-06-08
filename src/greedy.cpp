@@ -21,7 +21,7 @@ void algos::greedy_random(Satellites &sats) {
         sat.second.full_schedule.reserve(55000);
         init_sat_idle.push_back({sat.first, chill});
     }
-    for (int obs = OBS_FIRST; obs < NUM; obs++) {
+    for (int obs = OBS_FIRST; obs < OBS_NUM; obs++) {
         init_obs_idle.push_back({obs, chill});
     }
 
