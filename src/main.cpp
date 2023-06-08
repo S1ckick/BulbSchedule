@@ -135,9 +135,9 @@ int main(int argc, char* argv[])
 
         fs::create_directories(res_dir);
         std::ofstream out_schedule(res_dir + "all_schedule.txt");
-
         std::ofstream sats_obs_out("sats_obs.txt");
         std::ofstream out("sats.txt");
+        std::ofstream sat_full(res_dir + "time_sat_full.txt");
 
         if (!out || !out_schedule || !sats_obs_out) {
             std::cout << "Can't create files\n";
@@ -157,7 +157,6 @@ int main(int argc, char* argv[])
             satName_to_num[all_sat_names[ii]] = ii;
         }
 
-        double sum_data = 0;
         int cnt_sat = 1;
 
         for (auto &item : sats){
@@ -170,9 +169,8 @@ int main(int argc, char* argv[])
                     << " " 
                     << std::endl;
             }
-
-            out.close();
         }
+        out.close();
 
         for (auto &item : sats){
             for (auto &interval : item.second.ints_observatories){
@@ -185,21 +183,25 @@ int main(int argc, char* argv[])
                     << " " << interval.info.obs_name
                     << std::endl;
             }
-
-            sats_obs_out.close();
         }
+        sats_obs_out.close();
+
+        double sum_data = 0;
 
         for (auto &item : sats){
-            item.second.capacity = 0;
+            item.second.capacity = 0; // simulate satellite work from beginning
             for (auto &interval : item.second.full_schedule){
                 auto &cur_info = interval.info;
                 double capacity_change = 0;
-                if (interval.info.state == State::RECORDING)
+                if (interval.info.state == State::RECORDING) {
                     capacity_change = item.second.record(DURATION(interval.start, interval.end));
+                }
                 else if (interval.info.state == State::TRANSMISSION) {
                     capacity_change = item.second.transmission(DURATION(interval.start, interval.end));
                     sum_data += capacity_change;
                 }
+
+
                 out_schedule << std::fixed << satName_to_num[cur_info.sat_name] 
                     << " " << cur_info.sat_name
                     << " "
@@ -212,8 +214,9 @@ int main(int argc, char* argv[])
                     << std::endl;
             }
 
-            out_schedule.close();
         }
+        out_schedule.close();
+
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
         std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 
