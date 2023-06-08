@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
         int res_parse_obs = parse_observatory(path2, sats);
 
         auto start_algo = std::chrono::high_resolution_clock::now();
-        algos::bysolver(sats);
+        algos::greedy_capacity(sats);
         auto end_algo = std::chrono::high_resolution_clock::now();
 
         std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
         // VecSchedule sats_to_check;
         // std::string filename_sats_to_check = res_dir + "all_schedule.txt";
         // parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
-        // std::sort(sats_to_check.begin(), sats_to_check.end(), sort_obs);
+        // std::sort(sats_to_check.begin(), sats_to_check.end(), sort_for_parsed_schedule);
 
         // std::cout << sats_to_check.size() << std::endl;
         // std::string err_check_str;
@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
         //     std::cout << "obs are fine!" << std::endl;
         // }
 
-        // if(checkBroadcastInRightArea(sats_to_check, obs, err_check_str) == -1) {
+        // if(checkBroadcastInRightArea(sats_to_check, sats, err_check_str) == -1) {
         //    std::cout << "Error while checking transmission area: " << err_check_str;
         // } else {
         //     std::cout << "all satellites transmission in right area" << std::endl;

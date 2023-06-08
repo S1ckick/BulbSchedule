@@ -131,6 +131,12 @@ struct sort_schedule
     }
 };
 
+inline bool sort_for_parsed_schedule(const Interval& a, const Interval& b) {
+    if (a.start == b.start)
+        return DURATION(a.start, a.end) > DURATION(b.start, b.end);
+    return a.start < b.start;
+}
+
 struct Segment
 {
     timepoint start;
