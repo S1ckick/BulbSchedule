@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
         int res_parse_obs = parse_observatory(path2, sats);
 
         auto start_algo = std::chrono::high_resolution_clock::now();
-        algos::greedy_capacity(sats);
+        algos::bysolver(sats);
         auto end_algo = std::chrono::high_resolution_clock::now();
 
         std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;

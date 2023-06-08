@@ -1,49 +1,48 @@
 #include "algos.h"
 
-
 #include "ortools/base/logging.h"
 #include "ortools/sat/cp_model.h"
 #include "ortools/sat/cp_model.pb.h"
 #include "ortools/sat/cp_model_solver.h"
 #include "ortools/util/sorted_interval_list.h"
 
-
 extern timepoint START_MODELLING;
 
 using namespace operations_research;
 using namespace operations_research::sat;
 
-void algos::bysolver (Satellites &sats) {
+void algos::bysolver(Satellites &sats)
+{
     std::cout << "Starting scheduler\n";
     auto plan = great_plan(sats);
 
     int cnt = 0;
-    
+
     double transmitted = 0;
 
-    for (auto &inter: plan)
+    for (auto &inter : plan)
     {
         cnt++;
         printf("Interval %6d/%ld : ", cnt, plan.size());
 
         auto inter_dur = DURATION(inter.start, inter.end);
-        
+
         auto infos = inter.info;
 
         CpModelBuilder cp_model;
 
         std::map<std::string, BoolVar> vars;
-        
+
         LinearExpr optimized;
         std::map<SatName, LinearExpr> underflow_conditions;
         std::map<SatName, LinearExpr> uniqueness_conditions_sat;
         std::map<ObsName, LinearExpr> uniqueness_conditions_obs;
-        
+
         std::map<SatName, bool> can_record;
-        
-        std::map<std::string, IntervalInfo> id_to_info;
-        
-        for (auto & sat : sats)
+
+        std::map<std::string,  IntervalInfo> id_to_info;
+
+        for (auto &sat : sats)
         {
             SatName name = sat.second.name;
             underflow_conditions[name] = LinearExpr();
@@ -51,14 +50,13 @@ void algos::bysolver (Satellites &sats) {
             uniqueness_conditions_sat[name] = LinearExpr();
             can_record[name] = false;
         }
-        
-        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
+
+        for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
             uniqueness_conditions_obs[obs] = LinearExpr();
-        
-        
+
         for (auto &info : infos)
         {
-            if (info.state == State::RECORDING) 
+            if (info.state == State::RECORDING)
             {
                 BoolVar v = cp_model.NewBoolVar();
                 std::string id = std::to_string(info.sat_name) + "_0";
@@ -68,9 +66,9 @@ void algos::bysolver (Satellites &sats) {
                 underflow_conditions[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
                 uniqueness_conditions_sat[info.sat_name] += v;
                 can_record[info.sat_name] = true;
-                
+
                 optimized += v * (int)(1500 * inter_dur * sat.recording_speed *
-                                              (sat.max_capacity * 0.7 - sat.capacity) / sat.max_capacity);
+                                       (sat.max_capacity * 0.7 - sat.capacity) / sat.max_capacity);
             }
             else if (info.state == State::TRANSMISSION)
             {
@@ -78,8 +76,8 @@ void algos::bysolver (Satellites &sats) {
                 // obs_name must be counted from one not from zero
                 std::string id = std::to_string(info.sat_name) + "_" + std::to_string(info.obs_name);
                 Satellite &sat = sats.at(info.sat_name);
-                
-                vars.insert({id, v}); 
+
+                vars.insert({id, v});
                 id_to_info[id] = info;
                 underflow_conditions[info.sat_name] += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
                 uniqueness_conditions_obs[info.obs_name] += v;
@@ -87,9 +85,9 @@ void algos::bysolver (Satellites &sats) {
                 optimized += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
             }
         }
-        
+
         int nconstraints = 0;
-        for (auto & sat : sats)
+        for (auto &sat : sats)
         {
             if (can_record[sat.second.name])
                 cp_model.AddEquality(uniqueness_conditions_sat[sat.second.name], 1);
@@ -99,19 +97,20 @@ void algos::bysolver (Satellites &sats) {
             cp_model.AddLessOrEqual(underflow_conditions[sat.second.name], 0);
             nconstraints++;
         }
-        
-        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
+
+        for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
         {
             cp_model.AddLessOrEqual(uniqueness_conditions_obs[obs], 1);
             nconstraints++;
         }
-        
+
         cp_model.Maximize(optimized);
-        
+
         const CpSolverResponse response = Solve(cp_model.Build());
-        
+
         if (response.status() == CpSolverStatus::OPTIMAL ||
-            response.status() == CpSolverStatus::FEASIBLE) {
+            response.status() == CpSolverStatus::FEASIBLE)
+        {
             int r = 0, b = 0;
             for (const auto &v : vars)
                 if (SolutionBooleanValue(response, v.second))
@@ -132,48 +131,50 @@ void algos::bysolver (Satellites &sats) {
                     }
                 }
             printf("%2d recording, %2d transmitting; total transmitted %lf", r, b, transmitted);
-        } else {
-           LOG(INFO) << "No solution found.";
         }
-         
+        else
+        {
+            LOG(INFO) << "No solution found.";
+        }
+
         printf("\n");
-        //break;
+        // break;
     }
-    
 }
 
-void algos::bysolver2 (Satellites &sats) {
+void algos::bysolver2(Satellites &sats)
+{
     std::cout << "Starting scheduler\n";
     auto plan = great_plan(sats);
-    //std::vector<Interval> plan(plan_.begin(), plan_.end());
+    // std::vector<Interval> plan(plan_.begin(), plan_.end());
     typedef std::tuple<int, SatName, ObsName> SegmentSatObs;
-    
+
     std::cout << "Intervals: " + std::to_string(plan.size()) + "\n";
 
     double transmitted = 0;
-        
+
     std::unique_ptr<CpModelBuilder> cp_model(new CpModelBuilder());
     std::unique_ptr<LinearExpr> optimized(new LinearExpr());
     std::unique_ptr<std::map<SatName, LinearExpr>> underflow_conditions(new std::map<SatName, LinearExpr>());
-    
+
     std::map<SegmentSatObs, BoolVar> vars;
     std::map<SegmentSatObs, IntervalInfo> id_to_info;
     int nconstraints = 0;
-    
+
     for (int cnt = 0; cnt < plan.size(); cnt++)
     {
         auto &inter = plan[cnt];
 
         auto inter_dur = DURATION(inter.start, inter.end);
-        
+
         auto infos = inter.info;
-        
+
         std::map<SatName, LinearExpr> uniqueness_conditions_sat;
         std::map<ObsName, LinearExpr> uniqueness_conditions_obs;
-        
+
         std::map<SatName, bool> can_record;
-        
-        for (auto & sat : sats)
+
+        for (auto &sat : sats)
         {
             SatName name = sat.second.name;
             (*underflow_conditions)[name] = LinearExpr();
@@ -181,13 +182,13 @@ void algos::bysolver2 (Satellites &sats) {
             uniqueness_conditions_sat[name] = LinearExpr();
             can_record[name] = false;
         }
-        
-        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
+
+        for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
             uniqueness_conditions_obs[obs] = LinearExpr();
-        
+
         for (auto &info : infos)
         {
-            if (info.state == State::RECORDING) 
+            if (info.state == State::RECORDING)
             {
                 BoolVar v = cp_model->NewBoolVar();
                 SegmentSatObs id(cnt, info.sat_name, 0);
@@ -197,17 +198,17 @@ void algos::bysolver2 (Satellites &sats) {
                 (*underflow_conditions)[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
                 uniqueness_conditions_sat[info.sat_name] += v;
                 can_record[info.sat_name] = true;
-                
+
                 (*optimized) += v * (int)(1000 * inter_dur * sat.recording_speed *
-                                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
+                                          (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
             else if (info.state == State::TRANSMISSION)
             {
                 BoolVar v = cp_model->NewBoolVar();
                 SegmentSatObs id(cnt, info.sat_name, info.obs_name);
                 Satellite &sat = sats.at(info.sat_name);
-                
-                vars.insert({id, v}); 
+
+                vars.insert({id, v});
                 id_to_info[id] = info;
                 (*underflow_conditions)[info.sat_name] += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
                 uniqueness_conditions_obs[info.obs_name] += v;
@@ -215,8 +216,8 @@ void algos::bysolver2 (Satellites &sats) {
                 (*optimized) += v * (int)(1000 * inter_dur * sat.broadcasting_speed);
             }
         }
-        
-        for (auto & sat : sats)
+
+        for (auto &sat : sats)
         {
             if (can_record[sat.second.name])
                 cp_model->AddEquality(uniqueness_conditions_sat[sat.second.name], 1);
@@ -230,13 +231,13 @@ void algos::bysolver2 (Satellites &sats) {
             cp_model->AddLessOrEqual(underflow_copy, 0);
             nconstraints++;
         }
-        
-        for (int obs = OBS_FIRST; obs < OBS_NUM; obs++)
+
+        for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
         {
             cp_model->AddLessOrEqual(uniqueness_conditions_obs[obs], 1);
             nconstraints++;
         }
-        
+
         if (cnt % 50 == 0 || cnt == plan.size() - 1)
         {
             printf("%6d/%ld ", cnt, plan.size());
@@ -247,7 +248,8 @@ void algos::bysolver2 (Satellites &sats) {
             const CpSolverResponse response = Solve(cp_model->Build());
 
             if (response.status() == CpSolverStatus::OPTIMAL ||
-                response.status() == CpSolverStatus::FEASIBLE) {
+                response.status() == CpSolverStatus::FEASIBLE)
+            {
                 if (response.status() == CpSolverStatus::OPTIMAL)
                     printf("o ");
                 if (response.status() == CpSolverStatus::FEASIBLE)
@@ -256,7 +258,7 @@ void algos::bysolver2 (Satellites &sats) {
                 for (const auto &v : vars)
                     if (SolutionBooleanValue(response, v.second))
                     {
-                        int interval_idx =  std::get<0>(v.first);
+                        int interval_idx = std::get<0>(v.first);
                         int satname = std::get<1>(v.first);
                         int obsname = std::get<2>(v.first);
                         auto &cur_inter = plan[interval_idx];
@@ -274,8 +276,10 @@ void algos::bysolver2 (Satellites &sats) {
                         }
                     }
                 printf("%2d r, %2d b; total transmitted %lf", r, b, transmitted);
-            } else {
-               LOG(INFO) << "No solution found.";
+            }
+            else
+            {
+                LOG(INFO) << "No solution found.";
             }
             vars.clear();
             id_to_info.clear();
@@ -285,8 +289,7 @@ void algos::bysolver2 (Satellites &sats) {
             nconstraints = 0;
             printf("\n");
         }
-         
-        //break;
+
+        // break;
     }
-    
 }
