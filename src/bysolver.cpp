@@ -67,8 +67,8 @@ void algos::bysolver (Satellites &sats, Observatories &obs) {
                 uniqueness_conditions_sat[info->sat_name] += v;
                 can_record[info->sat_name] = true;
                 
-                optimized += v * (int)(1500 * inter->duration * sat.recording_speed *
-                                              (sat.max_capacity * 0.7 - sat.capacity) / sat.max_capacity);
+                optimized += v * (int)(20000 * inter->duration * sat.recording_speed *
+                                              (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
             }
             else if (info->state == State::TRANSMISSION)
             {
