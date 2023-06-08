@@ -190,13 +190,23 @@ int main(int argc, char* argv[])
 
         for (auto &item : sats){
             item.second.capacity = 0; // simulate satellite work from beginning
+
+            double time_full = 0;
+            timepoint became_full = item.second.full_schedule[0].start;
+
             for (auto &interval : item.second.full_schedule){
                 auto &cur_info = interval.info;
                 double capacity_change = 0;
                 if (interval.info.state == State::RECORDING) {
                     capacity_change = item.second.record(DURATION(interval.start, interval.end));
+                    if (item.second.capacity >= item.second.max_capacity - 1e-8) {
+                        became_full = interval.end;
+                    }
                 }
                 else if (interval.info.state == State::TRANSMISSION) {
+                    if (item.second.capacity >= item.second.max_capacity - 1e-8) {
+                        time_full += DURATION(became_full, interval.start) * 1000;
+                    }
                     capacity_change = item.second.transmission(DURATION(interval.start, interval.end));
                     sum_data += capacity_change;
                 }
@@ -213,8 +223,9 @@ int main(int argc, char* argv[])
                     << " " << cur_info.obs_name
                     << std::endl;
             }
-
+                sat_full << std::fixed << item.first << ": " << int(time_full) << " ms\n";
         }
+        sat_full.close();
         out_schedule.close();
 
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
