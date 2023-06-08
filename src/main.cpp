@@ -14,6 +14,7 @@ namespace fs = std::filesystem;
 using namespace date;
 
 std::unordered_map<std::string, int> obs_to_int = {
+    {"0", 0},
     {"Anadyr1",1},
     {"Anadyr2", 2},
     {"CapeTown", 3},
@@ -30,21 +31,21 @@ std::unordered_map<std::string, int> obs_to_int = {
     {"Sumatra", 14}
 };
 
-std::unordered_map<std::string, std::string> obs_to_hex = {
-    {"Anadyr1","#FF2D00"},
-    {"Anadyr2", "#FF8700"},
-    {"CapeTown", "#FAFF00"},
-    {"Delhi", "#05FFAF"},
-    {"Irkutsk", "#05FFF7"},
-    {"Magadan1", "#05C5FF"},
-    {"Magadan2", "#0599FF"},
-    {"Moscow", "#0546FF"},
-    {"Murmansk1", "#9705FF"},
-    {"Murmansk2", "#D905FF"},
-    {"Norilsk", "#FF05ED"},
-    {"Novosib", "#FF059A"},
-    {"RioGallegos", "#5890A7"},
-    {"Sumatra", "#388357"}
+std::unordered_map<int, std::string> obs_to_hex = {
+    {1,"#FF2D00"},
+    {2, "#FF8700"},
+    {3, "#FAFF00"},
+    {4, "#05FFAF"},
+    {5, "#05FFF7"},
+    {6, "#05C5FF"},
+    {7, "#0599FF"},
+    {8, "#0546FF"},
+    {9, "#9705FF"},
+    {10, "#D905FF"},
+    {11, "#FF05ED"},
+    {12, "#FF059A"},
+    {13, "#5890A7"},
+    {14, "#388357"}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const State& obj)
@@ -69,6 +70,27 @@ void help ()
             "  data1 is the path to Satellite-Russia visibility files. Default DATA_Files/Russia2Constellation2\n"
             "  data2 is the part to Satellite-station LOS files. Default DATA_Files/Facility2Constellation\n");
     
+}
+
+void countDailySum(std::shared_ptr<Interval> interval, std::vector<double> & daily_sums) {
+
+    for(int i = 0; i < 14; i++){
+        if(interval->start < START_MODELLING + std::chrono::hours((i+1) * 24)){
+            if(interval->end < START_MODELLING + std::chrono::hours((i+1) * 24))
+                daily_sums[i] += interval->capacity_change;
+            else {
+                double speed = (interval->info[0]->sat_name < 110600) ? 1 : 0.25;
+                double eval_change = DURATION(interval->start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
+                if(eval_change < interval->capacity_change){
+                    daily_sums[i] += eval_change;
+                    daily_sums[i+1] += (interval->capacity_change - eval_change);
+                } else {
+                    daily_sums[i] += interval->capacity_change;
+                }
+            }
+            return;
+        }
+    }
 }
 
 int main(int argc, char* argv[])
@@ -158,6 +180,7 @@ int main(int argc, char* argv[])
         }
 
         double sum_data = 0;
+        std::vector<double> daily_sums(14,0.0);
         int cnt_sat = 1;
         for (auto &item : sats){
             //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
@@ -177,7 +200,7 @@ int main(int argc, char* argv[])
                     << " " << (DURATION(START_MODELLING, interval->end) * 1000) //milliseconds
                     << " " << interval->info[0]->obs_name 
                     << " " << obs_to_hex[interval->info[0]->obs_name]
-                    << " " << obs_to_int[interval->info[0]->obs_name]
+                    << " " << interval->info[0]->obs_name
                     << std::endl;
             }
 
@@ -185,21 +208,30 @@ int main(int argc, char* argv[])
                 auto &cur_info = interval->info[0];
                 out_schedule << std::fixed << satName_to_num[cur_info->sat_name] 
                     << " " << cur_info->sat_name
-                    << " " << cur_info->sat_type
                     << " "
                     << (DURATION(START_MODELLING, interval->start) * 1000) //milliseconds
                     << " " << (DURATION(START_MODELLING, interval->end) * 1000)  //milliseconds
                     << " " << interval->info[0]->state
                     << " " << interval->capacity_change
                     << " " << obs_to_hex[cur_info->obs_name]
-                    << " " << obs_to_int[cur_info->obs_name]
                     << " " << cur_info->obs_name
                     << std::endl;
 
-                if (cur_info->state == State::TRANSMISSION)
+                if (cur_info->state == State::TRANSMISSION){
                     sum_data += interval->capacity_change;
+                    countDailySum(interval, daily_sums);
+                }
+                    
             }
         }
+
+        double daily_checksum = 0.0;
+        std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
+        for(int i = 0; i < daily_sums.size(); i++){
+            std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
+            daily_checksum += daily_sums[i];
+        }
+        std::cout << "Checksum: " << daily_checksum << std::endl;
         std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
         std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 

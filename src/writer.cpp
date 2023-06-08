@@ -19,18 +19,36 @@ inline std::ostream& operator<<(std::ostream& os, const State& obj)
    return os;
 }
 
+std::unordered_map<int,std::string> int_to_obs = {
+    {0,"0"},
+    {1,"Anadyr1"},
+    {2,"Anadyr2"},
+    {3,"CapeTown"},
+    {4,"Delhi"},
+    {5,"Irkutsk"},
+    {6,"Magadan1"},
+    {7,"Magadan2"},
+    {8,"Moscow"},
+    {9,"Murmansk1"},
+    {10,"Murmansk2"},
+    {11,"Norilsk"},
+    {12,"Novosib"},
+    {13,"RioGallegos"},
+    {14,"Sumatra"}
+};
+
 int write_res_obs(Satellites &sats, std::string &path, std::unordered_map<std::string, int> &obs_to_int) {
     std::unordered_map<ObsName, std::pair<std::ofstream, long int>> obs_files_to_save;
     fs::current_path(fs::current_path());
     fs::create_directories(path);
     for(auto &item : obs_to_int) {
-        if(item.first == "")
+        if(item.first == "" || item.first == "0")
             continue;
         std::ofstream obs_out_f(path + item.first + "_result.txt");
         obs_out_f << item.first << std::endl 
                   << "Access StartTime(UTCG) StopTime(UTCG) Duration(sec) Satname Data(Mbytes)"
                   << std::endl;
-        obs_files_to_save[item.first] = std::make_pair<std::ofstream, long int>(std::move(obs_out_f), 1);
+        obs_files_to_save[item.second] = std::make_pair<std::ofstream, long int>(std::move(obs_out_f), 1);
     }
 
     double total = 0.0;
@@ -74,7 +92,7 @@ int write_res_sats(Satellites &sats, std::string &path) {
                   << " " << DURATION(interval->start, interval->end)
                   << " " << interval->capacity_change * 128.0
                   << " " << interval->info[0]->state 
-                  << " " << interval->info[0]->obs_name
+                  << " " << int_to_obs[interval->info[0]->obs_name]
                   << std::endl;
         }
         sat_out_f.close();

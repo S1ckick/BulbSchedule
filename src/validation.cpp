@@ -1,6 +1,6 @@
 #include "validation.h"
 
-extern std::unordered_map<std::string, std::string> obs_to_hex;
+extern std::unordered_map<int, std::string> obs_to_hex;
 extern std::unordered_map<std::string, int> obs_to_int;
 extern timepoint START_MODELLING;
 
@@ -11,7 +11,6 @@ inline std::ostream& operator << (std::ostream& o, Interval& a)
     " " << (DURATION(START_MODELLING, a.end) * 1000) <<
     " " << a.capacity_change <<
     " " << obs_to_hex[a.info[0]->obs_name] <<
-    " " << obs_to_int[a.info[0]->obs_name] <<
     " " << a.info[0]->obs_name;
     return o;
 }
@@ -108,11 +107,11 @@ int checkZeroIntervals(VecSchedule &schedule_to_check, std::string &res)
 
 int checkValidity(VecSchedule &schedule_to_check, std::string &res)
 {
-    std::unordered_map<std::string, std::vector<std::shared_ptr<Interval>>> obs_to_check;
+    std::unordered_map<ObsName, std::vector<std::shared_ptr<Interval>>> obs_to_check;
 
     for (auto &item : schedule_to_check)
     {
-        if (item->info[0]->obs_name.empty())
+        if (item->info[0] == 0)
             obs_to_check[item->info[0]->obs_name].push_back(item);
     }
 

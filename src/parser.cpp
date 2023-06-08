@@ -9,10 +9,11 @@
 
 namespace fs = std::filesystem;
 
+extern std::unordered_map<std::string, int> obs_to_int;
 
 using namespace date;
 
-Interval parse_interval(const std::string &line, const SatType &sat_type, const SatName &sat_name, const ObsName &obs_name = {})
+Interval parse_interval(const std::string &line, const SatName &sat_name, const ObsName &obs_name = 0)
 {
     std::string str_idx, str_start_day, str_start_month, str_start_year, str_start_time,
         str_end_day, str_end_month, str_end_year, str_end_time,
@@ -31,12 +32,12 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
     end_date >> date::parse("%d/%b/%Y %T", tp_end);
 
     State new_state;
-    if (!obs_name.empty())
+    if (obs_name != 0)
         new_state = State::TRANSMISSION;
     else
         new_state = State::RECORDING;
 
-    Interval interval(tp_start, tp_end, sat_name, sat_type, new_state, obs_name);
+    Interval interval(tp_start, tp_end, sat_name, new_state, obs_name);
 
     return interval;
 }
@@ -44,7 +45,6 @@ Interval parse_interval(const std::string &line, const SatType &sat_type, const 
 int parse_russia_to_satellites(std::string &location, Satellites &sats)
 {
     std::cout << "Parsing satellites...\n";
-    std::vector<SatType> sat_types = {SatType::KINOSAT, SatType::ZORKIY};
     for (const auto & entry : fs::directory_iterator(location))
     {
         std::string name = entry.path().filename().string();
@@ -80,7 +80,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
                     continue;
                 }
 
-                auto interval = parse_interval(line, sats.at(cur_sat).type, sats.at(cur_sat).name);
+                auto interval = parse_interval(line, sats.at(cur_sat).name);
 
                 cnt++;
                 
@@ -106,8 +106,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
 
                     cur_sat = std::stoi(&sat_name[start_number]);
                     if (!sats.count(cur_sat)) {
-                        SatType cur_type = (cur_sat < 110600) ? SatType::KINOSAT : SatType::ZORKIY;
-                        auto new_sat = Satellite(cur_sat, cur_type);
+                        auto new_sat = Satellite(cur_sat);
                         sats.insert(std::make_pair(cur_sat, new_sat));
                     }
 
@@ -124,7 +123,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
 
         std::cout << "Current state:\nSattelites " + std::to_string(sats.size()) + "\n";
         for (auto &sat: sats) {
-            std::cout << SatNames.at(sat.second.type) + "_" + std::to_string(sat.second.name) + ":" << sat.second.ints_in_area.size() << "\t";
+            std::cout << std::to_string(sat.second.name) + ":" << sat.second.ints_in_area.size() << "\t";
         }
         std::cout << "\n";
     }
@@ -136,7 +135,6 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
 {
     int int_idx = 0;
     SatName cur_sat_name;
-    SatType cur_sat_type;
 
     // TODO: call OS (in)dependent function to get files list
 
@@ -176,7 +174,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                     continue;
                 }
 
-                auto interval = std::make_shared<Interval>(parse_interval(line, cur_sat_type, cur_sat_name, cur_obs));
+                auto interval = std::make_shared<Interval>(parse_interval(line, cur_sat_name, cur_obs));
 
                 obs[cur_obs].ints_satellite.insert(interval);
                 sats.at(cur_sat_name).ints_observatories.insert(interval);
@@ -187,7 +185,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                 std::string prefix = start_of_line + "-To-";
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
-                    cur_obs = start_of_line;
+                    cur_obs = obs_to_int[start_of_line];
                     if(init){
                         obs[cur_obs] = Observatory{cur_obs, {}};
                         init = false;
@@ -201,7 +199,6 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
                         }
 
                     cur_sat_name = std::stoi(&line[start_number]);
-                    cur_sat_type = sats.at(cur_sat_name).type;
 
                     headerRead = true;
                     // pass header lines
@@ -214,7 +211,7 @@ int parse_observatory(std::string &location, Observatories &obs, Satellites &sat
 
         fp.close();
 
-        std::cout << "Read " + cur_obs + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
+        std::cout << "Read " + std::to_string(cur_obs) + " with " + std::to_string(obs[cur_obs].ints_satellite.size()) + " intervals\n";
     }
 
     return 0;
@@ -229,17 +226,16 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
     }
 
     std::string line;
-    std::unordered_map<std::string,SatType> const str_to_sat_type = { {"KINOSAT", SatType::KINOSAT}, {"ZORKIY", SatType::ZORKIY} };
     std::unordered_map<std::string,State> const str_to_state = { {"TRANSMISSION", State::TRANSMISSION}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
     
     while ((std::getline(fp, line))) {
         std::istringstream line_stream(line);
-        std::string sat_num, sat_name, sat_type, start_str, end_str, state_str, capacity_change,
-                    obs_hex, obs_int, obs_name;
-        line_stream >> sat_num >> sat_name >> sat_type >> start_str >> end_str >> state_str >> capacity_change >>
+        std::string sat_num, sat_name, start_str, end_str, state_str, capacity_change,
+                    obs_hex, obs_name;
+        line_stream >> sat_num >> sat_name >> start_str >> end_str >> state_str >> capacity_change >>
                     obs_hex;
         if(obs_hex != "0") {
-            line_stream >> obs_int >> obs_name;
+            line_stream >> obs_name;
         }
         else {
             obs_name = "0";
@@ -249,8 +245,7 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
         long int end_int = std::stol(end_str);
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
-
-        Interval inter(start, end, std::stoi(sat_name), str_to_sat_type.at(sat_type), obs_name);
+        Interval inter(start, end, std::stoi(sat_name), std::stoi(obs_name));
         inter.info[0]->state = str_to_state.at(state_str);
         inter.capacity_change = std::stod(capacity_change);
 

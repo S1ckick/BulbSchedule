@@ -68,7 +68,7 @@ Schedule algos::great_plan(const Satellites &sats) {
 	return std::move(great_plan);
 }
 
-Observatory empty_obs({"", {}, {}});
+Observatory empty_obs({0, {}, {}});
 
 void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat, Observatory &cur_obs) {
 	if (interval->info[0]->state == State::RECORDING)
@@ -87,7 +87,7 @@ void algos::add2schedule(std::shared_ptr<Interval> &interval, Satellite &cur_sat
 	}
 
 	else if (interval->info[0]->state == State::TRANSMISSION) {
-		if (cur_obs.name.empty())
+		if (cur_obs.name == 0)
 			throw std::logic_error("Pass an observatory to add2schedule to add broadcasting interval");
 		cur_obs.full_schedule.push_back(interval);
 	}
