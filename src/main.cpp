@@ -72,14 +72,13 @@ void help ()
     
 }
 
-// void countDailySum(Interval interval, std::vector<double> & daily_sums) {
-
+// void countDailySum(const Interval &interval, std::vector<double> & daily_sums) {
 //     for(int i = 0; i < 14; i++){
-//         if(interval->start < START_MODELLING + std::chrono::hours((i+1) * 24)){
-//             if(interval->end < START_MODELLING + std::chrono::hours((i+1) * 24))
+//         if(interval.start < START_MODELLING + std::chrono::hours((i+1) * 24)){
+//             if(interval.end < START_MODELLING + std::chrono::hours((i+1) * 24))
 //                 daily_sums[i] += interval->capacity_change;
 //             else {
-//                 double speed = (interval->info[0]->sat_name < 110600) ? 1 : 0.25;
+//                 double speed = (interval->info[0]->sat_name <= 50) ? 1 : 0.25;
 //                 double eval_change = DURATION(interval->start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
 //                 if(eval_change < interval->capacity_change){
 //                     daily_sums[i] += eval_change;
@@ -144,7 +143,7 @@ int main(int argc, char* argv[])
         int res_parse_obs = parse_observatory(path2, sats);
 
         auto start_algo = std::chrono::high_resolution_clock::now();
-        algos::bysolver(sats);
+        algos::greedy_capacity(sats);
         auto end_algo = std::chrono::high_resolution_clock::now();
 
         std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
@@ -164,28 +163,15 @@ int main(int argc, char* argv[])
             std::cout << "Can't create files\n";
         }
 
-        std::unordered_map<int,int> satName_to_num;
-
-        std::vector<int> all_sat_names(200);
-
-        int sat_i = 0;
-        for(auto &item : sats){
-            all_sat_names[sat_i] = item.first;
-            sat_i++;
-        }
-        std::sort(all_sat_names.begin(), all_sat_names.end());
-        for(int ii = 0; ii < 200; ii++){
-            satName_to_num[all_sat_names[ii]] = ii;
-        }
-
         std::vector<double> daily_sums(14,0.0);
         int cnt_sat = 1;
 
         for (auto &item : sats){
             //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
             for (auto &interval : item.second.ints_in_area){
-                out << std::fixed << satName_to_num[interval.info.sat_name] 
-                    << " " << interval.info.sat_name << " "
+                out << std::fixed 
+                    << interval.info.sat_name << " "
+                    COUT_SATNAME(interval.info.sat_name) << " "
                     << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                     << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
                     << " " 
@@ -196,8 +182,9 @@ int main(int argc, char* argv[])
 
         for (auto &item : sats){
             for (auto &interval : item.second.ints_observatories){
-                sats_obs_out << std::fixed << satName_to_num[interval.info.sat_name] 
-                    << " " << interval.info.sat_name << " "
+                sats_obs_out << std::fixed
+                    << interval.info.sat_name << " "
+                    COUT_SATNAME(interval.info.sat_name) << " "
                     << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                     << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
                     << " " << interval.info.obs_name 
@@ -234,8 +221,8 @@ int main(int argc, char* argv[])
                 }
 
 
-                out_schedule << std::fixed << satName_to_num[cur_info.sat_name] 
-                    << " " << cur_info.sat_name
+                out_schedule << std::fixed << cur_info.sat_name
+                    << " " << COUT_SATNAME(cur_info.sat_name)
                     << " "
                     << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                     << " " << (DURATION(START_MODELLING, interval.end) * 1000)  //milliseconds

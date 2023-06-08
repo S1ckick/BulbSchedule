@@ -95,16 +95,19 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
 
                     sscanf(line.data(), "Russia-To-%s\n", sat_name);
 
+                    std::string sat_name_str(sat_name);
                     int start_number = -1;
-                    for (int i = 0; i < strlen(sat_name); i++)
-                        if (sat_name[i] == '_') {
+                    for (int i = 0; i < sat_name_str.length(); i++)
+                        if (sat_name_str[i] == '_') {
                             start_number = i + 1;
                             break;
                         }
                     if (start_number == -1)
                         throw "darou";
 
-                    cur_sat = std::stoi(&sat_name[start_number]);
+                    //cur_sat = std::stoi(&sat_name_str[start_number]);
+                    cur_sat = 10 * (std::stoi(sat_name_str.substr(start_number+2,2)) - 1) + std::stoi(sat_name_str.substr(start_number+4,2));
+
                     if (!sats.count(cur_sat)) {
                         auto new_sat = Satellite(cur_sat);
                         sats.insert(std::make_pair(cur_sat, new_sat));
@@ -193,7 +196,8 @@ int parse_observatory(std::string &location, Satellites &sats)
                             break;
                         }
 
-                    cur_sat_name = std::stoi(&line[start_number]);
+                    //cur_sat_name = std::stoi(&line[start_number]);
+                    cur_sat_name = 10 * (std::stoi(line.substr(start_number+2,2)) - 1) + std::stoi(line.substr(start_number+4,2));
 
                     headerRead = true;
                     // pass header lines
@@ -240,7 +244,7 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
         long int end_int = std::stol(end_str);
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
-        Interval inter(start, end, std::stoi(sat_name), std::stoi(obs_name));
+        Interval inter(start, end, 10 * (std::stoi(sat_name.substr(2,2)) - 1) + std::stoi(sat_name.substr(4,2)), std::stoi(obs_name));
         inter.info.state = str_to_state.at(state_str);
         //inter.capacity_change = std::stod(capacity_change);
 
