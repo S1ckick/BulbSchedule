@@ -72,25 +72,25 @@ void help ()
     
 }
 
-// void countDailySum(const Interval &interval, std::vector<double> & daily_sums) {
-//     for(int i = 0; i < 14; i++){
-//         if(interval.start < START_MODELLING + std::chrono::hours((i+1) * 24)){
-//             if(interval.end < START_MODELLING + std::chrono::hours((i+1) * 24))
-//                 daily_sums[i] += interval->capacity_change;
-//             else {
-//                 double speed = (interval->info[0]->sat_name <= 50) ? 1 : 0.25;
-//                 double eval_change = DURATION(interval->start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
-//                 if(eval_change < interval->capacity_change){
-//                     daily_sums[i] += eval_change;
-//                     daily_sums[i+1] += (interval->capacity_change - eval_change);
-//                 } else {
-//                     daily_sums[i] += interval->capacity_change;
-//                 }
-//             }
-//             return;
-//         }
-//     }
-// }
+void countDailySum(const Interval &interval, double capacity_change, std::vector<double> & daily_sums) {
+    for(int i = 0; i < 14; i++){
+        if(interval.start < START_MODELLING + std::chrono::hours((i+1) * 24)){
+            if(interval.end < START_MODELLING + std::chrono::hours((i+1) * 24))
+                daily_sums[i] += capacity_change;
+            else {
+                double speed = (interval.info.sat_name <= 50) ? 1 : 0.25;
+                double eval_change = DURATION(interval.start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
+                if(eval_change < capacity_change){
+                    daily_sums[i] += eval_change;
+                    daily_sums[i+1] += (capacity_change - eval_change);
+                } else {
+                    daily_sums[i] += capacity_change;
+                }
+            }
+            return;
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -147,7 +147,6 @@ int main(int argc, char* argv[])
         auto end_algo = std::chrono::high_resolution_clock::now();
 
         std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
-
 
         fs::current_path(fs::current_path());
 
@@ -209,17 +208,17 @@ int main(int argc, char* argv[])
                 if (interval.info.state == State::RECORDING) {
                     capacity_change = item.second.record(DURATION(interval.start, interval.end));
                     if (item.second.capacity >= item.second.max_capacity - 1e-8) {
-                        became_full = interval.end;
+                        time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / item.second.recording_speed * 1000)), interval.end);
                     }
                 }
                 else if (interval.info.state == State::TRANSMISSION) {
-                    if (item.second.capacity >= item.second.max_capacity - 1e-8) {
-                        time_full += DURATION(became_full, interval.start) * 1000;
-                    }
+                    // if (item.second.capacity >= item.second.max_capacity - 1e-8) {
+                    //     time_full += DURATION(became_full, interval.start) * 1000;
+                    // }
                     capacity_change = item.second.transmission(DURATION(interval.start, interval.end));
                     sum_data += capacity_change;
+                    countDailySum(interval, capacity_change, daily_sums);
                 }
-
 
                 out_schedule << std::fixed << cur_info.sat_name
                     << " " << COUT_SATNAME(cur_info.sat_name)
@@ -230,23 +229,18 @@ int main(int argc, char* argv[])
                     << " " << capacity_change
                     << " " << obs_to_hex[cur_info.obs_name]
                     << " " << cur_info.obs_name
-                    << std::endl;
-
-                // if (cur_info.state == State::TRANSMISSION){
-                //     countDailySum(interval, daily_sums);
-                // }
-                    
+                    << std::endl;                    
             }
                 sat_full << std::fixed << item.first << ": " << int(time_full) << " ms\n";
         }
 
-        // double daily_checksum = 0.0;
-        // std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
-        // for(int i = 0; i < daily_sums.size(); i++){
-        //     std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
-        //     daily_checksum += daily_sums[i];
-        // }
-        // std::cout << "Checksum: " << daily_checksum << std::endl;
+        double daily_checksum = 0.0;
+        std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
+        for(int i = 0; i < daily_sums.size(); i++){
+            std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
+            daily_checksum += daily_sums[i];
+        }
+        std::cout << "Checksum: " << daily_checksum << std::endl;
         sat_full.close();
         out_schedule.close();
 
