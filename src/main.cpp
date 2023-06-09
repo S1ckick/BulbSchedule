@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 
         fs::current_path(fs::current_path());
 
-        std::string res_dir = "results/";
+        std::string res_dir = "Results/";
 
         fs::create_directories(res_dir);
         std::ofstream out_schedule(res_dir + "all_schedule.txt");
@@ -253,10 +253,11 @@ int main(int argc, char* argv[])
 
         // write result
 
-        // std::string path_to_res_obs = res_dir + "observatories/";
-        // write_res_obs(sats, path_to_res_obs, obs_to_int);
-        // std::string path_to_res_sats = res_dir + "satellites/";
-        // write_res_sats(sats, path_to_res_sats);
+        std::string path_ground = res_dir + "Ground/";
+        std::string path_camera = res_dir + "Camera/";
+        std::string path_drop = res_dir + "Drop/";
+        writeResults(sats, path_ground, path_camera, path_drop, obs_to_int);
+
 
         // Validation
 
