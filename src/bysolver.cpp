@@ -55,12 +55,10 @@ void algos::bysolver(Satellites &sats)
         vars.clear();
         
         cnt++;
-
+        
         auto inter_dur = DURATION(inter.start, inter.end);
         auto dur_to_end = DURATION(inter.start, the_end);
         
-        //printf("[dur = %lf]", inter_dur);
-
         auto infos = inter.info;
 
         CpModelBuilder cp_model;
@@ -101,11 +99,6 @@ void algos::bysolver(Satellites &sats)
                 {
                     optimized += v * (int)(20000 * inter_dur * sat.recording_speed *
                                            (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
-                }
-                else
-                {
-                    printf("@");
-                    std::cout << "cap " << sat.capacity << ", speed " << sat.broadcasting_speed << ", dur_to_end = " << dur_to_end << "\n";
                 }
             }
             else if (info.state == State::TRANSMISSION)
@@ -204,8 +197,6 @@ void algos::bysolver(Satellites &sats)
                     if (v.obs_name == 0) // recording
                     {
                         algos::add2schedule(inter.start, inter.end, *(v.info), sats.at(v.sat_name));
-                        //if (v.sat_name == 157 && v.obs_name == 0)
-                        //    printf("#");
                         r++;
                     }
                     else
@@ -220,35 +211,17 @@ void algos::bysolver(Satellites &sats)
                             
                             auto transmit_end = inter.start + std::chrono::nanoseconds(uint64_t(transmit_dur * 1e9));
                             
-                            //std::cout << "inter_dur = " << inter_dur << ", transmit_dur = " << transmit_dur <<
-                            //            ", start = " << date::format("%e %b %Y %T", inter.start) << ", tend = " << date::format("%e %b %Y %T", transmit_end) <<
-                            //        ", end = " << date::format("%e %b %Y %T", inter.end) << "\n";
-                            //printf("BEFORE TRANSMISSION %lf\n", sat.capacity);
-                            
                             algos::add2schedule(inter.start, transmit_end, *(v.info), sat);
                             
                             // Record in the remaining time, if possible
                             if (can_record[v.sat_name])
                                 algos::add2schedule(transmit_end, inter.end, IntervalInfo(v.sat_name, State::RECORDING), sat);
-                            
-                            //printf("AFTER TRANSMISSION %lf\n", sat.capacity);
-                            //algos::add2schedule(inter.start, inter.end, *(v.info), sat);
                         }
                         
-                        //if (v.sat_name == 157 && v.obs_name == 8)                        
-                        //    printf("*");
                         transmitted += inter_dur * sats.at(v.sat_name).broadcasting_speed;
                         b++;
                         
 #ifdef CONTINUITY                        
-                        if (station_receiving[v.obs_name] != -1 && station_receiving[v.obs_name] != v.sat_name)
-                        {
-                            printf("?");
-                        }
-                        if (station_receiving[v.obs_name] == v.sat_name)
-                        {
-                            //printf("!");
-                        }
                         station_receiving[v.obs_name] = v.sat_name;
 #endif
                     }
