@@ -48,6 +48,8 @@ void algos::bysolver(Satellites &sats)
 
     std::vector<VarWithID> vars;
     
+    timepoint the_end = plan.back().end;
+    
     for (auto &inter : plan)
     {
         vars.clear();
@@ -55,6 +57,7 @@ void algos::bysolver(Satellites &sats)
         cnt++;
 
         auto inter_dur = DURATION(inter.start, inter.end);
+        auto dur_to_end = DURATION(inter.start, the_end);
         
         //printf("[dur = %lf]", inter_dur);
 
@@ -84,15 +87,26 @@ void algos::bysolver(Satellites &sats)
         {
             if (info.state == State::RECORDING)
             {
-                BoolVar v = cp_model.NewBoolVar();
                 Satellite &sat = sats.at(info.sat_name);
+                
+                BoolVar v = cp_model.NewBoolVar();
                 vars.push_back({info.sat_name, 0, v, &info});
                 //underflow_conditions[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
                 can_record[info.sat_name] = true;
                 sat_rec[info.sat_name] = v;
                 
-                optimized += v * (int)(20000 * inter_dur * sat.recording_speed *
-                                       (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
+                // do not incentivize recording if we have enough data to transfer till the end
+                // (can not disable recording entirely because this is against the rules)
+                if (sat.capacity / sat.broadcasting_speed < dur_to_end)
+                {
+                    optimized += v * (int)(20000 * inter_dur * sat.recording_speed *
+                                           (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
+                }
+                else
+                {
+                    printf("@");
+                    std::cout << "cap " << sat.capacity << ", speed " << sat.broadcasting_speed << ", dur_to_end = " << dur_to_end << "\n";
+                }
             }
             else if (info.state == State::TRANSMISSION)
             {
