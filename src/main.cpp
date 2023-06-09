@@ -31,21 +31,23 @@ std::unordered_map<std::string, uint32_t> obs_to_int = {
     {"Sumatra", 14}
 };
 
-std::unordered_map<uint32_t, std::string> obs_to_hex = {
-    {1,"#FF2D00"},
-    {2, "#FF8700"},
-    {3, "#FAFF00"},
-    {4, "#05FFAF"},
-    {5, "#05FFF7"},
-    {6, "#05C5FF"},
-    {7, "#0599FF"},
-    {8, "#0546FF"},
-    {9, "#9705FF"},
-    {10, "#D905FF"},
-    {11, "#FF05ED"},
-    {12, "#FF059A"},
-    {13, "#5890A7"},
-    {14, "#388357"}
+char * obs_to_hex[] =
+{
+    "",
+    "#FF2D00",
+    "#FF8700",
+    "#FAFF00",
+    "#05FFAF",
+    "#05FFF7",
+    "#05C5FF",
+    "#0599FF",
+    "#0546FF",
+    "#9705FF",
+    "#D905FF",
+    "#FF05ED",
+    "#FF059A",
+    "#5890A7",
+    "#388357"
 };
 
 inline std::ostream& operator<<(std::ostream& os, const State& obj)
