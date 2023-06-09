@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <itemPath>src/algos.h</itemPath>
+      <itemPath>src/parser.h</itemPath>
+      <itemPath>src/structs.h</itemPath>
+      <itemPath>src/validation.h</itemPath>
+      <itemPath>src/writer.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <itemPath>src/algos.cpp</itemPath>
+      <itemPath>src/bysolver.cpp</itemPath>
+      <itemPath>src/greedy.cpp</itemPath>
+      <itemPath>src/main.cpp</itemPath>
+      <itemPath>src/parser.cpp</itemPath>
+      <itemPath>src/validation.cpp</itemPath>
+      <itemPath>src/writer.cpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <ccTool>
+          <incDir>
+            <pElem>src</pElem>
+            <pElem>third-party</pElem>
+            <pElem>src/algos</pElem>
+            <pElem>../or-tools/include</pElem>
+          </incDir>
+          <commandLine>--std=c++17</commandLine>
+        </ccTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCbc.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCbcSolver.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCgl.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libClp.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libClpSolver.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCoinUtils.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libOsi.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libOsiCbc.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libOsiClp.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_bad_any_cast_impl.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_bad_optional_access.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_bad_variant_access.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_base.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_city.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_civil_time.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cord.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cord_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_functions.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_handle.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_info.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_sample_token.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc32c.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc_cord_state.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc_cpu_detect.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_debugging_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_demangle_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_die_if_null.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_examine_stack.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_exponential_biased.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_failure_signal_handler.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_commandlineflag.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_commandlineflag_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_config.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_marshalling.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_parse.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_private_handle_accessor.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_program_name.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_reflection.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_usage.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_usage_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_graphcycles_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_hash.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_hashtablez_sampler.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_int128.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_leak_check.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_entry.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_flags.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_globals.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_initialize.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_check_op.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_conditions.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_format.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_globals.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_log_sink_set.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_message.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_nullguard.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_proto.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_severity.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_sink.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_low_level_hash.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_malloc_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_periodic_sampler.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_distributions.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_distribution_test_util.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_platform.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_pool_urbg.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen_hwaes.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen_hwaes_impl.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen_slow.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_seed_material.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_seed_gen_exception.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_seed_sequences.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_raw_hash_set.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_raw_logging_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_scoped_set_env.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_spinlock_wait.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_stacktrace.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_status.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_statusor.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_str_format_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_strerror.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_strings.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_strings_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_symbolize.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_synchronization.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_throw_delegate.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_time.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_time_zone.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libortools.so</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libortools_flatzinc.so</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libprotobuf-lite.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libprotobuf.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libprotoc.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libre2.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libscip.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libz.a</linkerLibFileItem>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+      <item path="src/algos.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/algos.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/bysolver.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/greedy.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/parser.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/parser.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/structs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/validation.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/validation.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/writer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/writer.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>6</developmentMode>
+          <incDir>
+            <pElem>src</pElem>
+            <pElem>third-party</pElem>
+            <pElem>src/algos</pElem>
+            <pElem>../or-tools/include</pElem>
+          </incDir>
+          <commandLine>--std=c++17</commandLine>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCbc.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCbcSolver.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCgl.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libClp.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libClpSolver.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libCoinUtils.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libOsi.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libOsiCbc.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libOsiClp.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_bad_any_cast_impl.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_bad_optional_access.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_bad_variant_access.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_base.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_city.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_civil_time.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cord.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cord_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_functions.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_handle.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_info.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_cordz_sample_token.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc32c.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc_cord_state.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc_cpu_detect.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_crc_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_debugging_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_demangle_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_die_if_null.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_examine_stack.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_exponential_biased.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_failure_signal_handler.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_commandlineflag.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_commandlineflag_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_config.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_marshalling.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_parse.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_private_handle_accessor.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_program_name.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_reflection.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_usage.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_flags_usage_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_graphcycles_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_hash.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_hashtablez_sampler.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_int128.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_leak_check.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_entry.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_flags.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_globals.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_initialize.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_check_op.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_conditions.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_format.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_globals.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_log_sink_set.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_message.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_nullguard.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_internal_proto.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_severity.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_log_sink.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_low_level_hash.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_malloc_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_periodic_sampler.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_distributions.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_distribution_test_util.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_platform.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_pool_urbg.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen_hwaes.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen_hwaes_impl.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_randen_slow.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_internal_seed_material.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_seed_gen_exception.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_random_seed_sequences.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_raw_hash_set.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_raw_logging_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_scoped_set_env.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_spinlock_wait.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_stacktrace.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_status.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_statusor.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_str_format_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_strerror.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_strings.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_strings_internal.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_symbolize.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_synchronization.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_throw_delegate.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_time.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libabsl_time_zone.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libprotobuf-lite.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libprotobuf.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libprotoc.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libre2.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libscip.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libz.a</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libortools.so</linkerLibFileItem>
+            <linkerLibFileItem>third-party/or-tools-linux/lib/libortools_flatzinc.so</linkerLibFileItem>
+          </linkerLibItems>
+        </linkerTool>
+      </compileType>
+      <item path="src/algos.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/algos.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/bysolver.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/greedy.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/parser.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/parser.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/structs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/validation.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/validation.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/writer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/writer.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
