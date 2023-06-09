@@ -47,7 +47,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
     std::cout << "Parsing satellites...\n";
     sats.resize(SAT_NUM + 1);
     
-    for (int isat = 1; isat < SAT_NUM; isat++)
+    for (int isat = 1; isat <= SAT_NUM; isat++)
         sats[isat].init(isat);
     
     for (const auto & entry : fs::directory_iterator(location))
