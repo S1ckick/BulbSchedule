@@ -10,4 +10,5 @@ int checkForIntervalsIntersection(VecSchedule &schedule_to_check, std::string &r
 //double countObsTotalLength(Satellites &sats);
 int checkRecordingInRightArea(VecSchedule &schedule_to_check, Satellites &sats, std::string &res);
 int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Satellites &sats, std::string &res);
+int checkTransmissionTillTheEndOfSession(VecSchedule &schedule_to_check, Satellites &sats, std::string &res);
 #endif

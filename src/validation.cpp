@@ -105,6 +105,34 @@ int checkZeroIntervals(VecSchedule &schedule_to_check, std::string &res)
     return 0;
 }
 
+int checkTransmissionTillTheEndOfSession(VecSchedule &schedule_to_check, Satellites &sats, std::string &res)
+{
+    auto one_ms = std::chrono::milliseconds(1);
+    for (auto &interval : schedule_to_check)
+    {
+        if (interval.info.state == State::TRANSMISSION) {
+            auto &sat = sats.at(interval.info.sat_name);
+            bool found = false;
+            for (auto &area : sat.ints_observatories)
+            {
+                if (interval.info.obs_name == area.info.obs_name && interval.start >= area.start - one_ms && interval.end <= area.end + one_ms)
+                {
+                    if(interval.end != area.end) {
+                        std::stringstream res_ss;
+                        res_ss << std::fixed
+                            << "Error: \n"
+                            << interval << std::endl
+                            << area << std::endl;
+                        res = res_ss.str();
+                    return -1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int checkValidity(VecSchedule &schedule_to_check, std::string &res)
 {
     std::unordered_map<ObsName, std::vector<Interval>> obs_to_check;
@@ -137,6 +165,8 @@ int checkValidity(VecSchedule &schedule_to_check, std::string &res)
     }
     return 0;
 }
+
+
 
 // double countObsTotalLength(Satellites &sats)
 // {
