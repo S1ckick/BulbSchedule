@@ -56,9 +56,9 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
     }
 
     double total = 0.0;
-    for (auto &item : sats){
+    for (int isat = 1; isat <= SAT_NUM; isat++){
         std::stringstream satname;
-        satname << (item.first <= 50 ? "KinoSat_" : "Zorkiy_") << COUT_SATNAME(item.first);
+        satname << (isat <= 50 ? "KinoSat_" : "Zorkiy_") << COUT_SATNAME(isat);
 
         std::ofstream out_drop(path_drop + "Drop_" + satname.str() + ".txt");
         std::ofstream out_camera(path_camera + "Camera_" + satname.str() + ".txt");
@@ -77,10 +77,10 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
         long int i_camera = 1;
         long int i_drop = 1;
         long int i_ground = 1;
-        for (auto &interval : item.second.full_schedule){
+        for (auto &interval : sats[isat].full_schedule){
             auto &cur_info = interval.info;
             if (cur_info.state == State::RECORDING) {
-                capacity_change = item.second.record(DURATION(interval.start, interval.end));
+                capacity_change = sats[isat].record(DURATION(interval.start, interval.end));
 
                 // write to Camera
                 out_camera << std::fixed << std::setprecision(3) << i_camera++
@@ -90,7 +90,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
                   << " " << capacity_change * 128.0
                   << std::endl;
             } else {
-                capacity_change = item.second.transmission(DURATION(interval.start, interval.end));
+                capacity_change = sats[isat].transmission(DURATION(interval.start, interval.end));
                 
                 // write to Ground
                 std::ofstream & out_f = obs_files_to_save[cur_info.obs_name].first;

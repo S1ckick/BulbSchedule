@@ -14,18 +14,21 @@ struct Event {
 VecSegment algos::great_plan(const Satellites &sats) {
 	std::vector<Event> events_grid; // vector bcs timepoints are not unique :(
 
-	for (auto &sat: sats) {
-		events_grid.reserve(events_grid.size() + sat.second.ints_in_area.size());
-		for (auto &int_area: sat.second.ints_in_area) {
-			events_grid.push_back({int_area.start, int_area.info, 1});
-			events_grid.push_back({int_area.end, int_area.info, -1});
-		}
+        for (int isat = 1; isat <= SAT_NUM; isat++)
+        {
+            const Satellite &sat = sats[isat];
+            
+            events_grid.reserve(events_grid.size() + sat.ints_in_area.size());
+            for (auto &int_area: sat.ints_in_area) {
+                    events_grid.push_back({int_area.start, int_area.info, 1});
+                    events_grid.push_back({int_area.end, int_area.info, -1});
+            }
 
-		events_grid.reserve(events_grid.size() + sat.second.ints_observatories.size());
-		for (auto &int_sat: sat.second.ints_observatories) {
-			events_grid.push_back({int_sat.start, int_sat.info, 1});
-			events_grid.push_back({int_sat.end, int_sat.info, -1});
-		}
+            events_grid.reserve(events_grid.size() + sat.ints_observatories.size());
+            for (auto &int_sat: sat.ints_observatories) {
+                    events_grid.push_back({int_sat.start, int_sat.info, 1});
+                    events_grid.push_back({int_sat.end, int_sat.info, -1});
+            }
 	}
 
 	auto tp_cmp = [](const Event &a, const Event &b) {

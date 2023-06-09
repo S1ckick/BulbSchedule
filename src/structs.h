@@ -13,10 +13,11 @@
 
 #include <date.h>
 
-#define PLANES_NUM 20
 
 #define OBS_FIRST 1
 #define OBS_NUM 14
+
+#define SAT_NUM 200
 
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
                                std::chrono::milliseconds::period::num / std::chrono::milliseconds::period::den) \
@@ -154,7 +155,6 @@ using VecSchedule = std::vector<Interval>;
 
 struct Satellite
 {
-    SatName name;
     Schedule ints_in_area;
     Schedule ints_observatories;
     VecSchedule full_schedule;
@@ -165,10 +165,14 @@ struct Satellite
     double recording_speed;
     double broadcasting_speed;
 
-    Satellite(const SatName &sat_name) : name(sat_name)
+    Satellite ()
     {
         capacity = 0;
-        if (sat_name <= 50)
+    }
+
+    void init(int idx)
+    {
+        if (idx <= 50)
         { // KINOSAT
             max_capacity = 8192;
             broadcasting_speed = 1;
@@ -181,7 +185,7 @@ struct Satellite
             recording_speed = 4;
         }
     }
-
+    
     double can_record(const double &duration)
     {
         if (capacity == max_capacity)
@@ -230,7 +234,7 @@ struct Satellite
     }
 };
 
-typedef std::unordered_map<SatName, Satellite> Satellites;
+typedef std::vector<Satellite> Satellites;
 
 // struct Observatory
 // {

@@ -202,9 +202,9 @@ int main(int argc, char* argv[])
             std::vector<double> daily_sums(14,0.0);
             int cnt_sat = 1;
 
-            for (auto &item : sats){
+            for (int isat = 1; isat <= SAT_NUM; isat++){
                 //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
-                for (auto &interval : item.second.ints_in_area){
+                for (auto &interval : sats[isat].ints_in_area){
                     out << std::fixed 
                         << interval.info.sat_name << " "
                         COUT_SATNAME(interval.info.sat_name) << " "
@@ -216,8 +216,8 @@ int main(int argc, char* argv[])
             }
             out.close();
 
-            for (auto &item : sats){
-                for (auto &interval : item.second.ints_observatories){
+            for (int isat = 1; isat <= SAT_NUM; isat++){
+                for (auto &interval : sats[isat].ints_observatories){
                     sats_obs_out << std::fixed
                         << interval.info.sat_name << " "
                         COUT_SATNAME(interval.info.sat_name) << " "
@@ -233,26 +233,27 @@ int main(int argc, char* argv[])
 
             double sum_data = 0;
 
-            for (auto &item : sats){
-                item.second.capacity = 0; // simulate satellite work from beginning
+            for (int isat = 1; isat <= SAT_NUM; isat++){
+                Satellite &sat = sats[isat];
+                sat.capacity = 0; // simulate satellite work from beginning
 
                 double time_full = 0;
-                timepoint became_full = item.second.full_schedule[0].start;
+                timepoint became_full = sat.full_schedule[0].start;
 
-                for (auto &interval : item.second.full_schedule){
+                for (auto &interval : sat.full_schedule){
                     auto &cur_info = interval.info;
                     double capacity_change = 0;
                     if (interval.info.state == State::RECORDING) {
-                        capacity_change = item.second.record(DURATION(interval.start, interval.end));
-                        if (item.second.capacity >= item.second.max_capacity - 1e-8) {
-                            time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / item.second.recording_speed * 1000)), interval.end);
+                        capacity_change = sat.record(DURATION(interval.start, interval.end));
+                        if (sat.capacity >= sat.max_capacity - 1e-8) {
+                            time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / sat.recording_speed * 1000)), interval.end);
                         }
                     }
                     else if (interval.info.state == State::TRANSMISSION) {
                         // if (item.second.capacity >= item.second.max_capacity - 1e-8) {
                         //     time_full += DURATION(became_full, interval.start) * 1000;
                         // }
-                        capacity_change = item.second.transmission(DURATION(interval.start, interval.end));
+                        capacity_change = sat.transmission(DURATION(interval.start, interval.end));
                         sum_data += capacity_change;
                         countDailySum(interval, capacity_change, daily_sums);
                     }
@@ -268,7 +269,7 @@ int main(int argc, char* argv[])
                         << " " << cur_info.obs_name
                         << std::endl;                    
                 }
-                    sat_full << std::fixed << item.first << ": " << int(time_full) << " ms\n";
+                sat_full << std::fixed << isat << ": " << int(time_full) << " ms\n";
             }
 
             double daily_checksum = 0.0;

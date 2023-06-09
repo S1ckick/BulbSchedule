@@ -45,6 +45,11 @@ Interval parse_interval(const std::string &line, const SatName &sat_name, const 
 int parse_russia_to_satellites(std::string &location, Satellites &sats)
 {
     std::cout << "Parsing satellites...\n";
+    sats.resize(SAT_NUM + 1);
+    
+    for (int isat = 1; isat < SAT_NUM; isat++)
+        sats[isat].init(isat);
+    
     for (const auto & entry : fs::directory_iterator(location))
     {
         std::string name = entry.path().filename().string();
@@ -80,7 +85,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
                     continue;
                 }
 
-                auto interval = parse_interval(line, sats.at(cur_sat).name);
+                auto interval = parse_interval(line, cur_sat);
 
                 cnt++;
                 
@@ -108,11 +113,6 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
                     //cur_sat = std::stoi(&sat_name_str[start_number]);
                     cur_sat = 10 * (std::stoi(sat_name_str.substr(start_number+2,2)) - 1) + std::stoi(sat_name_str.substr(start_number+4,2));
 
-                    if (!sats.count(cur_sat)) {
-                        auto new_sat = Satellite(cur_sat);
-                        sats.insert(std::make_pair(cur_sat, new_sat));
-                    }
-
                     headerRead = true;
                     // pass header lines
                     std::getline(fp, line);
@@ -125,8 +125,8 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
         fp.close();
 
         std::cout << "Current state:\nSattelites " + std::to_string(sats.size()) + "\n";
-        for (auto &sat: sats) {
-            std::cout << std::to_string(sat.second.name) + ":" << sat.second.ints_in_area.size() << "\t";
+        for (int isat = 1; isat <= SAT_NUM; isat++) {
+            std::cout << std::to_string(isat) + ":" << sats[isat].ints_in_area.size() << "\t";
         }
         std::cout << "\n";
     }
