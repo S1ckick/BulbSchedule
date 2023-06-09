@@ -120,8 +120,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/usr/BulbSchedule/Debug/scheduler.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/usr/BulbSchedule/Debug/scheduler.pdb</ProgramDataBaseFile>
+      <ImportLibrary>./Debug/scheduler.lib</ImportLibrary>
+      <ProgramDataBaseFile>./Debug/scheduler.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -164,8 +164,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/usr/BulbSchedule/Release/scheduler.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/usr/BulbSchedule/Release/scheduler.pdb</ProgramDataBaseFile>
+      <ImportLibrary>./Release/scheduler.lib</ImportLibrary>
+      <ProgramDataBaseFile>./Release/scheduler.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -208,8 +208,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/usr/BulbSchedule/MinSizeRel/scheduler.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/usr/BulbSchedule/MinSizeRel/scheduler.pdb</ProgramDataBaseFile>
+      <ImportLibrary>./MinSizeRel/scheduler.lib</ImportLibrary>
+      <ProgramDataBaseFile>./MinSizeRel/scheduler.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
@@ -251,8 +251,8 @@
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <ImportLibrary>C:/Users/usr/BulbSchedule/RelWithDebInfo/scheduler.lib</ImportLibrary>
-      <ProgramDataBaseFile>C:/Users/usr/BulbSchedule/RelWithDebInfo/scheduler.pdb</ProgramDataBaseFile>
+      <ImportLibrary>./RelWithDebInfo/scheduler.lib</ImportLibrary>
+      <ProgramDataBaseFile>./RelWithDebInfo/scheduler.pdb</ProgramDataBaseFile>
       <SubSystem>Console</SubSystem>
     </Link>
     <ProjectReference>
