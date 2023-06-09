@@ -108,7 +108,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
                             break;
                         }
                     if (start_number == -1)
-                        throw "darou";
+                        throw "parse russia to satellites error";
 
                     //cur_sat = std::stoi(&sat_name_str[start_number]);
                     cur_sat = 10 * (std::stoi(sat_name_str.substr(start_number+2,2)) - 1) + std::stoi(sat_name_str.substr(start_number+4,2));

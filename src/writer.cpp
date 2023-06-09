@@ -48,7 +48,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
         if(item.first == "" || item.first == "0")
             continue;
         std::ofstream obs_out_f(path_ground + "Ground_" + item.first + ".txt");
-        obs_out_f << item.first << " - satellite name" << std::endl 
+        obs_out_f << item.first << " - observatory name" << std::endl 
                   << "-------------------------" << std::endl
                   << "Access * Start Time (UTCG) * Stop Time (UTCG) * Duration (sec) * Sat name * Data (Mbytes)"
                   << std::endl;
