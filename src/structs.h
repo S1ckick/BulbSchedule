@@ -59,7 +59,7 @@ struct IntervalInfo {
     // TRANSMISSION -> satelitte and observartory info
     IntervalInfo(
         const SatName &sat,
-        const State &new_state, const ObsName &obs = 0) : IntervalInfo(sat, obs)
+        const State new_state, const ObsName &obs = 0) : IntervalInfo(sat, obs)
     {
         state = new_state;
 

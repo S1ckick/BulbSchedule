@@ -31,7 +31,7 @@ void algos::bysolver(Satellites &sats)
     };
     
     bool can_record[SAT_NUM + 1];
-    LinearExpr underflow_conditions[SAT_NUM + 1];
+    //LinearExpr underflow_conditions[SAT_NUM + 1];
     LinearExpr uniqueness_conditions_sat[SAT_NUM + 1];
     bool    sat_keep_station[SAT_NUM + 1];
     BoolVar sat_keep_station_var[SAT_NUM + 1];
@@ -69,8 +69,8 @@ void algos::bysolver(Satellites &sats)
         {
             can_record[isat] = false;
             sat_keep_station[isat] = false;
-            underflow_conditions[isat] = LinearExpr();
-            underflow_conditions[isat] -= (int)(1000 * sats[isat].capacity);
+            //underflow_conditions[isat] = LinearExpr();
+            //underflow_conditions[isat] -= (int)(1000 * sats[isat].capacity);
             uniqueness_conditions_sat[isat] = LinearExpr();
         }
 
@@ -87,7 +87,7 @@ void algos::bysolver(Satellites &sats)
                 BoolVar v = cp_model.NewBoolVar();
                 Satellite &sat = sats.at(info.sat_name);
                 vars.push_back({info.sat_name, 0, v, &info});
-                underflow_conditions[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
+                //underflow_conditions[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
                 can_record[info.sat_name] = true;
                 sat_rec[info.sat_name] = v;
                 
@@ -96,31 +96,36 @@ void algos::bysolver(Satellites &sats)
             }
             else if (info.state == State::TRANSMISSION)
             {
-                BoolVar v = cp_model.NewBoolVar();
-                double rate = sats.at(info.sat_name).broadcasting_speed;
-
-                vars.push_back({info.sat_name, info.obs_name, v, &info});
-                optimized += v * (int)(1000 * inter_dur * rate);
+                double capacity = sats.at(info.sat_name).capacity;
                 
-                underflow_conditions[info.sat_name] += v * (int)(1000 * inter_dur * rate);
-#ifdef CONTINUITY                
-                if (station_receiving[info.obs_name] == info.sat_name)
+                if (capacity > 1e-3) // not zero because a minuscule amount could have remained because of rounding error
                 {
-                    uniqueness_conditions_obs[info.obs_name] += 1;
-                    uniqueness_conditions_sat[info.sat_name] += 1;
-                    still_visible[info.obs_name] = true; 
-                    sat_keep_station_var[info.sat_name] = v;
-                    sat_keep_station[info.sat_name] = true;
-                }
-                else
-                {
+                    BoolVar v = cp_model.NewBoolVar();
+                    double rate = sats.at(info.sat_name).broadcasting_speed;
+
+                    vars.push_back({info.sat_name, info.obs_name, v, &info});
+                    optimized += v * (int)(1000 * std::min(inter_dur * rate, capacity));
+
+                    //underflow_conditions[info.sat_name] += v * (int)(1000 * );
+    #ifdef CONTINUITY                
+                    if (station_receiving[info.obs_name] == info.sat_name)
+                    {
+                        uniqueness_conditions_obs[info.obs_name] += 1;
+                        uniqueness_conditions_sat[info.sat_name] += 1;
+                        still_visible[info.obs_name] = true; 
+                        sat_keep_station_var[info.sat_name] = v;
+                        sat_keep_station[info.sat_name] = true;
+                    }
+                    else
+                    {
+                        uniqueness_conditions_obs[info.obs_name] += v;
+                        uniqueness_conditions_sat[info.sat_name] += v;
+                    }
+    #else
                     uniqueness_conditions_obs[info.obs_name] += v;
                     uniqueness_conditions_sat[info.sat_name] += v;
+    #endif
                 }
-#else
-                uniqueness_conditions_obs[info.obs_name] += v;
-                uniqueness_conditions_sat[info.sat_name] += v;
-#endif
             }
         }
         
@@ -161,8 +166,8 @@ void algos::bysolver(Satellites &sats)
                 cp_model.AddLessOrEqual(uniqueness_conditions_sat[isat], 1);
             }
             nconstraints++;
-            cp_model.AddLessOrEqual(underflow_conditions[isat], 0);
-            nconstraints++;
+            //cp_model.AddLessOrEqual(underflow_conditions[isat], 0);
+            //nconstraints++;
         }
 
         for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
@@ -182,15 +187,40 @@ void algos::bysolver(Satellites &sats)
             for (const auto &v : vars)
                 if (SolutionBooleanValue(response, v.var))
                 {
-                    algos::add2schedule(inter.start, inter.end, *(v.info), sats.at(v.sat_name));
                     if (v.obs_name == 0) // recording
                     {
+                        algos::add2schedule(inter.start, inter.end, *(v.info), sats.at(v.sat_name));
                         //if (v.sat_name == 157 && v.obs_name == 0)
                         //    printf("#");
                         r++;
                     }
                     else
                     {
+                        Satellite &sat = sats[v.sat_name];
+                        
+                        if (sat.capacity >= inter_dur * sat.broadcasting_speed)
+                            algos::add2schedule(inter.start, inter.end, *(v.info), sat);
+                        else
+                        {
+                            auto transmit_dur = (sat.capacity / sat.broadcasting_speed);
+                            
+                            auto transmit_end = inter.start + std::chrono::nanoseconds(uint64_t(transmit_dur * 1e9));
+                            
+                            //std::cout << "inter_dur = " << inter_dur << ", transmit_dur = " << transmit_dur <<
+                            //            ", start = " << date::format("%e %b %Y %T", inter.start) << ", tend = " << date::format("%e %b %Y %T", transmit_end) <<
+                            //        ", end = " << date::format("%e %b %Y %T", inter.end) << "\n";
+                            //printf("BEFORE TRANSMISSION %lf\n", sat.capacity);
+                            
+                            algos::add2schedule(inter.start, transmit_end, *(v.info), sat);
+                            
+                            // Record in the remaining time, if possible
+                            if (can_record[v.sat_name])
+                                algos::add2schedule(transmit_end, inter.end, IntervalInfo(v.sat_name, State::RECORDING), sat);
+                            
+                            //printf("AFTER TRANSMISSION %lf\n", sat.capacity);
+                            //algos::add2schedule(inter.start, inter.end, *(v.info), sat);
+                        }
+                        
                         //if (v.sat_name == 157 && v.obs_name == 8)                        
                         //    printf("*");
                         transmitted += inter_dur * sats.at(v.sat_name).broadcasting_speed;
