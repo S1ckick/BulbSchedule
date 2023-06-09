@@ -69,6 +69,7 @@ void help ()
     fprintf(stderr, "\nUsage: scheduler [-data1 path] [-data2 path] [-algo algorithm] [-check] [-checkonly]\n"
             "  data1 is the path to Satellite-Russia visibility files. Default DATA_Files/Russia2Constellation2\n"
             "  data2 is the path to Satellite-station LOS files. Default DATA_Files/Facility2Constellation\n"
+            "  algorithm can be \"cpsat\" (default) or \"greedy\" (faster but somewhat less effective)"
             "  check is a parameter to check the results after the program has run"
             "  checkonly is a parameter to check the results without running calculations");
     
@@ -94,6 +95,12 @@ void countDailySum(const Interval &interval, double capacity_change, std::vector
     }
 }
 
+enum 
+{
+    CPSAT,
+    GREEDY
+};
+
 int main(int argc, char* argv[])
 {
     Satellites sats;
@@ -101,6 +108,7 @@ int main(int argc, char* argv[])
     std::string path2 = "DATA_Files/Facility2Constellation";
     bool check = false;
     bool checkonly = false;
+    int algo = CPSAT;
 
     for (int i = 1; i < argc; i++)
     {
@@ -127,7 +135,18 @@ int main(int argc, char* argv[])
         else if (strcmp(argv[i], "-algo") == 0)
         {
             if (i < argc - 1)
+            {
                 ++i;
+                if (strcmp(argv[i], "cpsat") == 0)
+                    algo = CPSAT;
+                else if (strcmp(argv[i], "greedy") == 0)
+                    algo = GREEDY;
+                else
+                {
+                    help();
+                    return -1;
+                }
+            }
             else
             {
                 help();
@@ -156,8 +175,10 @@ int main(int argc, char* argv[])
 
         if(!checkonly){
             auto start_algo = std::chrono::high_resolution_clock::now();
-            algos::greedy_capacity(sats);
-            algos::bysolver(sats);
+            if (algo == CPSAT)
+                algos::bysolver(sats);
+            else if (algo == GREEDY)
+                algos::greedy_capacity(sats);
             auto end_algo = std::chrono::high_resolution_clock::now();
 
             std::cout << "Schedule built in " << std::chrono::duration_cast<std::chrono::seconds>(end_algo - start_algo) << std::endl;
