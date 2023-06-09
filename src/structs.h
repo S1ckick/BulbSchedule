@@ -168,7 +168,7 @@ struct Satellite
     Satellite(const SatName &sat_name) : name(sat_name)
     {
         capacity = 0;
-        if (sat_name < 110600)
+        if (sat_name <= 50)
         { // KINOSAT
             max_capacity = 8192;
             broadcasting_speed = 1;
