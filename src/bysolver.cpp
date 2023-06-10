@@ -158,15 +158,18 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 if (sat_keep_station[isat])
                 {
                     cp_model.AddEquality(uniqueness_conditions_sat[isat], 1);
+                    nconstraints++;
                     LinearExpr e;
                     e += sat_keep_station_var[isat];
                     e += sat_rec[isat];
                     cp_model.AddEquality(e, 1);
+                    nconstraints++;
                 }
                 else
                 {
                     uniqueness_conditions_sat[isat] += sat_rec[isat];
                     cp_model.AddEquality(uniqueness_conditions_sat[isat], 1);
+                    nconstraints++;
                 }
 #else
                 uniqueness_conditions_sat[sat.second.name] += sat_rec[sat.second.name];
@@ -176,8 +179,8 @@ void algos::bysolver(Satellites &sats, double F, double W)
             else
             {
                 cp_model.AddLessOrEqual(uniqueness_conditions_sat[isat], 1);
+                nconstraints++;
             }
-            nconstraints++;
             //cp_model.AddLessOrEqual(underflow_conditions[isat], 0);
             //nconstraints++;
         }
@@ -233,8 +236,8 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 }
             if ((cnt % 10) == 0 || cnt == plan.size())
             {
-                printf("Int %6d/%ld : ", cnt, plan.size());
-                printf("%2d rec, %2d tx; %2d full, %2d empty, total %lf Gbit transmitted\n", r, b, nfull, nempty, transmitted);
+                printf("Int %6d/%ld (%3d vars, %3d cstrs), ", cnt, (int)plan.size(), (int)vars.size(), nconstraints);
+                printf("%2d rec, %2d tx; %3d full, %3d empty, total %.3lf Gbit transmitted\n", r, b, nfull, nempty, transmitted);
             }
         }
         else
