@@ -37,13 +37,11 @@ void algos::bysolver(Satellites &sats, double F, double W)
     BoolVar sat_keep_station_var[SAT_NUM + 1];
     BoolVar sat_rec[SAT_NUM + 1];
     
-#ifdef CONTINUITY        
     int station_receiving[OBS_NUM + 1]; // -1 if idle, i>= 0 if receiving from satellite #i
     for (int i = 0; i <= OBS_NUM; i++)
     {
         station_receiving[i] = -1;
     }
-#endif
     
 
     std::vector<VarWithID> vars;
@@ -70,16 +68,12 @@ void algos::bysolver(Satellites &sats, double F, double W)
         {
             can_record[isat] = false;
             sat_keep_station[isat] = false;
-            //underflow_conditions[isat] = LinearExpr();
-            //underflow_conditions[isat] -= (int)(1000 * sats[isat].capacity);
             uniqueness_conditions_sat[isat] = LinearExpr();
         }
 
-#ifdef CONTINUITY        
         bool still_visible[OBS_NUM + 1]; 
         for (int i = 0; i <= OBS_NUM; i++)
             still_visible[i] = false;
-#endif
         
         for (auto &info : infos)
         {
@@ -89,7 +83,6 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 
                 BoolVar v = cp_model.NewBoolVar();
                 vars.push_back({info.sat_name, 0, v, &info});
-                //underflow_conditions[info.sat_name] -= v * (int)(1000 * inter_dur * sat.recording_speed);
                 can_record[info.sat_name] = true;
                 sat_rec[info.sat_name] = v;
                 
@@ -113,8 +106,6 @@ void algos::bysolver(Satellites &sats, double F, double W)
                     vars.push_back({info.sat_name, info.obs_name, v, &info});
                     optimized += v * (int)(1000 * std::min(inter_dur * rate, capacity));
 
-                    //underflow_conditions[info.sat_name] += v * (int)(1000 * );
-    #ifdef CONTINUITY                
                     if (station_receiving[info.obs_name] == info.sat_name)
                     {
                         uniqueness_conditions_obs[info.obs_name] += 1;
@@ -128,21 +119,15 @@ void algos::bysolver(Satellites &sats, double F, double W)
                         uniqueness_conditions_obs[info.obs_name] += v;
                         uniqueness_conditions_sat[info.sat_name] += v;
                     }
-    #else
-                    uniqueness_conditions_obs[info.obs_name] += v;
-                    uniqueness_conditions_sat[info.sat_name] += v;
-    #endif
                 }
             }
         }
         
-#ifdef CONTINUITY        
         for (int i = 1; i <= OBS_NUM; i++)
             if (!still_visible[i])
             {
                 station_receiving[i] = -1;
-            }
-#endif        
+            } 
         
         int nconstraints = 0;
         int nfull = 0, nempty = 0;
@@ -154,7 +139,6 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 nfull++;
             if (can_record[isat])
             {
-#ifdef CONTINUITY               
                 if (sat_keep_station[isat])
                 {
                     cp_model.AddEquality(uniqueness_conditions_sat[isat], 1);
@@ -171,18 +155,12 @@ void algos::bysolver(Satellites &sats, double F, double W)
                     cp_model.AddEquality(uniqueness_conditions_sat[isat], 1);
                     nconstraints++;
                 }
-#else
-                uniqueness_conditions_sat[sat.second.name] += sat_rec[sat.second.name];
-                cp_model.AddEquality(uniqueness_conditions_sat[sat.second.name], 1);
-#endif                
             }
             else
             {
                 cp_model.AddLessOrEqual(uniqueness_conditions_sat[isat], 1);
                 nconstraints++;
             }
-            //cp_model.AddLessOrEqual(underflow_conditions[isat], 0);
-            //nconstraints++;
         }
 
         for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
