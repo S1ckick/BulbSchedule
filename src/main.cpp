@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 using namespace date;
 
-std::unordered_map<std::string, uint32_t> obs_to_int = {
+std::unordered_map<std::string, uint32_t> stn_to_int = {
     {"0", 0},
     {"Anadyr1",1},
     {"Anadyr2", 2},
@@ -31,7 +31,7 @@ std::unordered_map<std::string, uint32_t> obs_to_int = {
     {"Sumatra", 14}
 };
 
-char * obs_to_hex[] =
+char * stn_to_hex[] =
 {
     "",
     "#FF2D00",
@@ -211,7 +211,7 @@ int main(int argc, char* argv[])
     try
     {
         int res_parse_russia = parse_russia_to_satellites(path1, sats);
-        int res_parse_obs = parse_observatory(path2, sats);
+        int res_parse_stn = parse_station(path2, sats);
 
         if(!checkonly){
             auto start_algo = std::chrono::high_resolution_clock::now();
@@ -231,11 +231,11 @@ int main(int argc, char* argv[])
 
         if(!checkonly) {
             std::ofstream out_schedule(res_dir + "all_schedule.txt");
-            std::ofstream sats_obs_out("sats_obs.txt");
+            std::ofstream sats_stn_out("sats_obs.txt");
             std::ofstream out("sats.txt");
             std::ofstream sat_full(res_dir + "time_sat_full.txt");
 
-            if (!out || !out_schedule || !sats_obs_out) {
+            if (!out || !out_schedule || !sats_stn_out) {
                 std::cout << "Can't create files\n";
             }
 
@@ -257,25 +257,25 @@ int main(int argc, char* argv[])
             out.close();
 
             for (int isat = 1; isat <= SAT_NUM; isat++){
-                for (auto &interval : sats[isat].ints_observatories){
-                    sats_obs_out << std::fixed
+                for (auto &interval : sats[isat].ints_stations){
+                    sats_stn_out << std::fixed
                         << interval.info.sat_name << " "
                         COUT_SATNAME(interval.info.sat_name) << " "
                         << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                         << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
-                        << " " << interval.info.obs_name 
-                        << " " << obs_to_hex[interval.info.obs_name]
+                        << " " << interval.info.station_id 
+                        << " " << stn_to_hex[interval.info.station_id]
                         << std::endl;
                 }
             }
-            sats_obs_out.close();
+            sats_stn_out.close();
 
             double sum_data = 0;
             double sum_full = 0.0;
             double recording_time = 0.0;
             for (int isat = 1; isat <= SAT_NUM; isat++){
                 Satellite &sat = sats[isat];
-                sat.capacity = 0; // simulate satellite work from beginning
+                sat.volume = 0; // simulate satellite work from beginning
 
                 double time_full = 0;
                 double time_all = 0;
@@ -287,14 +287,11 @@ int main(int argc, char* argv[])
                     if (interval.info.state == State::RECORDING) {
                         capacity_change = sat.record(DURATION(interval.start, interval.end));
                         time_all += DURATION(interval.start, interval.end) * 1000; //milliseconds
-                        if (sat.capacity >= sat.max_capacity - 1e-8) {
+                        if (sat.volume >= sat.capacity - 1e-8) {
                             time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / sat.recording_speed * 1000)), interval.end) * 1000;
                         }
                     }
                     else if (interval.info.state == State::TRANSMISSION) {
-                        // if (item.second.capacity >= item.second.max_capacity - 1e-8) {
-                        //     time_full += DURATION(became_full, interval.start) * 1000;
-                        // }
                         capacity_change = sat.transmission(DURATION(interval.start, interval.end));
                         sum_data += capacity_change;
                         countDailySum(interval, capacity_change, daily_sums);
@@ -307,8 +304,8 @@ int main(int argc, char* argv[])
                         << " " << (DURATION(START_MODELLING, interval.end) * 1000)  //milliseconds
                         << " " << interval.info.state
                         << " " << capacity_change
-                        << " " << obs_to_hex[cur_info.obs_name]
-                        << " " << cur_info.obs_name
+                        << " " << stn_to_hex[cur_info.station_id]
+                        << " " << cur_info.station_id
                         << std::endl;                    
                 }
                 recording_time += time_all;
@@ -350,16 +347,12 @@ int main(int argc, char* argv[])
             std::cout << "Total points: " << sum_data / 8.0 + overflow_points << std::endl;
             std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 
-            // double obs_total_length = countObsTotalLength(sats);
-            // std::cout << std::fixed << "stations can receive max: " << obs_total_length << " sec" << std::endl;
-
-
             // write result
 
             std::string path_ground = res_dir + "Ground/";
             std::string path_camera = res_dir + "Camera/";
             std::string path_drop = res_dir + "Drop/";
-            writeResults(sats, path_ground, path_camera, path_drop, obs_to_int);
+            writeResults(sats, path_ground, path_camera, path_drop, stn_to_int);
         }
         
         // Validation
@@ -380,15 +373,15 @@ int main(int argc, char* argv[])
             }
 
             if(checkValidity(sats_to_check, err_check_str) == -1) {
-                std::cout << "Error while checking obs: " << err_check_str;
+                std::cout << "Error while checking station: " << err_check_str;
             } else {
-                std::cout << "obs are fine!" << std::endl;
+                std::cout << "Stations are fine!" << std::endl;
             }
 
             if(checkBroadcastInRightArea(sats_to_check, sats, err_check_str) == -1) {
                std::cout << "Error while checking transmission area: " << err_check_str;
             } else {
-                std::cout << "all satellites transmission in right area" << std::endl;
+                std::cout << "All satellites transmission in right area" << std::endl;
             }
 
             if(checkRecordingInRightArea(sats_to_check, sats, err_check_str) == -1) {

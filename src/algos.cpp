@@ -94,20 +94,20 @@ void algos::add2schedule(const timepoint &start, const timepoint &end, const Int
 
 	cur_sat.full_schedule.push_back(new_interval);
 	if (new_interval.info.state == State::TRANSMISSION) {
-		if (info.obs_name == 0)
+		if (info.station_id == 0)
 			throw std::logic_error("Pass a station to add2schedule to add transmission interval");
 	}
 }
 
-// find end of possible sat-obs transmission interval by timepoint
+// find end of possible transmission interval by timepoint
 timepoint algos::end_of_current_interval(
 	const Satellite &sat,
-	const ObsName &obs,
+	const StationID &station,
 	const timepoint &cur_start)
 {
 	auto one_ms = std::chrono::milliseconds(1);
 	for (auto &inter: sat.ints_stations) {
-		if (inter.info.obs_name == obs && 
+		if (inter.info.station_id == station && 
 			inter.start - one_ms <= cur_start &&
 			inter.end + one_ms >= cur_start) {
 				return inter.end;	

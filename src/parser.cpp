@@ -9,11 +9,11 @@
 
 namespace fs = std::filesystem;
 
-extern std::unordered_map<std::string, uint32_t> obs_to_int;
+extern std::unordered_map<std::string, uint32_t> stn_to_int;
 
 using namespace date;
 
-Interval parse_interval(const std::string &line, const SatName &sat_name, const ObsName &obs_name = 0)
+Interval parse_interval(const std::string &line, const SatID &sat_name, const StationID &station_id = 0)
 {
     std::string str_idx, str_start_day, str_start_month, str_start_year, str_start_time,
         str_end_day, str_end_month, str_end_year, str_end_time,
@@ -32,12 +32,12 @@ Interval parse_interval(const std::string &line, const SatName &sat_name, const 
     end_date >> date::parse("%d/%b/%Y %T", tp_end);
 
     State new_state;
-    if (obs_name != 0)
+    if (station_id != 0)
         new_state = State::TRANSMISSION;
     else
         new_state = State::RECORDING;
 
-    Interval interval(tp_start, tp_end, sat_name, new_state, obs_name);
+    Interval interval(tp_start, tp_end, sat_name, new_state, station_id);
 
     return interval;
 }
@@ -71,7 +71,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
         std::string line;
 
         bool headerRead = false;
-        SatName cur_sat = 0;
+        SatID cur_sat = 0;
         int cnt = 0;
 
         while (std::getline(fp, line))
@@ -137,7 +137,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
 int parse_station(std::string &location, Satellites &sats)
 {
     int int_idx = 0;
-    SatName cur_sat_name;
+    SatID cur_sat_name;
 
     // TODO: call OS (in)dependent function to get files list
 
@@ -164,7 +164,7 @@ int parse_station(std::string &location, Satellites &sats)
         std::string line;
 
         bool headerRead = false;
-        ObsName cur_obs;
+        StationID cur_station;
         while ((std::getline(fp, line)))
         {
             if (headerRead)
@@ -176,7 +176,7 @@ int parse_station(std::string &location, Satellites &sats)
                     continue;
                 }
 
-                auto interval = parse_interval(line, cur_sat_name, cur_obs);
+                auto interval = parse_interval(line, cur_sat_name, cur_station);
 
                 auto inserted = sats.at(cur_sat_name).ints_stations.insert(interval);
                 Interval &int_inserted = const_cast<Interval&>(*inserted.first);
@@ -187,7 +187,7 @@ int parse_station(std::string &location, Satellites &sats)
                 std::string prefix = start_of_line + "-To-";
                 if (std::strncmp(prefix.data(), line.data(), prefix.size()) == 0)
                 {
-                    cur_obs = obs_to_int[start_of_line];
+                    cur_station = stn_to_int[start_of_line];
                     size_t prefix_size = prefix.size();
                     int start_number = -1;
                     for (int i = 0; i < line.size(); i++)
@@ -210,7 +210,7 @@ int parse_station(std::string &location, Satellites &sats)
 
         fp.close();
 
-        std::cout << "Read " << cur_obs  << "\n";
+        std::cout << "Read " << cur_station  << "\n";
     }
 
     return 0;
@@ -230,21 +230,21 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
     while ((std::getline(fp, line))) {
         std::istringstream line_stream(line);
         std::string sat_num, sat_name, start_str, end_str, state_str, capacity_change,
-                    obs_hex, obs_name;
+                    stn_hex, station_id;
         line_stream >> sat_num >> sat_name >> start_str >> end_str >> state_str >> capacity_change >>
-                    obs_hex;
-        if(obs_hex != "0") {
-            line_stream >> obs_name;
+                    stn_hex;
+        if(stn_hex != "0") {
+            line_stream >> station_id;
         }
         else {
-            obs_name = "0";
+            station_id = "0";
         }
             
         long int start_int = std::stol(start_str);
         long int end_int = std::stol(end_str);
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
-        Interval inter(start, end, 10 * (std::stoi(sat_name.substr(2,2)) - 1) + std::stoi(sat_name.substr(4,2)), std::stoi(obs_name));
+        Interval inter(start, end, 10 * (std::stoi(sat_name.substr(2,2)) - 1) + std::stoi(sat_name.substr(4,2)), std::stoi(station_id));
         inter.info.state = str_to_state.at(state_str);
         //inter.capacity_change = std::stod(capacity_change);
 

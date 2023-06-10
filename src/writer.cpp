@@ -19,7 +19,7 @@ inline std::ostream& operator<<(std::ostream& os, const State& obj)
    return os;
 }
 
-std::unordered_map<int,std::string> int_to_obs = {
+std::unordered_map<int,std::string> int_to_stn = {
     {0,"0"},
     {1,"Anadyr1"},
     {2,"Anadyr2"},
@@ -38,21 +38,21 @@ std::unordered_map<int,std::string> int_to_obs = {
 };
 
 
-int writeResults(Satellites &sats, const std::string &path_ground, const std::string &path_camera, const std::string & path_drop, const std::unordered_map<std::string, uint32_t> &obs_to_int) {
-    std::unordered_map<ObsName, std::pair<std::ofstream, long int>> obs_files_to_save;
+int writeResults(Satellites &sats, const std::string &path_ground, const std::string &path_camera, const std::string & path_drop, const std::unordered_map<std::string, uint32_t> &stn_to_int) {
+    std::unordered_map<StationID, std::pair<std::ofstream, long int>> stn_files_to_save;
     fs::current_path(fs::current_path());
     fs::create_directories(path_ground);
     fs::create_directories(path_drop);
     fs::create_directories(path_camera);
-    for(auto &item : obs_to_int) {
+    for(auto &item : stn_to_int) {
         if(item.first == "" || item.first == "0")
             continue;
-        std::ofstream obs_out_f(path_ground + "Ground_" + item.first + ".txt");
-        obs_out_f << item.first << " - station name" << std::endl 
+        std::ofstream stn_out_f(path_ground + "Ground_" + item.first + ".txt");
+        stn_out_f << item.first << " - station name" << std::endl 
                   << "-------------------------" << std::endl
                   << "Access * Start Time (UTCG) * Stop Time (UTCG) * Duration (sec) * Sat name * Data (Mbytes)"
                   << std::endl;
-        obs_files_to_save[item.second] = std::make_pair<std::ofstream, long int>(std::move(obs_out_f), 1);
+        stn_files_to_save[item.second] = std::make_pair<std::ofstream, long int>(std::move(stn_out_f), 1);
     }
 
     double total = 0.0;
@@ -93,8 +93,8 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
                 capacity_change = sats[isat].transmission(DURATION(interval.start, interval.end));
                 
                 // write to Ground
-                std::ofstream & out_f = obs_files_to_save[cur_info.obs_name].first;
-                out_f << std::fixed << std::setprecision(3) << obs_files_to_save[cur_info.obs_name].second++ 
+                std::ofstream & out_f = stn_files_to_save[cur_info.station_id].first;
+                out_f << std::fixed << std::setprecision(3) << stn_files_to_save[cur_info.station_id].second++ 
                   << " " << date::format("%e %b %Y %T", interval.start)
                   << " " << date::format("%e %b %Y %T", interval.end)
                   << " " << DURATION(interval.start, interval.end)
@@ -107,7 +107,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
                   << " " << date::format("%e %b %Y %T", interval.start)
                   << " " << date::format("%e %b %Y %T", interval.end)
                   << " " << DURATION(interval.start, interval.end)
-                  << " " << int_to_obs[interval.info.obs_name]
+                  << " " << int_to_stn[interval.info.station_id]
                   << " " << capacity_change * 128.0
                   << std::endl;
             }
@@ -118,7 +118,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
         out_drop.close();
     }
 
-    for(auto &item : obs_files_to_save) {
+    for(auto &item : stn_files_to_save) {
         item.second.first.close();
     }
 

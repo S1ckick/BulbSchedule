@@ -14,15 +14,15 @@
 #include <date.h>
 
 
-#define OBS_NUM 14
+#define STN_NUM 14
 #define SAT_NUM 200
 
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
                                std::chrono::milliseconds::period::num / std::chrono::milliseconds::period::den) \
                                   .count())
 
-using SatName = uint32_t;
-using ObsName = uint32_t;
+using SatID = uint32_t;
+using StationID = uint32_t;
 using timepoint = std::chrono::system_clock::time_point;
 
 enum class State
@@ -33,20 +33,20 @@ enum class State
 };
 
 struct IntervalInfo {
-    SatName sat_name;
+    SatID sat_name;
     State state = State::IDLE;
-    ObsName obs_name;
+    StationID station_id;
 
     IntervalInfo() = default;
     IntervalInfo(const IntervalInfo &base_interval) = default;
 
     bool operator==(const IntervalInfo &r)
     {        
-        return sat_name == r.sat_name && state == r.state && obs_name == r.obs_name;
+        return sat_name == r.sat_name && state == r.state && station_id == r.station_id;
     }
 
     IntervalInfo(
-        const SatName &sat, const ObsName &obs = 0) : sat_name(sat), obs_name(obs)
+        const SatID &sat, const StationID &stn = 0) : sat_name(sat), station_id(stn)
     {
         
     }
@@ -55,18 +55,18 @@ struct IntervalInfo {
     // RECORDING -> only satelitte info
     // TRANSMISSION -> satelitte and station info
     IntervalInfo(
-        const SatName &sat,
-        const State new_state, const ObsName &obs = 0) : IntervalInfo(sat, obs)
+        const SatID &sat,
+        const State new_state, const StationID &stn = 0) : IntervalInfo(sat, stn)
     {
         state = new_state;
 
         if (new_state == State::TRANSMISSION)
         {
-            if (obs == 0) {
+            if (stn == 0) {
                 std::cout << "Transmission interval should contain station\n";
                 throw std::runtime_error("No station info");
             }
-            obs_name = obs;
+            station_id = stn;
         }
     }
 };
@@ -84,8 +84,8 @@ struct Interval
     Interval(
         const timepoint &tp_start,
         const timepoint &tp_end,
-        const SatName &sat,
-        const ObsName &obs = 0) : start(tp_start), end(tp_end), info(sat, obs)
+        const SatID &sat,
+        const StationID &stn = 0) : start(tp_start), end(tp_end), info(sat, stn)
     {
     }
 
@@ -95,8 +95,8 @@ struct Interval
     Interval(
         const timepoint &tp_start,
         const timepoint &tp_end,
-        const SatName &sat,
-        const State &new_state, const ObsName &obs = 0) : start(tp_start), end(tp_end), info(sat, new_state, obs)
+        const SatID &sat,
+        const State &new_state, const StationID &stn = 0) : start(tp_start), end(tp_end), info(sat, new_state, stn)
     {
     }
 
@@ -121,7 +121,7 @@ struct sort_schedule
     {
         if (a.start == b.start) {
             if (a.end == b.end)
-                return a.info.obs_name < b.info.obs_name;
+                return a.info.station_id < b.info.station_id;
             return DURATION(a.start, a.end) > DURATION(b.start, b.end);
         }
         return a.start < b.start;

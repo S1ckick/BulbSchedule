@@ -1,7 +1,7 @@
 #include "validation.h"
 
-extern char * obs_to_hex[];
-extern std::unordered_map<std::string, int> obs_to_int;
+extern char * stn_to_hex[];
+extern std::unordered_map<std::string, int> stn_to_int;
 extern timepoint START_MODELLING;
 
 inline std::ostream& operator << (std::ostream& o, const Interval& a)
@@ -10,8 +10,8 @@ inline std::ostream& operator << (std::ostream& o, const Interval& a)
     " " << (DURATION(START_MODELLING, a.start) * 1000) <<
     " " << (DURATION(START_MODELLING, a.end) * 1000) <<
     // " " << a.capacity_change <<
-    " " << obs_to_hex[a.info.obs_name] <<
-    " " << a.info.obs_name;
+    " " << stn_to_hex[a.info.station_id] <<
+    " " << a.info.station_id;
     return o;
 }
 
@@ -115,7 +115,7 @@ int checkTransmissionTillTheEndOfSession(VecSchedule &schedule_to_check, Satelli
             bool found = false;
             for (auto &area : sat.ints_stations)
             {
-                if (interval.info.obs_name == area.info.obs_name && interval.start >= area.start - one_ms && interval.end <= area.end + one_ms)
+                if (interval.info.station_id == area.info.station_id && interval.start >= area.start - one_ms && interval.end <= area.end + one_ms)
                 {
                     if(interval.end != area.end) {
                         std::stringstream res_ss;
@@ -135,17 +135,17 @@ int checkTransmissionTillTheEndOfSession(VecSchedule &schedule_to_check, Satelli
 
 int checkValidity(VecSchedule &schedule_to_check, std::string &res)
 {
-    std::unordered_map<ObsName, std::vector<Interval>> obs_to_check;
+    std::unordered_map<StationID, std::vector<Interval>> stn_to_check;
 
     for (auto &item : schedule_to_check)
     {
         if (item.info == 0)
-            obs_to_check[item.info.obs_name].push_back(item);
+            stn_to_check[item.info.station_id].push_back(item);
     }
 
-    for (auto &item : obs_to_check)
+    for (auto &item : stn_to_check)
     {
-        //std::sort(item.second.begin(), item.second.end(), sort_obs);
+        //std::sort(item.second.begin(), item.second.end(), sort_stn);
         for (int i = 0; i < item.second.size() - 1; i++)
         {
             if (!(item.second[i].start < item.second[i + 1].start

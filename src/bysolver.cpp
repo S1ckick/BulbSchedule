@@ -24,8 +24,8 @@ void algos::bysolver(Satellites &sats, double F, double W)
 
     struct VarWithID
     {
-        SatName sat_name;
-        ObsName obs_name;
+        SatID sat_name;
+        StationID station_id;
         BoolVar var;
         IntervalInfo *info;
     };
@@ -37,8 +37,8 @@ void algos::bysolver(Satellites &sats, double F, double W)
     BoolVar sat_keep_station_var[SAT_NUM + 1];
     BoolVar sat_rec[SAT_NUM + 1];
     
-    int station_receiving[OBS_NUM + 1]; // -1 if idle, i>= 0 if receiving from satellite #i
-    for (int i = 0; i <= OBS_NUM; i++)
+    int station_receiving[STN_NUM + 1]; // -1 if idle, i>= 0 if receiving from satellite #i
+    for (int i = 0; i <= STN_NUM; i++)
     {
         station_receiving[i] = -1;
     }
@@ -62,7 +62,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
         CpModelBuilder cp_model;
 
         LinearExpr optimized;
-        LinearExpr uniqueness_conditions_obs[OBS_NUM + 1];
+        LinearExpr uniqueness_conditions_stn[STN_NUM + 1];
 
         for (int isat = 1; isat <= SAT_NUM; isat++)
         {
@@ -71,8 +71,8 @@ void algos::bysolver(Satellites &sats, double F, double W)
             uniqueness_conditions_sat[isat] = LinearExpr();
         }
 
-        bool still_visible[OBS_NUM + 1]; 
-        for (int i = 0; i <= OBS_NUM; i++)
+        bool still_visible[STN_NUM + 1]; 
+        for (int i = 0; i <= STN_NUM; i++)
             still_visible[i] = false;
         
         for (auto &info : infos)
@@ -103,27 +103,27 @@ void algos::bysolver(Satellites &sats, double F, double W)
                     BoolVar v = cp_model.NewBoolVar();
                     double rate = sats.at(info.sat_name).transmission_speed;
 
-                    vars.push_back({info.sat_name, info.obs_name, v, &info});
+                    vars.push_back({info.sat_name, info.station_id, v, &info});
                     optimized += v * (int)(1000 * std::min(inter_dur * rate, volume));
 
-                    if (station_receiving[info.obs_name] == info.sat_name)
+                    if (station_receiving[info.station_id] == info.sat_name)
                     {
-                        uniqueness_conditions_obs[info.obs_name] += 1;
+                        uniqueness_conditions_stn[info.station_id] += 1;
                         uniqueness_conditions_sat[info.sat_name] += 1;
-                        still_visible[info.obs_name] = true; 
+                        still_visible[info.station_id] = true; 
                         sat_keep_station_var[info.sat_name] = v;
                         sat_keep_station[info.sat_name] = true;
                     }
                     else
                     {
-                        uniqueness_conditions_obs[info.obs_name] += v;
+                        uniqueness_conditions_stn[info.station_id] += v;
                         uniqueness_conditions_sat[info.sat_name] += v;
                     }
                 }
             }
         }
         
-        for (int i = 1; i <= OBS_NUM; i++)
+        for (int i = 1; i <= STN_NUM; i++)
             if (!still_visible[i])
             {
                 station_receiving[i] = -1;
@@ -163,9 +163,9 @@ void algos::bysolver(Satellites &sats, double F, double W)
             }
         }
 
-        for (int obs = 1; obs <= OBS_NUM; obs++)
+        for (int stn = 1; stn <= STN_NUM; stn++)
         {
-            cp_model.AddLessOrEqual(uniqueness_conditions_obs[obs], 1);
+            cp_model.AddLessOrEqual(uniqueness_conditions_stn[stn], 1);
             nconstraints++;
         }
 
@@ -180,7 +180,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
             for (const auto &v : vars)
                 if (SolutionBooleanValue(response, v.var))
                 {
-                    if (v.obs_name == 0) // recording
+                    if (v.station_id == 0) // recording
                     {
                         algos::add2schedule(inter.start, inter.end, *(v.info), sats.at(v.sat_name));
                         r++;
@@ -208,7 +208,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
                         b++;
                         
 #ifdef CONTINUITY                        
-                        station_receiving[v.obs_name] = v.sat_name;
+                        station_receiving[v.station_id] = v.sat_name;
 #endif
                     }
                 }
