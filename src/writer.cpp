@@ -48,7 +48,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
         if(item.first == "" || item.first == "0")
             continue;
         std::ofstream obs_out_f(path_ground + "Ground_" + item.first + ".txt");
-        obs_out_f << item.first << " - observatory name" << std::endl 
+        obs_out_f << item.first << " - station name" << std::endl 
                   << "-------------------------" << std::endl
                   << "Access * Start Time (UTCG) * Stop Time (UTCG) * Duration (sec) * Sat name * Data (Mbytes)"
                   << std::endl;
@@ -58,7 +58,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
     double total = 0.0;
     for (int isat = 1; isat <= SAT_NUM; isat++){
         std::stringstream satname;
-        satname << (isat <= 50 ? "KinoSat_" : "Zorkiy_") << COUT_SATNAME(isat);
+        satname << "KinoSat_" << COUT_SATNAME(isat);
 
         std::ofstream out_drop(path_drop + "Drop_" + satname.str() + ".txt");
         std::ofstream out_camera(path_camera + "Camera_" + satname.str() + ".txt");
