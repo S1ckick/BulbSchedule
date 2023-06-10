@@ -284,8 +284,8 @@ int main(int argc, char* argv[])
             std::ofstream out_score(res_dir + "score.txt");
 
             double overflow_points = (recording_time - sum_full) / 1000.0 / 60.0;
-            out_score << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " gigabit = " 
-                                                  << sum_data / 8.0 << " gigabyte (points)" << std::endl
+            out_score << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " Gbit = " 
+                                                  << sum_data / 8.0 << " GB (points)" << std::endl
                       << "Work without overflow: " << overflow_points << " min (points)" << std::endl
                       << "Total points: " << sum_data / 8.0 + overflow_points << std::endl << std::endl;
                         
@@ -295,8 +295,8 @@ int main(int argc, char* argv[])
             out_score << "Data transmitted daily: " << std::endl;
 
             for(int i = 0; i < daily_sums.size(); i++){
-                std::cout << i+1 << " day: " << daily_sums[i] << " gigabit = " << daily_sums[i] / 8.0 << " gigabyte = " << daily_sums[i] / 8192.0 << " terabyte\n";
-                out_score << i+1 << " day: " << daily_sums[i] << " gigabit = " << daily_sums[i] / 8.0 << " gigabyte = " << daily_sums[i] / 8192.0 << " terabyte\n";
+                std::cout << "day " << i+1 << ": transmitted " << daily_sums[i] << " Gbit = " << daily_sums[i] / 8.0 << " GB = " << daily_sums[i] / 8192.0 << " TB\n";
+                out_score << "day " << i+1 << ": transmitted " << daily_sums[i] << " Gbit = " << daily_sums[i] / 8.0 << " GB = " << daily_sums[i] / 8192.0 << " TB\n";
                 daily_checksum += daily_sums[i];
             }
 
@@ -304,8 +304,11 @@ int main(int argc, char* argv[])
 
             std::cout << "Checksum: " << daily_checksum << std::endl;
 
-            std::cout << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " gigabit = " << sum_data / 8.0 << " gigabyte = " << sum_data / 8192.0 << " terabyte\n";
-            std::cout << "Work without overflow: " << overflow_points << " min (points)" << std::endl;
+            std::cout << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " Gbit = " << sum_data / 8.0 << " GB = " << sum_data / 8192.0 << " TB\n";
+            std::cout << "Work without overflow time: " << overflow_points << " min (points)" << std::endl;
+            std::cout << "Recording time: " << recording_time / 1000.0 / 60.0 << " min" << std::endl;
+            std::cout << "Overflow time: " << sum_full / 1000.0 / 60.0 << " min" << std::endl;
+            
             std::cout << "Total points: " << sum_data / 8.0 + overflow_points << std::endl;
             std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 
