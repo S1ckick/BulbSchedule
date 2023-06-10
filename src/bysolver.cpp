@@ -24,7 +24,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
 
     struct VarWithID
     {
-        SatID sat_name;
+        SatID sat_id;
         StationID station_id;
         BoolVar var;
         IntervalInfo *info;
@@ -79,12 +79,12 @@ void algos::bysolver(Satellites &sats, double F, double W)
         {
             if (info.state == State::RECORDING)
             {
-                Satellite &sat = sats.at(info.sat_name);
+                Satellite &sat = sats.at(info.sat_id);
                 
                 BoolVar v = cp_model.NewBoolVar();
-                vars.push_back({info.sat_name, 0, v, &info});
-                can_record[info.sat_name] = true;
-                sat_rec[info.sat_name] = v;
+                vars.push_back({info.sat_id, 0, v, &info});
+                can_record[info.sat_id] = true;
+                sat_rec[info.sat_id] = v;
                 
                 // do not incentivize recording if we have enough data to transfer till the end
                 // (can not disable recording entirely because this is against the rules)
@@ -96,28 +96,28 @@ void algos::bysolver(Satellites &sats, double F, double W)
             }
             else if (info.state == State::TRANSMISSION)
             {
-                double volume = sats.at(info.sat_name).volume;
+                double volume = sats.at(info.sat_id).volume;
                 
                 if (volume > 1e-3) // not zero because a minuscule amount could have remained because of rounding error
                 {
                     BoolVar v = cp_model.NewBoolVar();
-                    double rate = sats.at(info.sat_name).transmission_speed;
+                    double rate = sats.at(info.sat_id).transmission_speed;
 
-                    vars.push_back({info.sat_name, info.station_id, v, &info});
+                    vars.push_back({info.sat_id, info.station_id, v, &info});
                     optimized += v * (int)(1000 * std::min(inter_dur * rate, volume));
 
-                    if (station_receiving[info.station_id] == info.sat_name)
+                    if (station_receiving[info.station_id] == info.sat_id)
                     {
                         uniqueness_conditions_stn[info.station_id] += 1;
-                        uniqueness_conditions_sat[info.sat_name] += 1;
+                        uniqueness_conditions_sat[info.sat_id] += 1;
                         still_visible[info.station_id] = true; 
-                        sat_keep_station_var[info.sat_name] = v;
-                        sat_keep_station[info.sat_name] = true;
+                        sat_keep_station_var[info.sat_id] = v;
+                        sat_keep_station[info.sat_id] = true;
                     }
                     else
                     {
                         uniqueness_conditions_stn[info.station_id] += v;
-                        uniqueness_conditions_sat[info.sat_name] += v;
+                        uniqueness_conditions_sat[info.sat_id] += v;
                     }
                 }
             }
@@ -182,12 +182,12 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 {
                     if (v.station_id == 0) // recording
                     {
-                        algos::add2schedule(inter.start, inter.end, *(v.info), sats.at(v.sat_name));
+                        algos::add2schedule(inter.start, inter.end, *(v.info), sats.at(v.sat_id));
                         r++;
                     }
                     else
                     {
-                        Satellite &sat = sats[v.sat_name];
+                        Satellite &sat = sats[v.sat_id];
                         
                         if (sat.volume >= inter_dur * sat.transmission_speed)
                             algos::add2schedule(inter.start, inter.end, *(v.info), sat);
@@ -200,15 +200,15 @@ void algos::bysolver(Satellites &sats, double F, double W)
                             algos::add2schedule(inter.start, transmit_end, *(v.info), sat);
                             
                             // Record in the remaining time, if possible
-                            if (can_record[v.sat_name])
-                                algos::add2schedule(transmit_end, inter.end, IntervalInfo(v.sat_name, State::RECORDING), sat);
+                            if (can_record[v.sat_id])
+                                algos::add2schedule(transmit_end, inter.end, IntervalInfo(v.sat_id, State::RECORDING), sat);
                         }
                         
-                        transmitted += inter_dur * sats.at(v.sat_name).transmission_speed;
+                        transmitted += inter_dur * sats.at(v.sat_id).transmission_speed;
                         b++;
                         
 #ifdef CONTINUITY                        
-                        station_receiving[v.station_id] = v.sat_name;
+                        station_receiving[v.station_id] = v.sat_id;
 #endif
                     }
                 }

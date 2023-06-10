@@ -85,7 +85,7 @@ void countDailySum(const Interval &interval, double capacity_change, std::vector
             if(interval.end < START_MODELLING + std::chrono::hours((i+1) * 24))
                 daily_sums[i] += capacity_change;
             else {
-                double speed = (interval.info.sat_name <= 50) ? 1 : 0.25;
+                double speed = (interval.info.sat_id <= 50) ? 1 : 0.25;
                 double eval_change = DURATION(interval.start, START_MODELLING + std::chrono::hours((i+1) * 24)) * speed;
                 if(eval_change < capacity_change){
                     daily_sums[i] += eval_change;
@@ -246,8 +246,8 @@ int main(int argc, char* argv[])
                 //std::cout << "Writing schedule: " << cnt_sat++ << "/" << sats.size() << "\n";
                 for (auto &interval : sats[isat].ints_in_area){
                     out << std::fixed 
-                        << interval.info.sat_name << " "
-                        COUT_SATNAME(interval.info.sat_name) << " "
+                        << interval.info.sat_id << " "
+                        COUT_SATNAME(interval.info.sat_id) << " "
                         << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                         << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
                         << " " 
@@ -259,8 +259,8 @@ int main(int argc, char* argv[])
             for (int isat = 1; isat <= SAT_NUM; isat++){
                 for (auto &interval : sats[isat].ints_stations){
                     sats_stn_out << std::fixed
-                        << interval.info.sat_name << " "
-                        COUT_SATNAME(interval.info.sat_name) << " "
+                        << interval.info.sat_id << " "
+                        COUT_SATNAME(interval.info.sat_id) << " "
                         << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                         << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
                         << " " << interval.info.station_id 
@@ -297,8 +297,8 @@ int main(int argc, char* argv[])
                         countDailySum(interval, capacity_change, daily_sums);
                     }
 
-                    out_schedule << std::fixed << cur_info.sat_name
-                        << " " << COUT_SATNAME(cur_info.sat_name)
+                    out_schedule << std::fixed << cur_info.sat_id
+                        << " " << COUT_SATNAME(cur_info.sat_id)
                         << " "
                         << (DURATION(START_MODELLING, interval.start) * 1000) //milliseconds
                         << " " << (DURATION(START_MODELLING, interval.end) * 1000)  //milliseconds

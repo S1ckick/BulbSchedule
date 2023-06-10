@@ -33,7 +33,7 @@ enum class State
 };
 
 struct IntervalInfo {
-    SatID sat_name;
+    SatID sat_id;
     State state = State::IDLE;
     StationID station_id;
 
@@ -42,11 +42,11 @@ struct IntervalInfo {
 
     bool operator==(const IntervalInfo &r)
     {        
-        return sat_name == r.sat_name && state == r.state && station_id == r.station_id;
+        return sat_id == r.sat_id && state == r.state && station_id == r.station_id;
     }
 
     IntervalInfo(
-        const SatID &sat, const StationID &stn = 0) : sat_name(sat), station_id(stn)
+        const SatID &sat, const StationID &stn = 0) : sat_id(sat), station_id(stn)
     {
         
     }

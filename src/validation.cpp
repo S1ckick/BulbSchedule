@@ -6,7 +6,7 @@ extern timepoint START_MODELLING;
 
 inline std::ostream& operator << (std::ostream& o, const Interval& a)
 {
-    o << a.info.sat_name <<
+    o << a.info.sat_id <<
     " " << (DURATION(START_MODELLING, a.start) * 1000) <<
     " " << (DURATION(START_MODELLING, a.end) * 1000) <<
     // " " << a.capacity_change <<
@@ -19,7 +19,7 @@ int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Satellites &sats, 
     for(auto &interval : schedule_to_check) {
         if(interval.info.state != State::TRANSMISSION)
             continue;
-        auto &sat = sats.at(interval.info.sat_name);
+        auto &sat = sats.at(interval.info.sat_id);
         int found = 0;
         for(auto &area : sat.ints_stations) {
             if(interval.start >= area.start && interval.end <= area.end) {
@@ -44,7 +44,7 @@ int checkRecordingInRightArea(VecSchedule &schedule_to_check, Satellites &sats, 
     for (auto &interval : schedule_to_check)
     {
         if (interval.info.state == State::RECORDING) {
-            auto &sat = sats.at(interval.info.sat_name);
+            auto &sat = sats.at(interval.info.sat_id);
             bool found = false;
             for (auto &area : sat.ints_in_area)
             {
@@ -111,7 +111,7 @@ int checkTransmissionTillTheEndOfSession(VecSchedule &schedule_to_check, Satelli
     for (auto &interval : schedule_to_check)
     {
         if (interval.info.state == State::TRANSMISSION) {
-            auto &sat = sats.at(interval.info.sat_name);
+            auto &sat = sats.at(interval.info.sat_id);
             bool found = false;
             for (auto &area : sat.ints_stations)
             {

@@ -13,7 +13,7 @@ extern std::unordered_map<std::string, uint32_t> stn_to_int;
 
 using namespace date;
 
-Interval parse_interval(const std::string &line, const SatID &sat_name, const StationID &station_id = 0)
+Interval parse_interval(const std::string &line, const SatID &sat_id, const StationID &station_id = 0)
 {
     std::string str_idx, str_start_day, str_start_month, str_start_year, str_start_time,
         str_end_day, str_end_month, str_end_year, str_end_time,
@@ -37,7 +37,7 @@ Interval parse_interval(const std::string &line, const SatID &sat_name, const St
     else
         new_state = State::RECORDING;
 
-    Interval interval(tp_start, tp_end, sat_name, new_state, station_id);
+    Interval interval(tp_start, tp_end, sat_id, new_state, station_id);
 
     return interval;
 }
@@ -96,11 +96,11 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
                 std::string pre = "Russia-To";
                 if (strncmp(pre.data(), line.data(), pre.size()) == 0)
                 {
-                    char sat_name[30];
+                    char sat_id[30];
 
-                    sscanf(line.data(), "Russia-To-%s\n", sat_name);
+                    sscanf(line.data(), "Russia-To-%s\n", sat_id);
 
-                    std::string sat_name_str(sat_name);
+                    std::string sat_name_str(sat_id);
                     int start_number = -1;
                     for (int i = 0; i < sat_name_str.length(); i++)
                         if (sat_name_str[i] == '_') {
@@ -229,9 +229,9 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
     
     while ((std::getline(fp, line))) {
         std::istringstream line_stream(line);
-        std::string sat_num, sat_name, start_str, end_str, state_str, capacity_change,
+        std::string sat_num, sat_id, start_str, end_str, state_str, capacity_change,
                     stn_hex, station_id;
-        line_stream >> sat_num >> sat_name >> start_str >> end_str >> state_str >> capacity_change >>
+        line_stream >> sat_num >> sat_id >> start_str >> end_str >> state_str >> capacity_change >>
                     stn_hex;
         if(stn_hex != "0") {
             line_stream >> station_id;
@@ -244,7 +244,7 @@ int parse_schedule(VecSchedule &schedule, const std::string &filename, const tim
         long int end_int = std::stol(end_str);
         const timepoint start = tp_start + std::chrono::milliseconds(start_int);
         const timepoint end = tp_start + std::chrono::milliseconds(end_int);
-        Interval inter(start, end, 10 * (std::stoi(sat_name.substr(2,2)) - 1) + std::stoi(sat_name.substr(4,2)), std::stoi(station_id));
+        Interval inter(start, end, 10 * (std::stoi(sat_id.substr(2,2)) - 1) + std::stoi(sat_id.substr(4,2)), std::stoi(station_id));
         inter.info.state = str_to_state.at(state_str);
         //inter.capacity_change = std::stod(capacity_change);
 

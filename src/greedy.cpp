@@ -37,24 +37,24 @@ void algos::greedy_capacity(Satellites &sats) {
         // get all actors in interval
         for (auto &action: inter.info) {
             auto action_ptr = std::make_shared<IntervalInfo>(action);
-            sat_actors.insert(action.sat_name);
+            sat_actors.insert(action.sat_id);
             if (action.state == State::TRANSMISSION) 
             {
-                if (!visible_stations.count(action.sat_name)) {
-                    visible_stations[action.sat_name] = {};
+                if (!visible_stations.count(action.sat_id)) {
+                    visible_stations[action.sat_id] = {};
                 }
                 if (!visible_sat.count(action.station_id)) {
                     visible_sat[action.station_id] = {};
                 }
-                visible_stations[action.sat_name].push_back(action_ptr);
+                visible_stations[action.sat_id].push_back(action_ptr);
                 visible_sat[action.station_id].push_back(action_ptr);
                 stn_actors.insert(action.station_id);
             }
             else {
-                if (!visible_stations.count(action.sat_name)) {
-                    visible_stations[action.sat_name] = {};
+                if (!visible_stations.count(action.sat_id)) {
+                    visible_stations[action.sat_id] = {};
                 }
-                can_record[action.sat_name] = action_ptr;
+                can_record[action.sat_id] = action_ptr;
             }
         }
 
