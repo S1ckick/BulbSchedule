@@ -145,8 +145,13 @@ void algos::bysolver(Satellites &sats, double F, double W)
 #endif        
         
         int nconstraints = 0;
+        int nfull = 0, nempty = 0;
         for (int isat = 1; isat <= SAT_NUM; isat++)
         {
+            if (sats[isat].capacity < 1e-3)
+                nempty++;
+            else if (sats[isat].capacity >= sats[isat].max_capacity - 1e-3)
+                nfull++;
             if (can_record[isat])
             {
 #ifdef CONTINUITY               
@@ -228,8 +233,8 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 }
             if ((cnt % 10) == 0 || cnt == plan.size())
             {
-                printf("Interval %6d/%ld : ", cnt, plan.size());
-                printf("%2d recording, %2d transmitting; total transmitted %lf\n", r, b, transmitted);
+                printf("Int %6d/%ld : ", cnt, plan.size());
+                printf("%2d rec, %2d tx; %2d full, %2d empty, total %lf Gbit transmitted\n", r, b, nfull, nempty, transmitted);
             }
         }
         else
