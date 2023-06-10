@@ -82,7 +82,7 @@ void algos::greedy_capacity(Satellites &sats) {
         std::vector<std::pair<SatName, double>> sat_cap(visible_obs.size());
         int cnt = 0;
         for (auto &sa: visible_obs) {
-            sat_cap[cnt] = {sa.first, sats.at(sa.first).capacity / sats.at(sa.first).max_capacity};
+            sat_cap[cnt] = {sa.first, sats.at(sa.first).volume / sats.at(sa.first).capacity};
             cnt++;
         }
 
@@ -111,8 +111,8 @@ void algos::greedy_capacity(Satellites &sats) {
                 auto dur_a = dur;
                 auto dur_b = dur;
 
-                double a_enough_data = (sats.at(a.first).capacity > 700 * sats.at(a.first).broadcasting_speed);//dur * sats.at(a.first).broadcasting_speed);
-                double b_enough_data = (sats.at(b.first).capacity > 700 * sats.at(b.first).broadcasting_speed);//dur * sats.at(b.first).broadcasting_speed);
+                double a_enough_data = (sats.at(a.first).volume > 700 * sats.at(a.first).broadcasting_speed);//dur * sats.at(a.first).broadcasting_speed);
+                double b_enough_data = (sats.at(b.first).volume > 700 * sats.at(b.first).broadcasting_speed);//dur * sats.at(b.first).broadcasting_speed);
 
                 if (is_connected_a == is_connected_b) {
                     if (a_enough_data == b_enough_data) {
@@ -125,7 +125,7 @@ void algos::greedy_capacity(Satellites &sats) {
             }
         );
 
-        // sort observatories for satellite by visibility
+        // sort stations for satellite by visibility
         for (auto &vis_obs: visible_obs) {
             std::sort(vis_obs.second.begin(), vis_obs.second.end(), 
                 [&](const std::shared_ptr<IntervalInfo> &a, const std::shared_ptr<IntervalInfo> &b) {
@@ -135,7 +135,7 @@ void algos::greedy_capacity(Satellites &sats) {
                                        (obs_busy_until[b->obs_name - 1].second > inter.start);
                     if (a_connected && b_connected) {
                         if (visible_sat.at(a->obs_name).size() == visible_sat.at(b->obs_name).size())
-                            return a->obs_name < b->obs_name; // always order double city-observatory same way
+                            return a->obs_name < b->obs_name; // always order double city-station same way
                         return visible_sat.at(a->obs_name).size() < visible_sat.at(b->obs_name).size();
                     }
                     return a_connected > b_connected;
@@ -144,16 +144,15 @@ void algos::greedy_capacity(Satellites &sats) {
             );
         }
 
-        // fill observatories with capacity priority
+        // fill stations with volume priority
         for (auto &pair: sat_cap) {
             SatName satellite = pair.first;
             bool pair_found = false;
 
             // check if some obs available, sat can transmission and its not empty
-            if (!obs_actors.empty() && visible_obs.count(satellite) && pair.second != 0)//&&
-                //!(can_record.count(satellite) && sats.at(satellite).capacity < dur * sats.at(satellite).broadcasting_speed))
+            if (!obs_actors.empty() && visible_obs.count(satellite) && pair.second != 0)
             {
-                // choose observatory
+                // choose station
                 for (auto &visible: visible_obs.at(satellite)) {
                     auto &cur_obs = visible->obs_name;
                     if (obs_actors.count(cur_obs) &&
@@ -172,7 +171,7 @@ void algos::greedy_capacity(Satellites &sats) {
                         // fill interval
                         algos::add2schedule(inter.start, inter.end, *(visible.get()), sats.at(satellite));
 
-                        // this observatory busy now
+                        // this station is busy now
                         obs_actors.erase(cur_obs);
 
                         break;

@@ -88,23 +88,23 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 
                 // do not incentivize recording if we have enough data to transfer till the end
                 // (can not disable recording entirely because this is against the rules)
-                if (sat.capacity / sat.broadcasting_speed < dur_to_end)
+                if (sat.volume / sat.broadcasting_speed < dur_to_end)
                 {
                     optimized += v * (int)(1000 * W * inter_dur * sat.recording_speed *
-                                           (sat.max_capacity * F - sat.capacity) / sat.max_capacity);
+                                           (sat.max_capacity * F - sat.volume) / sat.max_capacity);
                 }
             }
             else if (info.state == State::TRANSMISSION)
             {
-                double capacity = sats.at(info.sat_name).capacity;
+                double volume = sats.at(info.sat_name).volume;
                 
-                if (capacity > 1e-3) // not zero because a minuscule amount could have remained because of rounding error
+                if (volume > 1e-3) // not zero because a minuscule amount could have remained because of rounding error
                 {
                     BoolVar v = cp_model.NewBoolVar();
                     double rate = sats.at(info.sat_name).broadcasting_speed;
 
                     vars.push_back({info.sat_name, info.obs_name, v, &info});
-                    optimized += v * (int)(1000 * std::min(inter_dur * rate, capacity));
+                    optimized += v * (int)(1000 * std::min(inter_dur * rate, volume));
 
                     if (station_receiving[info.obs_name] == info.sat_name)
                     {
@@ -133,9 +133,9 @@ void algos::bysolver(Satellites &sats, double F, double W)
         int nfull = 0, nempty = 0;
         for (int isat = 1; isat <= SAT_NUM; isat++)
         {
-            if (sats[isat].capacity < 1e-3)
+            if (sats[isat].volume < 1e-3)
                 nempty++;
-            else if (sats[isat].capacity >= sats[isat].max_capacity - 1e-3)
+            else if (sats[isat].volume >= sats[isat].max_capacity - 1e-3)
                 nfull++;
             if (can_record[isat])
             {
@@ -163,7 +163,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
             }
         }
 
-        for (int obs = OBS_FIRST; obs <= OBS_NUM; obs++)
+        for (int obs = 1; obs <= OBS_NUM; obs++)
         {
             cp_model.AddLessOrEqual(uniqueness_conditions_obs[obs], 1);
             nconstraints++;
@@ -189,11 +189,11 @@ void algos::bysolver(Satellites &sats, double F, double W)
                     {
                         Satellite &sat = sats[v.sat_name];
                         
-                        if (sat.capacity >= inter_dur * sat.broadcasting_speed)
+                        if (sat.volume >= inter_dur * sat.broadcasting_speed)
                             algos::add2schedule(inter.start, inter.end, *(v.info), sat);
                         else
                         {
-                            auto transmit_dur = (sat.capacity / sat.broadcasting_speed);
+                            auto transmit_dur = (sat.volume / sat.broadcasting_speed);
                             
                             timepoint transmit_end = inter.start + std::chrono::microseconds(uint64_t(transmit_dur * 1e6));
                             

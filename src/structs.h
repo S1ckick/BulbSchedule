@@ -14,9 +14,7 @@
 #include <date.h>
 
 
-#define OBS_FIRST 1
 #define OBS_NUM 14
-
 #define SAT_NUM 200
 
 #define DURATION(start, end) ((std::chrono::duration<double, std::milli>((end) - (start)) *                     \
@@ -41,7 +39,6 @@ struct IntervalInfo {
 
     IntervalInfo() = default;
     IntervalInfo(const IntervalInfo &base_interval) = default;
-    //IntervalInfo(IntervalInfo &base_interval) = default;
 
     bool operator==(const IntervalInfo &r)
     {        
@@ -56,7 +53,7 @@ struct IntervalInfo {
 
     // Constructor for scheduling algorithm
     // RECORDING -> only satelitte info
-    // TRANSMISSION -> satelitte and observartory info
+    // TRANSMISSION -> satelitte and station info
     IntervalInfo(
         const SatName &sat,
         const State new_state, const ObsName &obs = 0) : IntervalInfo(sat, obs)
@@ -66,8 +63,8 @@ struct IntervalInfo {
         if (new_state == State::TRANSMISSION)
         {
             if (obs == 0) {
-                std::cout << "Transmission interval should contain observatory\n";
-                throw std::runtime_error("No observatory info");
+                std::cout << "Transmission interval should contain station\n";
+                throw std::runtime_error("No station info");
             }
             obs_name = obs;
         }
@@ -82,7 +79,6 @@ struct Interval
     IntervalInfo info;
 
     Interval(const Interval &base_interval) = default;
-    //Interval(Interval &base_interval) = default;
 
     // Constructor for parser
     Interval(
@@ -95,7 +91,7 @@ struct Interval
 
     // Constructor for scheduling algorithm
     // RECORDING -> only satelitte info
-    // TRANSMISSION -> satelitte and observartory info
+    // TRANSMISSION -> satelitte and station info
     Interval(
         const timepoint &tp_start,
         const timepoint &tp_end,
@@ -156,31 +152,31 @@ using VecSchedule = std::vector<Interval>;
 struct Satellite
 {
     Schedule ints_in_area;
-    Schedule ints_observatories;
+    Schedule ints_stations;
     VecSchedule full_schedule;
 
     // in Gbit
+    double volume;
     double capacity;
-    double max_capacity;
     double recording_speed;
     double broadcasting_speed;
 
     Satellite ()
     {
-        capacity = 0;
+        volume = 0;
     }
 
     void init(int idx)
     {
         if (idx <= 50)
         { // KINOSAT
-            max_capacity = 8192;
+            capacity = 8192;
             broadcasting_speed = 1;
             recording_speed = 4;
         }
         else
         { // ZORKIY
-            max_capacity = 4096;
+            capacity = 4096;
             broadcasting_speed = 0.25;
             recording_speed = 4;
         }
@@ -188,61 +184,52 @@ struct Satellite
     
     double can_record(const double &duration)
     {
-        if (capacity == max_capacity)
+        if (volume == capacity)
             return 0;
 
         double recorded = duration * recording_speed;
-        if (capacity + recorded > max_capacity) {
-            recorded = max_capacity - capacity;
+        if (volume + recorded > capacity) {
+            recorded = capacity - volume;
         }
 
         return recorded;
     }
 
-    // change capacity, return recorded amount
+    // change volume, return recorded amount
     double record(const double &duration)
     {
         double recorded = duration * recording_speed;
-        (capacity + recorded) < max_capacity ? capacity += recorded : (recorded = max_capacity - capacity, capacity = max_capacity);
+        (volume + recorded) < capacity ? volume += recorded : (recorded = capacity - volume, volume = capacity);
 
         return recorded;
     }
 
     double can_broadcast(const double &duration)
     {
-        if (capacity == 0)
+        if (volume == 0)
             return 0;
 
         double transmitted = duration * broadcasting_speed;
-        if (capacity - transmitted < 0) {
-            transmitted = capacity;
+        if (volume - transmitted < 0) {
+            transmitted = volume;
         }
 
         return transmitted;
     }
 
-    // change capacity, return transmitted amount
+    // change volume, return transmitted amount
     double transmission(const double &duration)
     {
-        if (capacity == 0)
+        if (volume == 0)
             return 0;
 
         double transmitted = duration * broadcasting_speed;
-        (capacity - transmitted) > 0 ? capacity -= transmitted : (transmitted = capacity, capacity = 0);
+        (volume - transmitted) > 0 ? volume -= transmitted : (transmitted = volume, volume = 0);
 
         return transmitted;
     }
 };
 
 typedef std::vector<Satellite> Satellites;
-
-// struct Observatory
-// {
-//     ObsName name;
-//     LinkSchedule ints_satellite;
-//     LinkVecSchedule full_schedule;
-// };
-
-//typedef std::unordered_map<ObsName, Observatory> Observatories;
 
 #endif

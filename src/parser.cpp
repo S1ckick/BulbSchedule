@@ -134,7 +134,7 @@ int parse_russia_to_satellites(std::string &location, Satellites &sats)
     return 0;
 }
 
-int parse_observatory(std::string &location, Satellites &sats)
+int parse_station(std::string &location, Satellites &sats)
 {
     int int_idx = 0;
     SatName cur_sat_name;
@@ -142,7 +142,7 @@ int parse_observatory(std::string &location, Satellites &sats)
     // TODO: call OS (in)dependent function to get files list
 
     std::cout << "Parsing stations...\n";
-    // Read each observatory
+    // Read each station
     for (const auto & entry : fs::directory_iterator(location))
     {
         std::string name = entry.path().filename().string();
@@ -178,7 +178,7 @@ int parse_observatory(std::string &location, Satellites &sats)
 
                 auto interval = parse_interval(line, cur_sat_name, cur_obs);
 
-                auto inserted = sats.at(cur_sat_name).ints_observatories.insert(interval);
+                auto inserted = sats.at(cur_sat_name).ints_stations.insert(interval);
                 Interval &int_inserted = const_cast<Interval&>(*inserted.first);
             }
             else

@@ -24,8 +24,8 @@ VecSegment algos::great_plan(const Satellites &sats) {
                     events_grid.push_back({int_area.end, int_area.info, -1});
             }
 
-            events_grid.reserve(events_grid.size() + sat.ints_observatories.size());
-            for (auto &int_sat: sat.ints_observatories) {
+            events_grid.reserve(events_grid.size() + sat.ints_stations.size());
+            for (auto &int_sat: sat.ints_stations) {
                     events_grid.push_back({int_sat.start, int_sat.info, 1});
                     events_grid.push_back({int_sat.end, int_sat.info, -1});
             }
@@ -95,7 +95,7 @@ void algos::add2schedule(const timepoint &start, const timepoint &end, const Int
 	cur_sat.full_schedule.push_back(new_interval);
 	if (new_interval.info.state == State::TRANSMISSION) {
 		if (info.obs_name == 0)
-			throw std::logic_error("Pass an observatory to add2schedule to add broadcasting interval");
+			throw std::logic_error("Pass a station to add2schedule to add broadcasting interval");
 	}
 }
 
@@ -106,7 +106,7 @@ timepoint algos::end_of_current_interval(
 	const timepoint &cur_start)
 {
 	auto one_ms = std::chrono::milliseconds(1);
-	for (auto &inter: sat.ints_observatories) {
+	for (auto &inter: sat.ints_stations) {
 		if (inter.info.obs_name == obs && 
 			inter.start - one_ms <= cur_start &&
 			inter.end + one_ms >= cur_start) {
