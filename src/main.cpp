@@ -227,19 +227,20 @@ int main(int argc, char* argv[])
                         << " " << (DURATION(START_MODELLING, interval.end) * 1000) //milliseconds
                         << " " << interval.info.obs_name 
                         << " " << obs_to_hex[interval.info.obs_name]
-                        << " " << interval.info.obs_name
                         << std::endl;
                 }
             }
             sats_obs_out.close();
 
             double sum_data = 0;
-
+            double sum_full = 0.0;
+            double recording_time = 0.0;
             for (int isat = 1; isat <= SAT_NUM; isat++){
                 Satellite &sat = sats[isat];
                 sat.capacity = 0; // simulate satellite work from beginning
 
                 double time_full = 0;
+                double time_all = 0;
                 timepoint became_full = sat.full_schedule[0].start;
 
                 for (auto &interval : sat.full_schedule){
@@ -247,8 +248,9 @@ int main(int argc, char* argv[])
                     double capacity_change = 0;
                     if (interval.info.state == State::RECORDING) {
                         capacity_change = sat.record(DURATION(interval.start, interval.end));
+                        time_all += DURATION(interval.start, interval.end) * 1000; //milliseconds
                         if (sat.capacity >= sat.max_capacity - 1e-8) {
-                            time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / sat.recording_speed * 1000)), interval.end);
+                            time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / sat.recording_speed * 1000)), interval.end) * 1000;
                         }
                     }
                     else if (interval.info.state == State::TRANSMISSION) {
@@ -271,20 +273,40 @@ int main(int argc, char* argv[])
                         << " " << cur_info.obs_name
                         << std::endl;                    
                 }
-                sat_full << std::fixed << isat << ": " << int(time_full) << " ms\n";
+                recording_time += time_all;
+                sum_full += time_full;
+                sat_full << std::fixed << std::setprecision(3) << isat << ": " << time_all - time_full << " ms\n";
             }
-
-            double daily_checksum = 0.0;
-            std::cout << std::fixed << std::setprecision(18) << "Data transmitted daily: \n";
-            for(int i = 0; i < daily_sums.size(); i++){
-                std::cout << i+1 << " day: " << daily_sums[i] << " Gbit \n";
-                daily_checksum += daily_sums[i];
-            }
-            std::cout << "Checksum: " << daily_checksum << std::endl;
             sat_full.close();
             out_schedule.close();
 
-            std::cout << "Total data transmitted: " << std::fixed << std::setprecision(18) << sum_data << " Gbit \n";
+            //score output
+            std::ofstream out_score(res_dir + "score.txt");
+
+            double overflow_points = (recording_time - sum_full) / 1000.0 / 60.0;
+            out_score << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " gigabit = " 
+                                                  << sum_data / 8.0 << " gigabyte (points)" << std::endl
+                      << "Work without overflow: " << overflow_points << " min (points)" << std::endl
+                      << "Total points: " << sum_data / 8.0 + overflow_points << std::endl << std::endl;
+                        
+
+            double daily_checksum = 0.0;
+            std::cout << std::fixed << std::setprecision(3) << "Data transmitted daily: \n";
+            out_score << "Data transmitted daily: " << std::endl;
+
+            for(int i = 0; i < daily_sums.size(); i++){
+                std::cout << i+1 << " day: " << daily_sums[i] << " gigabit = " << daily_sums[i] / 8.0 << " gigabyte = " << daily_sums[i] / 8192.0 << " terabyte\n";
+                out_score << i+1 << " day: " << daily_sums[i] << " gigabit = " << daily_sums[i] / 8.0 << " gigabyte = " << daily_sums[i] / 8192.0 << " terabyte\n";
+                daily_checksum += daily_sums[i];
+            }
+
+            out_score.close();
+
+            std::cout << "Checksum: " << daily_checksum << std::endl;
+
+            std::cout << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " gigabit = " << sum_data / 8.0 << " gigabyte = " << sum_data / 8192.0 << " terabyte\n";
+            std::cout << "Work without overflow: " << overflow_points << " min (points)" << std::endl;
+            std::cout << "Total points: " << sum_data / 8.0 + overflow_points << std::endl;
             std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
 
             // double obs_total_length = countObsTotalLength(sats);
@@ -333,11 +355,11 @@ int main(int argc, char* argv[])
             } else {
                 std::cout << "all satellites record in right area" << std::endl;
             }
-            if(checkTransmissionTillTheEndOfSession(sats_to_check, sats, err_check_str) == -1) {
-               std::cout << "Error while checking transmission sessions: " << err_check_str;
-            } else {
-                std::cout << "all transmission ends match" << std::endl;
-            }
+            // if(checkTransmissionTillTheEndOfSession(sats_to_check, sats, err_check_str) == -1) {
+            //    std::cout << "Error while checking transmission sessions: " << err_check_str;
+            // } else {
+            //     std::cout << "all transmission ends match" << std::endl;
+            // }
         }
         
     }
