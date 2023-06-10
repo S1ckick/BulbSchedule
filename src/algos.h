@@ -10,7 +10,7 @@ namespace algos
 
     void greedy_capacity(Satellites &sats);
     
-    void bysolver(Satellites &sats);
+    void bysolver(Satellites &sats, double F, double W);
 }
 
 #endif // SCHEDULE_GREEDY

@@ -13,9 +13,9 @@ using namespace operations_research::sat;
 
 #define CONTINUITY
 
-void algos::bysolver(Satellites &sats)
+void algos::bysolver(Satellites &sats, double F, double W)
 {
-    std::cout << "Starting scheduler\n";
+    printf("Starting cpsat scheduler, F = %f, W = %lf\n", F, W);
     auto plan = great_plan(sats);
 
     int cnt = 0;
@@ -97,8 +97,8 @@ void algos::bysolver(Satellites &sats)
                 // (can not disable recording entirely because this is against the rules)
                 if (sat.capacity / sat.broadcasting_speed < dur_to_end)
                 {
-                    optimized += v * (int)(20000 * inter_dur * sat.recording_speed *
-                                           (sat.max_capacity * 0.8 - sat.capacity) / sat.max_capacity);
+                    optimized += v * (int)(1000 * W * inter_dur * sat.recording_speed *
+                                           (sat.max_capacity * F - sat.capacity) / sat.max_capacity);
                 }
             }
             else if (info.state == State::TRANSMISSION)

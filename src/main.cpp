@@ -68,12 +68,14 @@ timepoint START_MODELLING{std::chrono::milliseconds{1811808000000}};
 
 void help ()
 {
-    fprintf(stderr, "\nUsage: scheduler [-data1 path] [-data2 path] [-algo algorithm] [-check] [-checkonly]\n"
-            "  data1 is the path to Satellite-Russia visibility files. Default DATA_Files/Russia2Constellation2\n"
-            "  data2 is the path to Satellite-station LOS files. Default DATA_Files/Facility2Constellation\n"
-            "  algorithm can be \"cpsat\" (default) or \"greedy\" (faster but somewhat less effective)"
-            "  check is a parameter to check the results after the program has run"
-            "  checkonly is a parameter to check the results without running calculations");
+    fprintf(stderr, "\nUsage: scheduler [arguments]\n"
+            "  -data1 [path]         : path to Satellite-Russia visibility files. Default DATA_Files/Russia2Constellation2\n"
+            "  -data2 [path]         : path to Satellite-station LOS files. Default DATA_Files/Facility2Constellation\n"
+            "  -algo  [cpsat|greedy] : algorithm. Default cpsat\n"
+            "  -cpsat-f [value]      : F parameter for cpsat scheduler. Default 0.8\n"
+            "  -cpsat-w [value]      : W parameter for cpsat scheduler. Default 20\n"
+            "  -check                : check the results after the program has run\n"
+            "  -checkonly            : check the results without running calculations\n");
     
 }
 
@@ -111,6 +113,8 @@ int main(int argc, char* argv[])
     bool check = false;
     bool checkonly = false;
     int algo = CPSAT;
+    double cpsat_f = 0.8;
+    double cpsat_w = 20;
 
     for (int i = 1; i < argc; i++)
     {
@@ -163,6 +167,40 @@ int main(int argc, char* argv[])
         {
             checkonly = true;
         }
+        else if (strcmp(argv[i], "-cpsat-f") == 0)
+        {
+            if (i < argc - 1)
+            {
+                ++i;
+                if (sscanf(argv[i], "%lf", &cpsat_f) != 1)
+                {
+                    help();
+                    return -1;
+                }
+            }
+            else
+            {
+                help();
+                return -1;
+            }
+        }
+        else if (strcmp(argv[i], "-cpsat-w") == 0)
+        {
+            if (i < argc - 1)
+            {
+                ++i;
+                if (sscanf(argv[i], "%lf", &cpsat_w) != 1)
+                {
+                    help();
+                    return -1;
+                }
+            }
+            else
+            {
+                help();
+                return -1;
+            }
+        }
         else
         {
             help();
@@ -178,7 +216,7 @@ int main(int argc, char* argv[])
         if(!checkonly){
             auto start_algo = std::chrono::high_resolution_clock::now();
             if (algo == CPSAT)
-                algos::bysolver(sats);
+                algos::bysolver(sats, cpsat_f, cpsat_w);
             else if (algo == GREEDY)
                 algos::greedy_capacity(sats);
             auto end_algo = std::chrono::high_resolution_clock::now();
