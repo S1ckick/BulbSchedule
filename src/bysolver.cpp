@@ -88,10 +88,10 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 
                 // do not incentivize recording if we have enough data to transfer till the end
                 // (can not disable recording entirely because this is against the rules)
-                if (sat.volume / sat.broadcasting_speed < dur_to_end)
+                if (sat.volume / sat.transmission_speed < dur_to_end)
                 {
                     optimized += v * (int)(1000 * W * inter_dur * sat.recording_speed *
-                                           (sat.max_capacity * F - sat.volume) / sat.max_capacity);
+                                           (sat.capacity * F - sat.volume) / sat.capacity);
                 }
             }
             else if (info.state == State::TRANSMISSION)
@@ -101,7 +101,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
                 if (volume > 1e-3) // not zero because a minuscule amount could have remained because of rounding error
                 {
                     BoolVar v = cp_model.NewBoolVar();
-                    double rate = sats.at(info.sat_name).broadcasting_speed;
+                    double rate = sats.at(info.sat_name).transmission_speed;
 
                     vars.push_back({info.sat_name, info.obs_name, v, &info});
                     optimized += v * (int)(1000 * std::min(inter_dur * rate, volume));
@@ -135,7 +135,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
         {
             if (sats[isat].volume < 1e-3)
                 nempty++;
-            else if (sats[isat].volume >= sats[isat].max_capacity - 1e-3)
+            else if (sats[isat].volume >= sats[isat].capacity - 1e-3)
                 nfull++;
             if (can_record[isat])
             {
@@ -189,11 +189,11 @@ void algos::bysolver(Satellites &sats, double F, double W)
                     {
                         Satellite &sat = sats[v.sat_name];
                         
-                        if (sat.volume >= inter_dur * sat.broadcasting_speed)
+                        if (sat.volume >= inter_dur * sat.transmission_speed)
                             algos::add2schedule(inter.start, inter.end, *(v.info), sat);
                         else
                         {
-                            auto transmit_dur = (sat.volume / sat.broadcasting_speed);
+                            auto transmit_dur = (sat.volume / sat.transmission_speed);
                             
                             timepoint transmit_end = inter.start + std::chrono::microseconds(uint64_t(transmit_dur * 1e6));
                             
@@ -204,7 +204,7 @@ void algos::bysolver(Satellites &sats, double F, double W)
                                 algos::add2schedule(transmit_end, inter.end, IntervalInfo(v.sat_name, State::RECORDING), sat);
                         }
                         
-                        transmitted += inter_dur * sats.at(v.sat_name).broadcasting_speed;
+                        transmitted += inter_dur * sats.at(v.sat_name).transmission_speed;
                         b++;
                         
 #ifdef CONTINUITY                        

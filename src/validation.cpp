@@ -21,7 +21,7 @@ int checkBroadcastInRightArea(VecSchedule &schedule_to_check, Satellites &sats, 
             continue;
         auto &sat = sats.at(interval.info.sat_name);
         int found = 0;
-        for(auto &area : sat.ints_observatories) {
+        for(auto &area : sat.ints_stations) {
             if(interval.start >= area.start && interval.end <= area.end) {
                 found = 1;
                 break;
@@ -113,7 +113,7 @@ int checkTransmissionTillTheEndOfSession(VecSchedule &schedule_to_check, Satelli
         if (interval.info.state == State::TRANSMISSION) {
             auto &sat = sats.at(interval.info.sat_name);
             bool found = false;
-            for (auto &area : sat.ints_observatories)
+            for (auto &area : sat.ints_stations)
             {
                 if (interval.info.obs_name == area.info.obs_name && interval.start >= area.start - one_ms && interval.end <= area.end + one_ms)
                 {

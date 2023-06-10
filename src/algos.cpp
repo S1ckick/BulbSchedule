@@ -82,7 +82,7 @@ void algos::add2schedule(const timepoint &start, const timepoint &end, const Int
 	else if (info.state == State::TRANSMISSION)
 		cur_sat.transmission(int_dur);
 
-	// its pointer so it affects observatory interval too
+	// its pointer so it affects station interval too
 	if (!cur_sat.full_schedule.empty())
 	{
 		auto &last_sat = cur_sat.full_schedule[cur_sat.full_schedule.size() - 1];
@@ -95,7 +95,7 @@ void algos::add2schedule(const timepoint &start, const timepoint &end, const Int
 	cur_sat.full_schedule.push_back(new_interval);
 	if (new_interval.info.state == State::TRANSMISSION) {
 		if (info.obs_name == 0)
-			throw std::logic_error("Pass a station to add2schedule to add broadcasting interval");
+			throw std::logic_error("Pass a station to add2schedule to add transmission interval");
 	}
 }
 

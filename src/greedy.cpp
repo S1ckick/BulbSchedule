@@ -111,8 +111,8 @@ void algos::greedy_capacity(Satellites &sats) {
                 auto dur_a = dur;
                 auto dur_b = dur;
 
-                double a_enough_data = (sats.at(a.first).volume > 700 * sats.at(a.first).broadcasting_speed);//dur * sats.at(a.first).broadcasting_speed);
-                double b_enough_data = (sats.at(b.first).volume > 700 * sats.at(b.first).broadcasting_speed);//dur * sats.at(b.first).broadcasting_speed);
+                double a_enough_data = (sats.at(a.first).volume > 700 * sats.at(a.first).transmission_speed);//dur * sats.at(a.first).broadcasting_speed);
+                double b_enough_data = (sats.at(b.first).volume > 700 * sats.at(b.first).transmission_speed);//dur * sats.at(b.first).broadcasting_speed);
 
                 if (is_connected_a == is_connected_b) {
                     if (a_enough_data == b_enough_data) {

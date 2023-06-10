@@ -159,7 +159,7 @@ struct Satellite
     double volume;
     double capacity;
     double recording_speed;
-    double broadcasting_speed;
+    double transmission_speed;
 
     Satellite ()
     {
@@ -171,13 +171,13 @@ struct Satellite
         if (idx <= 50)
         { // KINOSAT
             capacity = 8192;
-            broadcasting_speed = 1;
+            transmission_speed = 1;
             recording_speed = 4;
         }
         else
         { // ZORKIY
             capacity = 4096;
-            broadcasting_speed = 0.25;
+            transmission_speed = 0.25;
             recording_speed = 4;
         }
     }
@@ -209,7 +209,7 @@ struct Satellite
         if (volume == 0)
             return 0;
 
-        double transmitted = duration * broadcasting_speed;
+        double transmitted = duration * transmission_speed;
         if (volume - transmitted < 0) {
             transmitted = volume;
         }
@@ -223,7 +223,7 @@ struct Satellite
         if (volume == 0)
             return 0;
 
-        double transmitted = duration * broadcasting_speed;
+        double transmitted = duration * transmission_speed;
         (volume - transmitted) > 0 ? volume -= transmitted : (transmitted = volume, volume = 0);
 
         return transmitted;
