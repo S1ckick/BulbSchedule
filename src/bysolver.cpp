@@ -209,7 +209,7 @@ void algos::bysolver(Satellites &sats)
                         {
                             auto transmit_dur = (sat.capacity / sat.broadcasting_speed);
                             
-                            timepoint transmit_end = inter.start + std::chrono::milliseconds(uint64_t(transmit_dur * 1e6));
+                            timepoint transmit_end = inter.start + std::chrono::microseconds(uint64_t(transmit_dur * 1e6));
                             
                             algos::add2schedule(inter.start, transmit_end, *(v.info), sat);
                             

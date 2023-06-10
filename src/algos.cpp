@@ -98,3 +98,21 @@ void algos::add2schedule(const timepoint &start, const timepoint &end, const Int
 			throw std::logic_error("Pass an observatory to add2schedule to add broadcasting interval");
 	}
 }
+
+// find end of possible sat-obs transmission interval by timepoint
+timepoint algos::end_of_current_interval(
+	const Satellite &sat,
+	const ObsName &obs,
+	const timepoint &cur_start)
+{
+	auto one_ms = std::chrono::milliseconds(1);
+	for (auto &inter: sat.ints_observatories) {
+		if (inter.info.obs_name == obs && 
+			inter.start - one_ms <= cur_start &&
+			inter.end + one_ms >= cur_start) {
+				return inter.end;	
+			}
+	}
+
+	throw std::logic_error("Timepoint outside of any transmission interval\n");
+}
