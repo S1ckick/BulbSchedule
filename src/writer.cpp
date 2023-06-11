@@ -77,6 +77,7 @@ int writeResults(Satellites &sats, const std::string &path_ground, const std::st
         long int i_camera = 1;
         long int i_drop = 1;
         long int i_ground = 1;
+        sats[isat].volume = 0;
         for (auto &interval : sats[isat].full_schedule){
             auto &cur_info = interval.info;
             if (cur_info.state == State::RECORDING) {
