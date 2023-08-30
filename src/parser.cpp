@@ -6,6 +6,7 @@
 #include <cstring>
 #include <vector>
 #include <filesystem>
+#include <set>
 
 namespace fs = std::filesystem;
 
@@ -216,42 +217,110 @@ int parse_station(std::string &location, Satellites &sats)
     return 0;
 }
 
-int parse_schedule(VecSchedule &schedule, const std::string &filename, const timepoint &tp_start) {
-    std::ifstream fp(filename);
-    if (!fp)
-    {
-        printf("Error with opening file!\n");
-        return 1;
+int parse_schedule(VecSchedule &schedule, const std::string &resdir) {
+
+    parseCamera(schedule, resdir);
+    parseDrop(schedule, resdir);
+
+    return 0;
+}
+
+
+Interval parse_intervalDrop(const std::string &line, const SatID &sat_id)
+{
+    std::string str_idx, str_start_day, str_start_month, str_start_year, str_start_time,
+        str_end_day, str_end_month, str_end_year, str_end_time,
+        str_duration, station_id;
+    std::istringstream line_stream(line);
+    line_stream >> str_idx >> str_start_day >> str_start_month >> str_start_year >>
+        str_start_time >> str_end_day >> str_end_month >> str_end_year >>
+        str_end_time >> str_duration >> station_id;
+
+    std::istringstream start_date(str_start_day + "/" + str_start_month + "/" + str_start_year + " " + str_start_time);
+    timepoint tp_start;
+    start_date >> date::parse("%d/%b/%Y %T", tp_start);
+
+    std::istringstream end_date(str_end_day + "/" + str_end_month + "/" + str_end_year + " " + str_end_time);
+    timepoint tp_end;
+    end_date >> date::parse("%d/%b/%Y %T", tp_end);
+
+    State new_state;
+    new_state = State::TRANSMISSION;
+
+    std::cout << station_id << std::endl;
+
+    Interval interval(tp_start, tp_end, sat_id, new_state, stn_to_int[station_id]);
+
+    return interval;
+}
+
+int parseCamera(VecSchedule & schedule, const std::string &resdir) {
+        std::string cameradir = resdir + "Camera";
+        std::set<fs::path> sorted_dir;
+    for (const auto & file: std::filesystem::directory_iterator(cameradir)) {
+        sorted_dir.insert(file.path());
     }
-
-    std::string line;
-    std::unordered_map<std::string,State> const str_to_state = { {"TRANSMISSION", State::TRANSMISSION}, {"IDLE", State::IDLE}, {"RECORDING", State::RECORDING}};
-    
-    while ((std::getline(fp, line))) {
-        std::istringstream line_stream(line);
-        std::string sat_num, sat_id, start_str, end_str, state_str, capacity_change,
-                    stn_hex, station_id;
-        line_stream >> sat_num >> sat_id >> start_str >> end_str >> state_str >> capacity_change >>
-                    stn_hex;
-        if(stn_hex != "0") {
-            line_stream >> station_id;
+    SatID sat_id = 0;
+    for (auto &filename: sorted_dir){
+        sat_id++;
+        std::ifstream fp(filename.u8string());
+        std::cout << filename.u8string() << std::endl;
+        if (!fp)
+        {
+            printf("Error with opening file!\n");
+            return 1;
         }
-        else {
-            station_id = "0";
-        }
-            
-        long int start_int = std::stol(start_str);
-        long int end_int = std::stol(end_str);
-        const timepoint start = tp_start + std::chrono::milliseconds(start_int);
-        const timepoint end = tp_start + std::chrono::milliseconds(end_int);
-        Interval inter(start, end, 10 * (std::stoi(sat_id.substr(2,2)) - 1) + std::stoi(sat_id.substr(4,2)), std::stoi(station_id));
-        inter.info.state = str_to_state.at(state_str);
-        //inter.capacity_change = std::stod(capacity_change);
 
-        schedule.push_back(inter);
+        std::string line;
+        std::getline(fp, line);
+        std::getline(fp, line);
+        std::getline(fp, line);
+
+        while ((std::getline(fp, line))) {
+            std::istringstream line_stream(line);
+            auto interval = parse_interval(line, sat_id);
+            schedule.push_back(interval);
+        }
+
+        fp.close();
     }
+    return 0;
+}
 
-    fp.close();
+int parseDrop(VecSchedule & schedule, const std::string &resdir) {
+        std::string cameradir = resdir + "Drop";
+        std::set<fs::path> sorted_dir;
+    for (const auto & file: std::filesystem::directory_iterator(cameradir)) {
+        sorted_dir.insert(file.path());
+    }
+    SatID sat_id = 0;
+    StationID cur_station;
+    int counter = 0;
+    for (auto &filename: sorted_dir){
+        sat_id++;
+        std::ifstream fp(filename.u8string());
+        std::cout << filename.u8string() << std::endl;
 
+        if (!fp)
+        {
+            printf("Error with opening file!\n");
+            return 1;
+        }
+
+        std::string line;
+        std::getline(fp, line);
+        std::getline(fp, line);
+        std::getline(fp, line);
+
+        while (std::getline(fp, line)) {
+            std::istringstream line_stream(line);
+            auto interval = parse_intervalDrop(line, sat_id);
+            schedule.push_back(interval);
+            counter++;
+        }
+        
+        fp.close();
+    }
+    std::cout << "For drop: " << counter << std::endl;
     return 0;
 }

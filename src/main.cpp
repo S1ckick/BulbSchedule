@@ -359,8 +359,8 @@ int main(int argc, char* argv[])
 
         if(check || checkonly) {
             VecSchedule sats_to_check;
-            std::string filename_sats_to_check = res_dir + "all_schedule.txt";
-            parse_schedule(sats_to_check, filename_sats_to_check, START_MODELLING);
+            std::string filename_sats_to_check = res_dir;
+            parse_schedule(sats_to_check, res_dir);
             std::sort(sats_to_check.begin(), sats_to_check.end(), sort_for_parsed_schedule);
 
             std::cout << sats_to_check.size() << std::endl;
@@ -394,6 +394,67 @@ int main(int argc, char* argv[])
             // } else {
             //     std::cout << "all transmission ends match" << std::endl;
             // }
+
+            double sum_data = 0;
+            double sum_full = 0.0;
+            double recording_time = 0.0;
+            std::vector<double> daily_sums(14,0.0);
+            int ccounter = 0;
+
+            for (int isat = 1; isat <= SAT_NUM; isat++){
+                Satellite &sat = sats[isat];
+                sat.volume = 0;
+            }
+            double time_full = 0;
+            double time_all = 0;
+            for (auto &interval : sats_to_check){
+                    auto &cur_info = interval.info;
+                    Satellite &sat = sats[cur_info.sat_id];
+                    
+                    double capacity_change = 0;
+                    if (interval.info.state == State::RECORDING) {
+                        capacity_change = sat.record(DURATION(interval.start, interval.end));
+                        time_all += DURATION(interval.start, interval.end) * 1000; //milliseconds
+                        if (sat.volume >= sat.capacity - 1e-8) {
+                            time_full += DURATION(interval.start + std::chrono::milliseconds((uint64_t)(capacity_change / sat.recording_speed * 1000)), interval.end) * 1000;
+                        }
+                    }
+                    else if (interval.info.state == State::TRANSMISSION) {
+                        capacity_change = sat.transmission(DURATION(interval.start, interval.end));
+                        sum_data += capacity_change;
+                        ccounter++;
+                        countDailySum(interval, capacity_change, daily_sums);
+                    }                   
+            }
+
+            std::cout << "ww: " << ccounter << std::endl;
+
+            double overflow_points = (recording_time - sum_full) / 1000.0 / 60.0;
+            std::cout << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " Gbit = " 
+                                                  << sum_data / 8.0 << " GB (points)" << std::endl
+                      << "Work without overflow: " << overflow_points << " min (points)" << std::endl
+                      << "Total points: " << sum_data / 8.0 + overflow_points << std::endl << std::endl;
+                        
+
+            double daily_checksum = 0.0;
+            std::cout << std::fixed << std::setprecision(3) << "Data transmitted daily: \n";
+
+            for(int i = 0; i < daily_sums.size(); i++){
+                std::cout << "day " << i+1 << ": transmitted " << daily_sums[i] << " Gbit = " << daily_sums[i] / 8.0 << " GB = " << daily_sums[i] / 8192.0 << " TB\n";
+                daily_checksum += daily_sums[i];
+            }
+
+
+            std::cout << "Checksum: " << daily_checksum << std::endl;
+
+            std::cout << "Total data transmitted: " << std::fixed << std::setprecision(3) << sum_data << " Gbit = " << sum_data / 8.0 << " GB = " << sum_data / 8192.0 << " TB\n";
+            std::cout << "Work without overflow time: " << overflow_points << " min (points)" << std::endl;
+            std::cout << "Recording time: " << recording_time / 1000.0 / 60.0 << " min" << std::endl;
+            std::cout << "Overflow time: " << sum_full / 1000.0 / 60.0 << " min" << std::endl;
+            
+            std::cout << "Total points: " << sum_data / 8.0 + overflow_points << std::endl;
+            std::cout << "The schedule is saved in a folder: " << res_dir << std::endl;
+
         }
         
     }
